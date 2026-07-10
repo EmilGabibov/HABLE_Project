@@ -1,5 +1,6 @@
-- [ ] series of documenting system architecture (2): Document current cloudflare worker code, environment variables, secrets, d1 database, etc. Show what each worker does, environment variables, secrets, d1 database, etc. 
-- [ ] series of documenting system architecture (3): Document current flutter code, state management, services, repositories, etc. Show what each service does, repository does, etc. 
+- [ ] series of documenting system architecture (2): Document current cloudflare worker code, environment variables, secrets, d1 database, etc. Show what each worker does, environment variables, secrets, d1 database, etc. Make a diagram (like UML or flow chart) of the database schema. Show the tables, columns, relationships, etc. 
+- [ ] series of documenting system architecture (3): Document current flutter code, state management, services, repositories, etc. Show what each service does, repository does, etc. Make a diagram (like UML or flow chart) of the system architecture. Show the interaction between the flutter app, cloudflare workers, d1 database, etc. 
+
 
 - Simplifying/compacting users profile:
     - User card:
@@ -55,22 +56,49 @@
     - Habit icon
     - Habit current streak
     - Habit target number of days
-    - partner(s) user profile picture, name, and status (active/completed/skipped): (max 3 or 4 visible, and "..." if more) 
+    - partner(s) (max 3 or 4 visible, and "..." if more):
+        - user profile picture
+        - name
+        - status (active/completed/skipped): as a ring around their profile picture. 
     - supporters profile picture: (max 3 or 4 visible, and "..." if more) 
     - status bar showing the progress of the habit: (current number of days / target number of days) a progress bar like a line like the bottom border of habit cards
     - the ring: the icon of the habit is inside this ring, and it's a solid color, like the border color of the card. (if the habit is completed, the ring is filled with the color of the border, if the habit is skipped, the ring is empty. if the habit is active, the ring is empty.) 
     
-
-        
-             
-
     
+- Achivement system:
+    - A user can earn achievements by completing habits, streaks, etc. 
+    - An achievement could be a score or a badge. Achievements are related to completing habits, maintaining streaks, supporting friends, nudging friends, etc. 
+    - Points: 
+        - every completing of a habit (checking in) will give the user 5 points.
+        - in parterned habit, after all participants checked in, then all participants get 5 points.
+    - Badges: 
+        - Example Badges:
+            - First check in
+            - First habit creating / joining (creating a habit)
+            - First friend 
+            - First habit completed
+            - First streak
+            - First supporter
+            - First nudge
+            - First 10 check-ins
+            - First 100 check-ins
+            - First 1000 check-ins
+            - First 10 habits completed
+            - First 100 habits completed
+            - First 1000 habits completed
+            - First 10 streaks (7 days streak)
+            - First 100 streaks (7 days streak)
+            - First 1000 streaks (7 days streak)
+            - First 10 supports
+            - First 100 supports
+            - First 1000 supports
+            - First 10 nudges
+            - First 100 nudges
+            - First 1000 nudges
+    - Achievements can be shown on the user's profile. 
+    - (for future maybe) we could have a system where users can earn points by completing habits, and then use those points to redeem rewards. (like getting coins for free coins in the app) 
 
-        
-        
-    
-        
-             
+
 
     
 
