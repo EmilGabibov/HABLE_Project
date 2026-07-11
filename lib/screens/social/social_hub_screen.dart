@@ -26,6 +26,12 @@ final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
   );
 
   if (response.statusCode == 200) {
+    final contentType = response.headers['content-type'] ?? '';
+    if (!contentType.toLowerCase().contains('application/json')) {
+      throw Exception(
+        'Leaderboard endpoint returned ${contentType.isEmpty ? 'non-JSON' : contentType} content.',
+      );
+    }
     final data = jsonDecode(response.body);
     return data['leaderboard'] ?? [];
   }
@@ -49,6 +55,12 @@ final userSearchProvider = FutureProvider.family
 
       debugPrint('RESPONSE ${response.statusCode}: ${response.body}');
       if (response.statusCode == 200) {
+        final contentType = response.headers['content-type'] ?? '';
+        if (!contentType.toLowerCase().contains('application/json')) {
+          throw Exception(
+            'Search endpoint returned ${contentType.isEmpty ? 'non-JSON' : contentType} content.',
+          );
+        }
         final data = jsonDecode(response.body);
         return data['results'] ?? [];
       }
@@ -395,8 +407,9 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
             padding: const EdgeInsets.all(16),
             children: [
               LeaderboardCard(
-                title: 'Points Leaderboard',
-                subtitle: 'All-time points from synced habit progress',
+                title: 'Friends Leaderboard',
+                subtitle: 'You and accepted friends only',
+                scopeLabel: 'Friends',
                 rankings: rankings,
                 currentUserId: currentUserId,
               ),

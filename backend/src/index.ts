@@ -1621,13 +1621,27 @@ app.get('/api/sync/daily', async (c) => {
 // --- New Leaderboard & Search Endpoints ---
 
 app.get('/api/social/leaderboard', async (c) => {
-  // Return top 100 users ordered by score
+  await ensureGamificationSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
   const { results } = await c.env.DB.prepare(`
+    WITH friend_ids AS (
+      SELECT ? AS user_id
+      UNION
+      SELECT DISTINCT CASE
+        WHEN requester_id = ? THEN recipient_id
+        ELSE requester_id
+      END AS user_id
+      FROM friend_requests
+      WHERE status = 'accepted'
+        AND (requester_id = ? OR recipient_id = ?)
+    )
     SELECT id, username, avatar_url, total_score
     FROM users
-    ORDER BY total_score DESC
+    WHERE id IN (SELECT user_id FROM friend_ids)
+    ORDER BY total_score DESC, username COLLATE NOCASE ASC
     LIMIT 100
-  `).all()
+  `).bind(userId, userId, userId, userId).all()
 
   return c.json({ leaderboard: results })
 })
@@ -1638,6 +1652,7 @@ app.get('/api/social/search', async (c) => {
     return c.json({ results: [] })
   }
 
+  await ensureGamificationSchema(c.env)
   const { results } = await c.env.DB.prepare(`
     SELECT id, username, avatar_url, total_score
     FROM users

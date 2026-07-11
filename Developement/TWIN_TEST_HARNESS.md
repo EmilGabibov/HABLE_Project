@@ -73,6 +73,17 @@ With both apps installed, test the current social path in this order:
 12. **Receive Nudge**: Open or sync the receiving app and verify the nudge is visible through the current in-app social state.
 13. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
 
+## 5. Backend Lifecycle Smoke
+
+Before or after the device pass, run the repeatable backend lifecycle smoke against the local Worker:
+
+```bash
+cd backend
+npm run smoke:lifecycle
+```
+
+The smoke uses the seeded Alice/Bob users and verifies case-insensitive search, friend request acceptance, shared normal habit sync, shared multi-day habit sync, Bob-owned habit visibility in Alice, completion progress, owner-only metadata updates, archive propagation, and private habit exclusion.
+
 ## Troubleshooting
 
 - **Android package collision**: Ensure you are using the `--flavor` flag so that the `applicationIdSuffix` applies correctly.

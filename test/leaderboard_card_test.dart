@@ -42,6 +42,7 @@ void main() {
               padding: const EdgeInsets.all(16),
               child: LeaderboardCard(
                 title: 'Points Leaderboard',
+                scopeLabel: 'Friends',
                 rankings: entries,
                 currentUserId: 'u-5',
               ),
@@ -52,7 +53,7 @@ void main() {
     );
 
     expect(find.text('Points Leaderboard'), findsOneWidget);
-    expect(find.text('Global'), findsOneWidget);
+    expect(find.text('Friends'), findsOneWidget);
     expect(find.text('#1'), findsWidgets);
     expect(find.text('User 1'), findsWidgets);
     expect(find.text('You'), findsOneWidget);

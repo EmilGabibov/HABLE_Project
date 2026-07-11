@@ -53,6 +53,7 @@ class LeaderboardEntry {
 class LeaderboardCard extends StatefulWidget {
   final String title;
   final String subtitle;
+  final String scopeLabel;
   final List<LeaderboardEntry> rankings;
   final String? currentUserId;
   final int defaultPageSize;
@@ -61,6 +62,7 @@ class LeaderboardCard extends StatefulWidget {
     super.key,
     this.title = 'Leaderboard',
     this.subtitle = 'All-time total points',
+    this.scopeLabel = 'Global',
     required this.rankings,
     this.currentUserId,
     this.defaultPageSize = 10,
@@ -111,7 +113,11 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LeaderboardHeader(title: widget.title, subtitle: widget.subtitle),
+          _LeaderboardHeader(
+            title: widget.title,
+            subtitle: widget.subtitle,
+            scopeLabel: widget.scopeLabel,
+          ),
           const SizedBox(height: 22),
           _LeaderboardPodium(
             rankings: podiumRankings,
@@ -167,8 +173,13 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
 class _LeaderboardHeader extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String scopeLabel;
 
-  const _LeaderboardHeader({required this.title, required this.subtitle});
+  const _LeaderboardHeader({
+    required this.title,
+    required this.subtitle,
+    required this.scopeLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -206,12 +217,18 @@ class _LeaderboardHeader extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.public_rounded, size: 16, color: AppTheme.sageGreen),
-              SizedBox(width: 6),
+            children: [
+              Icon(
+                scopeLabel.toLowerCase() == 'friends'
+                    ? Icons.group_rounded
+                    : Icons.public_rounded,
+                size: 16,
+                color: AppTheme.sageGreen,
+              ),
+              const SizedBox(width: 6),
               Text(
-                'Global',
-                style: TextStyle(
+                scopeLabel,
+                style: const TextStyle(
                   color: AppTheme.deepCharcoal,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
