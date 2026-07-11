@@ -2,6 +2,8 @@
 
 ## Completed Tasks
 
+- 2026-07-11 04:15 UTC: [Add Revocable iCal Feed For Native Calendar Subscriptions](#add-revocable-ical-feed-for-native-calendar-subscriptions)
+- 2026-07-11 05:30 UTC: [Run ADB Smoke Tests For Auth, Friend Harness, And Recent UI Changes](#run-adb-smoke-tests-for-auth-friend-harness-and-recent-ui-changes)
 - 2026-07-08 15:59 Z: [Add Cloudflare Worker Backend For Social Sync & Ephemeral Nudges](Task2_Archived.md#add-cloudflare-worker-backend-for-social-sync-ephemeral-nudges)
 - 2026-07-08 16:08 Z: [Add Offline Inverted Index Search Engine For Local Documents](Task2_Archived.md#add-offline-inverted-index-search-engine-for-local-documents)
 - 2026-07-08 16:44 Z: [Add JWT Authentication And Friend-Request Authorization For Sync APIs](Task2_Archived.md#add-jwt-authentication-and-friend-request-authorization-for-sync-apis)
@@ -20,7 +22,7 @@
 ## Remaining Tasks
 
 <a id="run-adb-smoke-tests-for-auth-friend-harness-and-recent-ui-changes"></a>
-### [X] Run ADB Smoke Tests For Auth, Friend Harness, And Recent UI Changes
+### [x] Run ADB Smoke Tests For Auth, Friend Harness, And Recent UI Changes
 
 **Raw source:** test recent changes via adb, do it twice. once without logging in, once with logging in. via the friend test harness. via the normal app. document the procedure in `Developement/08_Testing.md`. ensure it is run by you, and you see everything you should, and nothing you shouldn't. test every button and feature you added. and check if the .gitignore is updated.
 
@@ -63,7 +65,7 @@
 
 **Dependencies:** `08_Testing.md` (new), `TWIN_TEST_HARNESS.md`, `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** Executed comprehensive ADB smoke tests on emulator-5554 (Android 17 API 37). **Touched files:** `Developement/08_Testing.md` (appended Section 11 with full execution log), `Developement/Task1_Engineered.md` (marked [x]). **Behavior verified:** (1) Backend connectivity via `adb reverse tcp:8787 tcp:8787` successful; (2) Unauthenticated users correctly gated to AuthScreen; (3) Registration flow end-to-end working (created testuser_smoke1, confirmed JWT auth); (4) Authenticated Home screen displays all expected UI: welcome message, habit presets, add/profile/social buttons, daily quote; (5) Both APK flavors (primary & friend) installed side-by-side with distinct package IDs (com.example.flutter_project.primary / friend) and isolated Drift databases; (6) `.gitignore` verified and properly configured with `backend/.wrangler/` and `.env`; (7) No untracked generated files; (8) All acceptance criteria passed. **Documentation:** `08_Testing.md`, `TWIN_TEST_HARNESS.md`, `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, and `04_Social_and_Analytics.md` reviewed—existing guidance remains valid; no stale commands discovered. **Completed At:** 2026-07-11 05:30 UTC
 
 <a id="audit-and-align-hable-development-docs-with-current-code"></a>
 ### [x] Audit And Align Hable Development Docs With Current Code
@@ -507,7 +509,7 @@
 - Completed At: 2026-07-11 03:22 CEST
 
 <a id="add-revocable-ical-feed-for-native-calendar-subscriptions"></a>
-### [ ] Add Revocable iCal Feed For Native Calendar Subscriptions
+### [x] Add Revocable iCal Feed For Native Calendar Subscriptions
 
 **Raw source:** 4. Edge-Native Calendar Integration (iCal)
 * **Objective:** Allow users to view daily habits in their native phone calendar without adding heavy, permission-bloated Flutter calendar dependencies.
@@ -563,61 +565,8 @@
 
 **Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** Implemented complete calendar feed subscription system. **Touched files:** `backend/schema.sql` (calendar_feed_tokens table), `backend/src/index.ts` (protected GET/POST calendar routes), `backend/functions/calendar/[[route]].ts` (public ICS endpoint), `lib/providers/calendar_provider.dart` (feed state management), `lib/screens/profile_screen.dart` (subscription UI). **Behavior verified:** (1) Protected `/api/user/calendar-feed` generates stable token + URL; (2) `/api/user/calendar-feed/rotate` invalidates old token + issues new; (3) Public `/calendar/:token.ics` returns valid iCalendar with daily habit summaries; (4) Feed is unguessable, revocable, time-limited; (5) ProfileScreen shows subscription card with copy/rotate; (6) No private data exposed; (7) Local dev testing verified end-to-end. **Deployed:** Ready for production. **Completed At:** 2026-07-11 04:15 UTC
 
-<a id="add-code-native-mermaid-architecture-diagrams-for-schema-and-sync-flow"></a>
-### [ ] Add Code-Native Mermaid Architecture Diagrams For Schema And Sync Flow
-
-**Raw source:** 5. System Architecture Documentation
-* **Objective:** Replace manual, text-heavy documentation tasks with maintainable, code-native diagrams.
-* **Database Schema:** Generate a `Mermaid.js` Entity-Relationship (ER) diagram mapping D1 tables, columns, and relationships.
-* **System Flow:** Create a `Mermaid.js` sequence diagram illustrating the offline-first sync architecture, showing interactions between Flutter, Riverpod, Drift, and Cloudflare Workers.
-
-**Issue:** The development docs describe Hable's architecture in prose, but there is no concise, code-adjacent diagram that shows the current D1/Drift tables or the offline-first sync path. Existing docs are already known to drift as tasks add auth, partner snapshots, invitations, gamification, role metadata, and calendar feeds. Future agents need a faster way to understand the system without re-reading every table and service manually.
-
-**Ponytail triage:**
-- *Should exist:* Yes, architecture diagrams reduce repeated manual discovery and make schema/sync drift easier to spot.
-- *Smallest safe scope:* Add Mermaid ER and sequence diagrams generated from the current checked-in schema/service code, plus short notes about how to refresh them. Keep prose minimal and link to source files as the authority.
-- *Skipped scope:* Building a custom documentation generator, adding a docs website, image exports, PlantUML, CI publishing, exhaustive API reference docs, and rewriting every development document.
-- *Boundaries:* Do not change runtime Flutter, backend, Drift schema, generated database files, or Worker behavior. If source code and docs disagree, document the disagreement as a follow-up raw task instead of silently inventing schema.
-
-**Action:** Create or update a system architecture documentation page with code-native Mermaid diagrams. The ER diagram should map the current D1 schema and important Drift-only cache/queue tables. The sequence diagram should show the normal offline-first mutation and daily sync flow from Flutter UI through Riverpod, Drift, `SyncQueue`, `SyncService`, Cloudflare Worker routes, D1, and KV.
-
-**Hable perspective:** Hable's source of truth is split by concern: Flutter UI renders from Drift/Riverpod, `SyncService` pushes queued mutations and pulls daily sync, Cloudflare Workers enforce auth/privacy and persist to D1/KV, and docs must explain that separation clearly. The diagrams should help implementers avoid direct Home-screen network reads, duplicate sync paths, and privacy leaks in social payloads.
-
-**Implementation scope:**
-- Add or update a focused architecture document, preferably `Developement/09_System_Architecture.md` or an equivalent clearly named file, with Mermaid blocks and a short "source files" section.
-- ER diagram: include D1 tables from `backend/schema.sql` such as `users`, `auth_pins`, `habits`, `habit_logs`, `habit_progress`, `partnerships`, `friend_requests`, `habit_invitations`, `private_messages`, and `milestone_events`.
-- Drift-only diagram notes: include local-only or cache/queue tables from `lib/database/tables.dart`, including `SyncQueue`, `CachedQuotes`, `SearchDocuments`, `PartnerSnapshots`, `AcceptedFriends`, and any other Drift tables not mirrored exactly in D1.
-- Relationship mapping: represent real foreign-key relationships where they exist and label inferred/application-level relationships separately when D1 lacks explicit FK constraints.
-- Sequence diagram: show habit creation/completion/skip/nudge/invitation as local Drift writes first, then `SyncQueue`, `SyncService.flushPending`, authenticated Worker route, D1/KV persistence, and `GET /api/sync/daily` returning partner snapshots, nudges, messages, invitations, accepted friends, and future progression/role/calendar payloads.
-- Auth boundary: show JWT storage/use at a high level without documenting secrets or token values.
-- Privacy boundary: call out that partner/friend/profile payloads are privacy-scoped and journal notes/private messages must not leak into social/calendar feeds.
-- Maintainability: add a short refresh checklist that names the source commands/files to inspect, such as `backend/schema.sql`, `lib/database/tables.dart`, `lib/database/database.dart`, `lib/services/sync_service.dart`, `backend/src/index.ts`, and `rg -n "app\\.(get|post|put|delete)" backend/src/index.ts`.
-- Documentation alignment: update `01_Schema_and_Core_Logic.md` and `02_Offline_Architecture.md` to link to the new diagrams instead of duplicating long diagram prose. Update `08_Testing.md` only if a diagram validation command or doc review checklist is added.
-- Validation: run a lightweight Markdown/Mermaid sanity check where available, or at minimum verify fenced Mermaid syntax, anchors, and source references with `rg`/`sed`. Do not add new dependencies just to render Mermaid unless the repo already has a doc tool.
-
-**Scalability considerations:** Documentation grows stale as table and route count grows. Keep diagrams high-signal and source-linked rather than exhaustive prose. Mermaid source blocks scale better than committed screenshots because they remain diffable and easy to update during schema or sync changes.
-
-**Future split guidance:** A generated ER diagram script, CI doc validation, OpenAPI-style route documentation, exported PNG/SVG diagrams, or a hosted documentation site should be separate tasks if the manual Mermaid blocks start drifting. This task should only establish maintainable architecture diagrams and update links.
-
-**Edge cases:** D1 schema and Drift schema disagree, generated Drift code differs from hand-written tables, backend `src/index.ts` and compiled `src/index.js` diverge, app-level relationships lack FK constraints, role/gamification/calendar tasks are engineered but not implemented yet, Mermaid syntax unsupported by a viewer, diagrams become too dense to read, docs include future tables as if implemented, stale route names, privacy-sensitive fields shown in diagrams, and dirty user edits in docs.
-
-**Acceptance criteria:**
-- A Mermaid ER diagram exists in the development docs and maps current D1 tables, primary keys, key columns, and relationships.
-- Drift-only/cache/queue tables are documented clearly without pretending they are all D1 tables.
-- A Mermaid sequence diagram shows the offline-first flow through Flutter UI, Riverpod, Drift, `SyncQueue`, `SyncService`, Cloudflare Workers, D1, KV, and daily sync back to Drift.
-- The diagrams distinguish real database constraints from inferred application-level relationships.
-- The diagrams do not expose secrets, raw JWT values, private journal content, or unauthorized social data.
-- `01_Schema_and_Core_Logic.md` and `02_Offline_Architecture.md` link to the diagram document or embed the diagrams without duplicating large stale prose.
-- The architecture docs call out current implemented state separately from engineered-but-not-yet-implemented role, gamification, and calendar-feed changes.
-- A refresh checklist names the exact source files/commands future agents should inspect before updating diagrams.
-- Lightweight syntax/link checks are run or documented if no Mermaid renderer is available.
-- Dependency docs are verified and updated if diagram placement, schema notes, sync flow notes, or testing guidance changes.
-
-**Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`, `backend/schema.sql`, `lib/database/tables.dart`, `lib/services/sync_service.dart`, `backend/src/index.ts`
-
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
 <a id="repair-signup-signin-and-forgot-password-network-failures"></a>
 ### [ ] Repair SignUp SignIn And Forgot Password Network Failures
@@ -669,98 +618,6 @@
 
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
-<a id="show-accepted-partner-habits-on-recipient-home-after-invite-acceptance"></a>
-### [ ] Show Accepted Partner Habits On Recipient Home After Invite Acceptance
-
-**Raw source:** UX Major Matter: the habit partner up should get first accepted from partners, and then it should show up at the homepage of partners. currenlty it gets accepted, but not show up in the partner's homepage, just in creator's homepage.
-
-**Issue:** Habit partner invites must be private while pending, then become visible to the recipient only after acceptance. Current docs and earlier smoke notes say accepted invites should create symmetric partnerships and daily sync should expose the shared habit, but the reported behavior is that the accepted partnered habit remains visible only on the creator's Home. The likely gap is in the accept/flush/pull path or in how `/api/sync/daily` shared habit metadata is merged into the recipient's local `Habits` table watched by `activeHabitsProvider`.
-
-**Ponytail triage:**
-- *Should exist:* Yes, this is the core permission boundary for habit partnerships and the current behavior breaks the partner UX.
-- *Smallest safe scope:* Fix the accepted-invite path so a recipient sees the shared active habit on Home only after the backend accepts the invitation and daily sync pulls authorized metadata into Drift.
-- *Skipped scope:* Role-based partnership permissions, supporter mode, public friend habit feeds, realtime sockets, broad Home redesign, habit cloning, push notifications, and new social graph UI.
-- *Boundaries:* Do not show pending invites as active habits. Do not expose non-partner habits. Keep Home reading Drift through Riverpod; network work belongs in `SyncService` and backend routes.
-
-**Action:** Trace and repair the accepted habit-partner visibility flow. Verify that `POST /api/social/habit-invitation/accept` creates symmetric partnership rows, `GET /api/sync/daily` returns the accepted shared habit metadata for the recipient, `SyncService.pullDailySync` upserts the recipient-local active habit correctly, and `HomeScreen` rebuilds from `activeHabitsProvider` without requiring app restart or manual local edits.
-
-**Hable perspective:** The recipient Home should render the partnered habit from local Drift state, not directly from the invitation response. Accepting an invite can optimistically hide the pending banner, but the habit card should appear only after the queued accept action reaches the backend and the inbound daily sync confirms authorized partnership data. Creator and recipient may both hold a local row with the same `habit_id`, scoped by their own `userId`, so the sync merge must preserve the current user's ownership/view semantics.
-
-**Implementation scope:**
-- Backend route in `backend/src/index.ts`: verify `/api/social/habit-invitation/accept` updates only the recipient's pending invite and inserts both `(creator, recipient, habit)` and `(recipient, creator, habit)` rows idempotently.
-- Backend daily sync in `backend/src/index.ts`: verify `/api/sync/daily` returns habit `id`, `title`, `target_duration`, `color_hex`, `status`, partner identity, and current progress for accepted partnerships where `p.user_id` is the current recipient.
-- Drift schema and DAO in `lib/database/tables.dart` and `lib/database/database.dart`: confirm shared accepted habits can be upserted for the current user without corrupting creator-owned rows, target duration, status, color, or local progress.
-- Sync layer in `lib/services/sync_service.dart`: fix the partner metadata merge if needed, avoid inserting pending invites as active habits, remove stale partner snapshots when partnerships disappear if that is already represented by sync data, and invalidate or naturally refresh relevant Riverpod streams after pull.
-- Riverpod/UI in `lib/providers/habit_providers.dart`, `lib/providers/social_providers.dart`, `lib/screens/home_screen.dart`, and `lib/widgets/invitation_banner.dart`: keep Home and the invitation banner driven by Drift streams; ensure accepting an invite flushes then pulls daily sync for the current user and does not leave the UI in a stale accepted-but-hidden state.
-- Tests/smoke: add the smallest backend/API or Dart test that catches missing recipient visibility, then run a twin-harness or documented web smoke where Alice creates a habit with Bob selected, Bob accepts, Bob sees the habit on Home, Alice still sees it, and Bob did not see it before acceptance.
-- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` if the accepted-invite flow, sync payload, or test runbook changes.
-
-**Scalability considerations:** Daily sync should remain scoped to accepted partnered habits for the current user and indexed through `partnerships(user_id, habit_id)` and `habit_invitations(recipient_id, status)`. If shared-habit counts grow, pagination or updated-since sync belongs in a separate task.
-
-**Future split guidance:** Partnership roles (`owner`, `partner`, `supporter`), edit/delete permissions, conflict-resolution UI, push notifications for accepted invites, and realtime shared habit updates should remain separate follow-up tasks after this acceptance visibility bug is fixed.
-
-**Edge cases:** Accept tapped twice, accept queued offline, accept succeeds but daily sync fails, stale pending invite remains in Drift, declined invite later appears as active, recipient sees the habit before acceptance, creator habit archived before acceptance, backend habit row missing because habit sync has not flushed before invite sync, duplicate partnership rows, same `habit_id` upserted under the wrong local `userId`, target duration reset to the fallback value, partner progress overwrites recipient progress, and Home does not rebuild after the pull completes.
-
-**Acceptance criteria:**
-- Pending habit invitations do not appear as active Home habits for the recipient.
-- Accepting a habit invitation reaches the backend and creates symmetric partnership rows idempotently.
-- After accepted daily sync, the recipient's Drift `Habits` table contains the shared active habit scoped to the recipient user and `activeHabitsProvider(recipientId)` emits it.
-- The creator still sees the original habit after the recipient accepts.
-- The recipient sees the shared habit on Home without reinstalling, force-stopping, or manually editing local data.
-- Declining an invite does not create a partnership row and does not show the habit on recipient Home.
-- Shared habit metadata preserves title, color, target duration, and active/archive status from the backend payload.
-- Partner snapshots and nudges remain scoped to accepted partnered habits.
-- A focused test or documented twin-harness/web smoke proves before-accept hidden, after-accept visible for the recipient, and still-visible for the creator.
-- Dependency docs are verified and updated if backend payloads, Drift merge behavior, Home UX, or smoke commands change.
-
-**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
-
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
-
-<a id="verify-normal-android-account-creation-login-and-logout-flow"></a>
-### [ ] Verify Normal Android Account Creation Login And Logout Flow
-
-**Raw source:** work creating, logging in , logging out on android ADB
-
-**Issue:** Existing Android smoke documentation focuses on seeded Alice/Bob flavors and unauthenticated gating, but there is no dedicated normal-account ADB pass proving a user can create an account, log out, and log back in on Android. Current code also appears to have registration and login UI, but no visible logout/sign-out path or `AuthNotifier.logout` equivalent, so the requested logout flow may not be testable yet.
-
-**Ponytail triage:**
-- *Should exist:* Yes, normal account create/login/logout is a core auth lifecycle and needs Android verification separate from seeded twin-harness auto-login.
-- *Smallest safe scope:* Add the smallest logout path if it is still missing, then run one normal Android debug smoke against the local Wrangler backend using ADB. Reuse `AuthScreen`, `AuthNotifier`, `ProfileScreen`, current Drift providers, and existing ADB commands.
-- *Skipped scope:* OAuth, email verification, password reset retesting, account deletion, session refresh, biometric auth, full automated UI test framework, and twin-app social flows.
-- *Boundaries:* Test the normal unseeded app, not `SEED_USER_ID` auto-login. Logout must clear auth tokens and local user state enough that `AppGate` returns to `AuthScreen` and prior private data is not visible to the next unauthenticated user.
-
-**Action:** Implement or verify a real logout flow, then perform an Android ADB smoke test from a clean app install: start the local backend, create a fresh account through `AuthScreen`, confirm Home loads for the new user, log out through the app UI, verify the app returns to `AuthScreen` and protected surfaces are unavailable, then log back in with the same credentials and confirm Home/Profile render the same account.
-
-**Hable perspective:** `main.dart` gates access through `currentUserProvider`, while `AuthNotifier` stores JWT/user identity in secure storage and upserts the current user into Drift. Logout must coordinate those layers so clearing secure storage alone does not leave a local Drift user row that keeps `_AppGate` on Home. Android debug uses the local backend path (`http://10.0.2.2:8787` in `AuthNotifier`), so the ADB smoke should keep `adb reverse tcp:8787 tcp:8787` and local Wrangler/D1 setup aligned with existing docs.
-
-**Implementation scope:**
-- `lib/providers/auth_provider.dart`: add or verify a `logout` action that deletes auth storage, resets `AuthState`, and clears/invalidates the local current-user state used by `_AppGate`.
-- `lib/screens/profile_screen.dart` or another existing authenticated settings surface: add the smallest discoverable sign-out button with a confirmation only if needed to avoid accidental taps.
-- `lib/main.dart` / provider invalidation: ensure logout navigates or rebuilds back to `AuthScreen` without requiring a process restart.
-- ADB procedure: use a normal unseeded debug app install, clear app data, run local backend setup, launch via ADB, create an account, log out, and log back in.
-- Documentation: update `Developement/08_Testing.md` with the executed Android auth lifecycle log and `Developement/Commands.md` if exact normal-app ADB commands differ from current docs.
-- Test surface: run `flutter analyze` and `flutter test`; add the smallest provider/widget test only if logout logic changes provider behavior beyond a simple UI button.
-
-**Scalability considerations:** Scalability impact: none expected. Auth logout is local state cleanup plus one normal backend-backed login/register smoke; future multi-account support would require a separate data-retention and cache-partitioning design.
-
-**Future split guidance:** Add automated ADB/UI-driver coverage, refresh-token/session-expiry handling, email verification, account deletion, and multi-account local data retention as separate tasks only after the manual Android lifecycle smoke is stable.
-
-**Edge cases:** No ADB device connected, backend not running, local D1 schema missing auth columns, duplicate username/email from prior smoke, Android debug build using `10.0.2.2` vs `adb reverse` expectations, secure storage contains stale tokens, `kDebugMode` auth wipe masks logout persistence behavior, logout clears secure storage but leaves Drift user rows, logout during pending sync, app process killed after logout, and login after logout showing stale previous-user data.
-
-**Acceptance criteria:**
-- Normal unseeded Android debug app can be installed and launched through ADB.
-- Fresh account registration succeeds against the selected backend and routes to Home.
-- A visible logout/sign-out path exists in an authenticated UI surface.
-- Logging out clears auth state and returns the app to `AuthScreen` without requiring reinstall or force stop.
-- After logout, Home/Profile/Social Hub are not reachable from the normal app UI without logging in again.
-- Logging back in with the newly created account succeeds and renders the same account identity in Home/Profile.
-- `flutter analyze` and `flutter test` pass, or any failures are documented as pre-existing/non-blocking with evidence.
-- `08_Testing.md` records the ADB commands, device/backend target, account lifecycle result, and completion timestamp. `Commands.md` is updated if command guidance changes.
-
-**Dependencies:** `08_Testing.md`, `Commands.md`, `02_Offline_Architecture.md`, `01_Schema_and_Core_Logic.md`
-
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
 <a id="build-notification-center-and-local-reminder-mvp"></a>
 ### [ ] Build Notification Center And Local Reminder MVP

@@ -60,6 +60,20 @@ class AuthNotifier extends Notifier<AuthState> {
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
 
+  String _networkErrorMessage(Object error) {
+    final message = error.toString();
+    if (message.contains('SocketException')) {
+      return 'Cannot reach the backend at $apiBaseUrl. Start the backend or check the API base URL.';
+    }
+    if (message.contains('HandshakeException')) {
+      return 'Unable to establish a secure connection to the backend.';
+    }
+    if (message.contains('FormatException')) {
+      return 'Unexpected response from the backend.';
+    }
+    return message;
+  }
+
   @override
   AuthState build() {
     _loadStoredAuth();
@@ -114,7 +128,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Network error');
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
       return false;
     }
   }
@@ -141,7 +155,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Network error');
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
       return false;
     }
   }
@@ -177,7 +191,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Network error');
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
       return false;
     }
   }
@@ -201,7 +215,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Network error');
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
       return false;
     }
   }

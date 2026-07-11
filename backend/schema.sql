@@ -120,6 +120,18 @@ CREATE TABLE IF NOT EXISTS user_achievements (
 CREATE INDEX IF NOT EXISTS idx_achievements_user_unlocked
 ON user_achievements(user_id, unlocked_at);
 
+CREATE TABLE IF NOT EXISTS calendar_feed_tokens (
+    user_id TEXT PRIMARY KEY,
+    token TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    rotated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    revoked_at DATETIME
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_feed_tokens_hash
+ON calendar_feed_tokens(token_hash);
+
 -- Insert some dummy data for local testing
 INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES 
 ('local-user-1', 'Alice', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),

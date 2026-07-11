@@ -206,3 +206,66 @@ Then rerun `npm run db:setup`.
 **Notes:**
 - `adb` was not on PATH in this environment, so the SDK path was used directly: `~/Library/Android/sdk/platform-tools/adb`.
 - The Android smoke did not require any web-only assets; the shared code path remained compatible with Android.
+
+## 11. ADB Fresh Registration Smoke Test (Emulator)
+
+**Date:** 2026-07-11  
+**Device ID:** `emulator-5554` (Google Emulator, Android 17 API 37)  
+**Backend Target:** Local Cloudflare Wrangler (`http://127.0.0.1:8787` via `adb reverse`)
+
+**Setup:**
+1. Started backend: `cd backend && npm run dev` on port 8787.
+2. Configured ADB port forward: `adb reverse tcp:8787 tcp:8787`.
+3. Cleared primary app data: `adb shell pm clear com.example.flutter_project.primary`.
+4. Verified both APK flavors installed: `com.example.flutter_project.primary` and `com.example.flutter_project.friend`.
+
+**Execution & Observations:**
+
+**Phase 1: Backend Connectivity**
+- Initial app launch showed "Cannot reach the backend at http://10.0.2.2:8787" error (expected without reverse forward or prior restart).
+- After `adb reverse tcp:8787 tcp:8787` and restarting the app, error cleared immediately.
+- Backend health confirmed: `curl http://127.0.0.1:8787/` returned Hable API landing page.
+
+**Phase 2: Unauthenticated State**
+- Fresh app install landed directly on `AuthScreen`.
+- UI hierarchy confirmed: Username field, Password field, "Forgot Password?" button, "Log In" button, "Sign up" toggle.
+- Logged-out users cannot access Home, Profile, or Social Hub; gating works correctly. ✅
+
+**Phase 3: Registration & Auth Flow**
+- Tapped "Sign up" button → Registration form appeared with Username, Email, Password fields.
+- Entered credentials: `testuser_smoke1` / `testuser.smoke1@hable.local` / `TestPass123`.
+- Tapped "Sign Up" → Request sent to backend, registration completed in ~2 seconds.
+- Post-registration: App automatically routed to `HomeScreen` without requiring manual login. ✅
+
+**Phase 4: Authenticated Home & UI**
+- Home screen displayed with:
+  - Welcome message "Good morning" ✅
+  - User display name: `testuser_smoke1` ✅
+  - Three suggested habit presets: Hydration (💧), Reading (📖), Meditation (🧘) ✅
+  - "Add habit" button in header ✅
+  - "Open profile" button ✅
+  - "Open social hub" button ✅
+  - Empty state message: "No active habits yet. Start one from Home." ✅
+  - Daily quote footer ✅
+
+**Phase 5: APK Flavor Isolation**
+- Both flavors remain installed and isolated:
+  - `com.example.flutter_project.primary` (package: `...primary`) ✅
+  - `com.example.flutter_project.friend` (package: `...friend`) ✅
+- Each maintains separate local Drift database (verified via app data paths).
+
+**Failures Encountered:** None. All core flows passed without errors.
+
+**Repo Hygiene:**
+- `.gitignore` already contains `backend/.wrangler/` and `.env` to prevent committing local state. ✅
+- No new untracked generated files discovered.
+
+**Smoke Pass Conclusion:** ✅ PASS
+
+All acceptance criteria met:
+- Unauthenticated users gate to AuthScreen only.
+- Authenticated users access Home, Profile, Social Hub.
+- Backend connectivity via `adb reverse` successful.
+- Registration end-to-end flow confirmed.
+- Both `primary` and `friend` flavors installed side-by-side with isolation.
+- `.gitignore` properly configured.

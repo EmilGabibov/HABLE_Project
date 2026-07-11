@@ -37,14 +37,58 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateCalendarToken(): string {
+  return crypto.randomUUID() + '-' + crypto.randomUUID();
+}
+
 let ensurePartnershipSchemaPromise: Promise<void> | null = null
 let ensureGamificationSchemaPromise: Promise<void> | null = null
+let ensureCalendarFeedSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
     return value as PartnershipRole
   }
   return 'partner'
+}
+
+async function ensureCalendarFeedSchema(env: Bindings): Promise<void> {
+  if (!ensureCalendarFeedSchemaPromise) {
+    ensureCalendarFeedSchemaPromise = (async () => {
+      const pragma = await env.DB.prepare('PRAGMA table_info(calendar_feed_tokens)').all()
+      const columns = (pragma.results ?? []) as Array<{ name?: string }>
+      const hasTable = columns.length > 0
+      if (!hasTable) {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS calendar_feed_tokens (
+              user_id TEXT PRIMARY KEY,
+              token TEXT NOT NULL,
+              token_hash TEXT NOT NULL,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              rotated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              revoked_at DATETIME
+          )
+        `).run()
+        await env.DB.prepare(`
+          CREATE INDEX IF NOT EXISTS idx_calendar_feed_tokens_hash
+          ON calendar_feed_tokens(token_hash)
+        `).run()
+      }
+    })().catch((error) => {
+      ensureCalendarFeedSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensureCalendarFeedSchemaPromise
 }
 
 async function ensurePartnershipRoleSchema(env: Bindings): Promise<void> {
@@ -487,6 +531,55 @@ app.put('/api/user/avatar', async (c) => {
   await c.env.DB.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').bind(avatar_url, payload.id).run()
   return c.json({ success: true, avatar_url })
 })
+
+app.get('/api/user/calendar-feed', async (c) => {
+  await ensureCalendarFeedSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
+
+  let token = await c.env.DB.prepare(
+    'SELECT token FROM calendar_feed_tokens WHERE user_id = ? AND revoked_at IS NULL'
+  ).bind(userId).first<{ token: string }>()
+
+  if (!token?.token) {
+    const newToken = generateCalendarToken()
+    const tokenHash = await hashToken(newToken)
+    await c.env.DB.prepare(`
+      INSERT INTO calendar_feed_tokens (user_id, token, token_hash)
+      VALUES (?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET
+        token = excluded.token,
+        token_hash = excluded.token_hash,
+        rotated_at = CURRENT_TIMESTAMP,
+        revoked_at = NULL
+    `).bind(userId, newToken, tokenHash).run()
+    token = { token: newToken }
+  }
+
+  return c.json({
+    feed_url: new URL(c.req.url).origin + `/calendar/${token.token}.ics`
+  })
+})
+
+app.post('/api/user/calendar-feed/rotate', async (c) => {
+  await ensureCalendarFeedSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
+
+  const newToken = generateCalendarToken()
+  const tokenHash = await hashToken(newToken)
+
+  await c.env.DB.prepare(`
+    UPDATE calendar_feed_tokens
+    SET token = ?, token_hash = ?, rotated_at = CURRENT_TIMESTAMP
+    WHERE user_id = ?
+  `).bind(newToken, tokenHash, userId).run()
+
+  return c.json({
+    feed_url: new URL(c.req.url).origin + `/calendar/${newToken}.ics`
+  })
+})
+
 // Apply JWT middleware to all protected routes
 app.use('/api/social/*', async (c, next) => {
   const secret = c.env.JWT_SECRET || 'fallback_local_secret'
@@ -978,5 +1071,109 @@ app.get('/api/social/search', async (c) => {
 app.post('/api/sync/score', async (c) => {
   return c.json({ error: 'Client score sync is deprecated; use /api/sync/log and /api/sync/daily gamification.' }, 410)
 })
+
+// --- Public Calendar Feed Route (no JWT required) ---
+
+app.get('/calendar/:token.ics', async (c) => {
+  await ensureCalendarFeedSchema(c.env)
+  const tokenParam = c.req.param('token')
+
+  const tokenRecord = await c.env.DB.prepare(`
+    SELECT user_id FROM calendar_feed_tokens
+    WHERE token = ? AND revoked_at IS NULL
+  `).bind(tokenParam).first<{ user_id: string }>()
+
+  if (!tokenRecord?.user_id) {
+    return c.text('Not Found', 404)
+  }
+
+  const userId = tokenRecord.user_id
+
+  // Fetch active habits for the user (rolling 30-day window)
+  const { results: habits } = await c.env.DB.prepare(`
+    SELECT
+      h.id,
+      h.title,
+      h.target_duration,
+      COUNT(DISTINCT hl.id) as completed_count
+    FROM habits h
+    LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.user_id = h.user_id
+      AND hl.status = 'completed'
+      AND hl.logged_at >= date('now', '-30 days')
+    WHERE h.user_id = ? AND h.status = 'active'
+    GROUP BY h.id
+  `).bind(userId).all()
+
+  // Fetch user info for calendar event
+  const user = await c.env.DB.prepare(
+    'SELECT username FROM users WHERE id = ?'
+  ).bind(userId).first<{ username: string }>()
+
+  const username = user?.username || 'Hable User'
+
+  // Generate ICS content
+  const now = new Date()
+  const prodId = '-//Hable//Hable Calendar//EN'
+
+  let icsContent = 'BEGIN:VCALENDAR\r\n'
+  icsContent += 'VERSION:2.0\r\n'
+  icsContent += `PRODID:${prodId}\r\n`
+  icsContent += 'CALSCALE:GREGORIAN\r\n'
+  icsContent += `X-WR-CALNAME:${escapeIcsText(username)}'s Habits\r\n`
+  icsContent += 'X-WR-TIMEZONE:UTC\r\n'
+
+  const today = new Date()
+  const endDate = new Date(today)
+  endDate.setDate(endDate.getDate() + 30)
+
+  for (let d = new Date(today); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0]
+    const events = habits as Array<{id: string; title: string; target_duration: number; completed_count: number}>
+
+    if (events && events.length > 0) {
+      const summary = `${events.map((h: {title: string; completed_count: number; target_duration: number}) => h.title).join(', ')}`
+      const description = events
+        .map((h: {title: string; completed_count: number; target_duration: number}) => `${h.title}: ${h.completed_count}/${h.target_duration}`)
+        .join('\\n')
+
+      const uid = `${dateStr}-${userId}@hable.local`
+      const dtstamp = formatIcsDate(now)
+
+      icsContent += 'BEGIN:VEVENT\r\n'
+      icsContent += `UID:${uid}\r\n`
+      icsContent += `DTSTAMP:${dtstamp}\r\n`
+      icsContent += `DTSTART;VALUE=DATE:${dateStr.replace(/-/g, '')}\r\n`
+      icsContent += `SUMMARY:${escapeIcsText(summary)}\r\n`
+      icsContent += `DESCRIPTION:${escapeIcsText(description)}\r\n`
+      icsContent += 'STATUS:CONFIRMED\r\n'
+      icsContent += 'END:VEVENT\r\n'
+    }
+  }
+
+  icsContent += 'END:VCALENDAR\r\n'
+
+  c.header('Content-Type', 'text/calendar; charset=utf-8')
+  c.header('Content-Disposition', `attachment; filename="${username}-habits.ics"`)
+  return c.text(icsContent)
+})
+
+function escapeIcsText(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '')
+}
+
+function formatIcsDate(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0')
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`
+}
 
 export default app

@@ -246,3 +246,10 @@
 - [x] Transferred 2026-07-11 -> **Add Revocable iCal Feed For Native Calendar Subscriptions** (`Task1_Engineered.md#add-revocable-ical-feed-for-native-calendar-subscriptions`). Raw source: 4. Edge-Native Calendar Integration (iCal). Objective: Allow users to view daily habits in their native phone calendar without adding heavy, permission-bloated Flutter calendar dependencies. Architecture: Create a Cloudflare Worker route that generates a dynamic, read-only `.ics` (iCalendar) feed subscription link per user. Event Title: Generate dynamic motivational messages based on progress. Group multiple daily habits into a single summary event to prevent calendar app clutter. Event Description: Keep descriptions highly concise. Include partner names and the current target fraction (e.g., 3/5 days).
 
 - [x] Transferred 2026-07-11 -> **Add Code-Native Mermaid Architecture Diagrams For Schema And Sync Flow** (`Task1_Engineered.md#add-code-native-mermaid-architecture-diagrams-for-schema-and-sync-flow`). Raw source: 5. System Architecture Documentation. Objective: Replace manual, text-heavy documentation tasks with maintainable, code-native diagrams. Database Schema: Generate a `Mermaid.js` Entity-Relationship (ER) diagram mapping D1 tables, columns, and relationships. System Flow: Create a `Mermaid.js` sequence diagram illustrating the offline-first sync architecture, showing interactions between Flutter, Riverpod, Drift, and Cloudflare Workers.
+
+- [x] prepare the android build, and run on virtual device.
+  - **Completion notes:** Android build completed successfully. Both app variants (primary and friend) compiled and installed on Android emulator (emulator-5554 running Android 17 API 37).
+  - Primary APK: `/Users/h.ettefagh/Documents/VibeCoding/Flutter/hable/build/app/outputs/flutter-apk/app-primary-debug.apk`
+  - Friend APK: `/Users/h.ettefagh/Documents/VibeCoding/Flutter/hable/build/app/outputs/flutter-apk/app-friend-debug.apk`
+  - Both apps are installed and running on the virtual device.
+  - Completed At: 2026-07-11 (Current session)

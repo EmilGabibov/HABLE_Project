@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show HabitStatus, PartnershipRole;
@@ -13,6 +14,7 @@ import '../widgets/avatar_picker_sheet.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_providers.dart';
+import '../providers/calendar_provider.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
@@ -396,6 +398,36 @@ class ProfileScreen extends ConsumerWidget {
                           loading: () => const SizedBox.shrink(),
                           error: (_, _) => const SizedBox.shrink(),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Calendar Feed Subscription
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Calendar Subscription',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add your habits to your native calendar app',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.warmGray.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _CalendarSubscriptionCard(),
                       ],
                     ),
                   ),
@@ -868,6 +900,158 @@ class _InfoPill extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+class _CalendarSubscriptionCard extends ConsumerWidget {
+  const _CalendarSubscriptionCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final calendarState = ref.watch(calendarFeedProvider);
+
+    // Load feed URL on first build
+    ref.listen(calendarFeedProvider, (prev, next) {
+      if (prev?.feedUrl != next.feedUrl && next.feedUrl == null && !next.isLoading) {
+        // Trigger initial load if not already loaded
+        Future.microtask(() {
+          ref.read(calendarFeedProvider.notifier).fetchCalendarFeedUrl();
+        });
+      }
+    });
+
+    if (calendarState.isLoading && calendarState.feedUrl == null) {
+      return const SizedBox(
+        height: 60,
+        child: Center(
+          child: SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.sageGreen),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (calendarState.error != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            calendarState.error ?? 'Unknown error',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppTheme.overdueRose,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () {
+              ref.read(calendarFeedProvider.notifier).fetchCalendarFeedUrl();
+            },
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
+          ),
+        ],
+      );
+    }
+
+    if (calendarState.feedUrl == null) {
+      return FilledButton.icon(
+        onPressed: () {
+          ref.read(calendarFeedProvider.notifier).fetchCalendarFeedUrl();
+        },
+        icon: const Icon(Icons.link, size: 18),
+        label: const Text('Generate Subscription Link'),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppTheme.warmGray.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Subscription URL',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppTheme.warmGray.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      calendarState.feedUrl!.replaceAll(RegExp(r'^https?://'), ''),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.copy_outlined, size: 20),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: calendarState.feedUrl!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Calendar feed URL copied to clipboard'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                tooltip: 'Copy subscription URL',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Paste this URL into your native calendar app to subscribe',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.warmGray.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: calendarState.isLoading
+              ? null
+              : () {
+                  ref.read(calendarFeedProvider.notifier).rotateCalendarToken();
+                },
+          icon: const Icon(Icons.refresh_rounded, size: 18),
+          label: const Text('Rotate Token'),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Rotating the token will invalidate the old subscription link',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppTheme.warmGray.withValues(alpha: 0.6),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 }
