@@ -25,16 +25,10 @@ void main() {
       final db = AppDatabase(NativeDatabase.memory());
 
       await db.insertUser(
-        UsersCompanion.insert(
-          userId: 'stale-user',
-          username: 'Stale',
-        ),
+        UsersCompanion.insert(userId: 'stale-user', username: 'Stale'),
       );
       await db.insertUser(
-        UsersCompanion.insert(
-          userId: 'active-user',
-          username: 'Active',
-        ),
+        UsersCompanion.insert(userId: 'active-user', username: 'Active'),
       );
 
       const storage = FlutterSecureStorage();

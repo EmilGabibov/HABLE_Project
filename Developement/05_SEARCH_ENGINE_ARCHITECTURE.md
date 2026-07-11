@@ -1,23 +1,28 @@
-# 05: Multithreaded Inverted Index Engine
+# 05: Local Search Engine Architecture
 
-**Core Function:** High-performance text search and retrieval system. Test the engine by indexing classical literary corpora (e.g., evaluating semantic weights and English equivalents of Ferdowsi, Saadi, or Shafiei Kadkani).
+**Core Function:** Local text search and retrieval over device-held content. The current implementation is intentionally small: Drift stores document metadata, a pure-Dart inverted index lives in memory, and document tokenization runs off the UI thread with `compute`.
 
-## Execution Directives
+## Current Implemented Architecture
 
-The workload for this system is strictly divided by architectural layer:
+### 1. Metadata Tier
+* **Drift metadata store:** `SearchDocuments` persists local document metadata such as `document_id`, `title`, `author`, `publication_date`, `source`, `updated_at`, and `is_synced`.
+* **Result join path:** Search returns ranked document IDs from the in-memory index, then `database.dart` resolves those IDs back to Drift metadata for final display.
+* **Current boundary:** Metadata is persistent; posting lists are not. Search content must be re-indexed in memory after app restart unless a future persistence task extends the design.
 
-### 1. Database Tier
-* **Task:** Relational Schema Creation & SQL Normalization.
-* **3NF Relational Schema:** Store persistent document metadata: `DocumentID`, `Author`, `Publication Date`, `Source`.
-* **Advanced SQL (Window Functions):** Use `RANK()` or `ROW_NUMBER()` combined with `JOIN` operations to merge the in-memory search hits with persistent relational metadata, generating the final output.
+### 2. Index Tier
+* **Inverted index mapping:** Vocabulary maps to `document_id -> positions` for fast exact-term lookup.
+* **Hash maps in memory:** The active index is a Dart `Map<String, Map<String, List<int>>>`.
+* **Ranking:** Results are ranked by term frequency using the custom merge-sort path already implemented in `lib/search/search_engine.dart`.
+* **Query scope:** The current engine supports direct token lookup, not fuzzy matching, stemming, phrase ranking, or semantic search.
 
-### 2. Algorithmic Tier
-* **Task:** Core Inverted Index.
-* **Inverted Index Mapping:** Map vocabulary to document IDs and positions for O(1) retrieval.
-* **Hash Tables:** Store the inverted index dictionary in memory to minimize time complexity during query execution.
-* **Merge Sort:** Implement $O(n \log n)$ sorting to rank search results by term frequency before returning them to the user.
+### 3. Concurrency Tier
+* **Off-main-thread tokenization:** `SearchEngine.indexDocument` uses Flutter `compute` to tokenize one document off the UI thread, then merges the result back on the main isolate.
+* **Current concurrency model:** This is isolate-based task isolation, not a true multi-consumer shared-memory pipeline. There are no mutexes/semaphores because the main isolate owns index mutation.
+* **Reasonable ceiling:** The current design is appropriate for small to moderate local corpora and avoids UI jank without introducing a complex worker scheduler.
 
-### 3. Operating Systems Tier
-* **Task:** Thread Synchronization & Resource Allocation.
-* **Producer-Consumer Synchronization:** Construct a multithreaded indexing pipeline. Producer threads parse documents and place text chunks into a bounded buffer. Consumer threads read the buffer, tokenize text, and populate the shared inverted index.
-* **Mutexes/Semaphores:** Prevent race conditions when multiple consumer threads attempt to write to the exact same hash table index simultaneously. Bind the database querying and algorithmic processing strictly without deadlocks.
+## Deferred Scaling Path
+
+* **Persistent posting lists:** If the corpus grows, move posting lists into Drift/SQLite or FTS instead of keeping everything in memory.
+* **Batch indexing:** If indexing many documents becomes slow, add chunked/background batch scheduling rather than indexing everything eagerly at startup.
+* **Linguistic quality:** Stemming, normalization, phrase search, multilingual tokenization, and semantic ranking are separate follow-up concerns.
+* **Advanced SQL ranking:** Window-function ranking is not part of the current implementation and should only be added if search persistence moves into SQL-backed posting lists.

@@ -1,13 +1,13 @@
 /// Reusable habit visual state model for UI rendering and animations.
 /// Encodes parameters used by difficulty, level, completion, and habit establishment.
 enum HabitVisualState {
-  idle,           // At rest, unestablished
-  pressing,       // During hold/press
+  idle, // At rest, unestablished
+  pressing, // During hold/press
   checkInComplete, // Brief confirmation after check-in
-  established,    // After successful check-in, stable established state
-  skipped,        // When habit is skipped for the day
-  missed,         // When habit deadline passed without completion
-  nudged,         // When habit owner/partner sends a nudge
+  established, // After successful check-in, stable established state
+  skipped, // When habit is skipped for the day
+  missed, // When habit deadline passed without completion
+  nudged, // When habit owner/partner sends a nudge
 }
 
 /// Encapsulates reusable visual parameters for habit icon and ring rendering.
@@ -68,5 +68,3 @@ class HabitVisualParameters {
     iconAnimationMs: 500,
   );
 }
-
-

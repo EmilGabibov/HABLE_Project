@@ -22,9 +22,9 @@ final allPartnersProvider = StreamProvider<List<PartnerSnapshot>>((ref) {
 /// Watches partners for a specific habit (used per-card).
 final habitPartnersProvider =
     StreamProvider.family<List<PartnerSnapshot>, String>((ref, habitId) {
-  final db = ref.watch(databaseProvider);
-  return db.watchPartnersByHabit(habitId);
-});
+      final db = ref.watch(databaseProvider);
+      return db.watchPartnersByHabit(habitId);
+    });
 
 // --- Friend Profile Network Provider ---
 
@@ -34,7 +34,10 @@ class FriendProfileData {
   FriendProfileData({required this.user, required this.habits});
 }
 
-final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((ref, friendId) async {
+final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((
+  ref,
+  friendId,
+) async {
   final token = ref.watch(authProvider).token;
   if (token == null) throw Exception('Not authenticated');
 
@@ -76,11 +79,13 @@ Future<void> enqueueNudge({
     'target_user_id': targetUserId,
   });
 
-  await db.enqueueSync(SyncQueueCompanion(
-    action: const Value(SyncAction.sendNudge),
-    payload: Value(payload),
-    createdAt: Value(DateTime.now()),
-  ));
+  await db.enqueueSync(
+    SyncQueueCompanion(
+      action: const Value(SyncAction.sendNudge),
+      payload: Value(payload),
+      createdAt: Value(DateTime.now()),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -105,11 +110,13 @@ Future<void> enqueueAcceptInvitation({
   await db.updateHabitInvitationStatus(invitationId, 'accepted');
 
   final payload = jsonEncode({'invitation_id': invitationId});
-  await db.enqueueSync(SyncQueueCompanion(
-    action: const Value(SyncAction.acceptInvitation),
-    payload: Value(payload),
-    createdAt: Value(DateTime.now()),
-  ));
+  await db.enqueueSync(
+    SyncQueueCompanion(
+      action: const Value(SyncAction.acceptInvitation),
+      payload: Value(payload),
+      createdAt: Value(DateTime.now()),
+    ),
+  );
 }
 
 Future<void> enqueueDeclineInvitation({
@@ -120,11 +127,13 @@ Future<void> enqueueDeclineInvitation({
   await db.updateHabitInvitationStatus(invitationId, 'declined');
 
   final payload = jsonEncode({'invitation_id': invitationId});
-  await db.enqueueSync(SyncQueueCompanion(
-    action: const Value(SyncAction.declineInvitation),
-    payload: Value(payload),
-    createdAt: Value(DateTime.now()),
-  ));
+  await db.enqueueSync(
+    SyncQueueCompanion(
+      action: const Value(SyncAction.declineInvitation),
+      payload: Value(payload),
+      createdAt: Value(DateTime.now()),
+    ),
+  );
 }
 
 Future<void> enqueuePrivateMessage({
@@ -145,9 +154,11 @@ Future<void> enqueuePrivateMessage({
     'milestone_type': milestoneType,
   });
 
-  await db.enqueueSync(SyncQueueCompanion(
-    action: const Value(SyncAction.sendPrivateMessage),
-    payload: Value(payload),
-    createdAt: Value(DateTime.now()),
-  ));
+  await db.enqueueSync(
+    SyncQueueCompanion(
+      action: const Value(SyncAction.sendPrivateMessage),
+      payload: Value(payload),
+      createdAt: Value(DateTime.now()),
+    ),
+  );
 }

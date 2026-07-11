@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../database/database.dart';
-import '../database/tables.dart'
-    show HabitStatus, LogStatus, PartnershipRole, SyncAction;
+import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
 import '../providers/resistance_provider.dart';
@@ -21,6 +20,7 @@ import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/milestone_wish_carousel.dart';
+import '../widgets/usage_tracked_screen.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
@@ -62,12 +62,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final habitsAsync = ref.watch(activeHabitsProvider(widget.userId));
     final quoteAsync = ref.watch(quoteProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        child: habitsAsync.when(
-          data: (habits) => _buildContent(context, habits, quoteAsync),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error: $err')),
+    return UsageTrackedScreen(
+      screenName: 'home',
+      child: Scaffold(
+        body: SafeArea(
+          child: habitsAsync.when(
+            data: (habits) => _buildContent(context, habits, quoteAsync),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Center(child: Text('Error: $err')),
+          ),
         ),
       ),
     );
@@ -566,16 +569,18 @@ class _HabitCard extends ConsumerWidget {
                           habit.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Challenge: Day $challengeDay of $targetDays',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppTheme.deepCharcoal.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
                         ),
                       ],
                     ),
@@ -639,20 +644,21 @@ class _HabitCard extends ConsumerWidget {
       SyncQueueCompanion(
         action: Value(SyncAction.logHabit),
         payload: Value(
-          '{"log_id":"$logId","habit_id":"${habit.habitId}","status":"completed"}',
+          '{"log_id":"$logId","habit_id":"${habit.habitId}","status":"completed","logged_at":"${now.toIso8601String()}"}',
         ),
         createdAt: Value(now),
       ),
     );
 
-    // 3. Check if habit is complete
-    if (currentDay >= habit.currentDuration) {
-      await db.updateHabitStatus(habit.habitId, HabitStatus.completed);
-    }
+    // 3. Update optimistic local progression.
+    await db.completeHabitDay(habit.habitId);
+
+    await ref.read(syncServiceProvider).flushPending();
 
     // Invalidate providers to refresh UI
     ref.invalidate(todaysLogProvider(habit.habitId));
     ref.invalidate(streakProvider(habit.habitId));
+    ref.invalidate(activeHabitsProvider(userId));
   }
 
   void _handleSkip(BuildContext context, WidgetRef ref, Habit habit) {
@@ -685,11 +691,13 @@ class _HabitCard extends ConsumerWidget {
           SyncQueueCompanion(
             action: Value(SyncAction.logHabit),
             payload: Value(
-              '{"log_id":"$logId","habit_id":"${habit.habitId}","status":"skipped","journal":"$journalEntry"}',
+              '{"log_id":"$logId","habit_id":"${habit.habitId}","status":"skipped","logged_at":"${now.toIso8601String()}"}',
             ),
             createdAt: Value(now),
           ),
         );
+
+        await ref.read(syncServiceProvider).flushPending();
 
         ref.invalidate(todaysLogProvider(habit.habitId));
         ref.invalidate(activeHabitsProvider(userId));

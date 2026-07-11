@@ -211,3 +211,27 @@ class AchievementUnlocks extends Table {
   @override
   Set<Column> get primaryKey => {userId, achievementId};
 }
+
+/// Coarse anonymous diagnostics buckets for development-only usage reporting.
+class UsageAggregateBuckets extends Table {
+  TextColumn get bucketDate => text()();
+  TextColumn get platform => text()();
+  TextColumn get buildChannel => text()();
+  TextColumn get screenName => text()();
+  TextColumn get metricName => text()();
+  IntColumn get count => integer().withDefault(const Constant(0))();
+  IntColumn get totalDurationMs => integer().withDefault(const Constant(0))();
+  IntColumn get uploadedCount => integer().withDefault(const Constant(0))();
+  IntColumn get uploadedTotalDurationMs =>
+      integer().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {
+    bucketDate,
+    platform,
+    buildChannel,
+    screenName,
+    metricName,
+  };
+}

@@ -58,10 +58,10 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.85),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             child: Column(
@@ -84,9 +84,9 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
                 // Title
                 Text(
                   'Skipping "${widget.habitTitle}"',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppTheme.overdueRose,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: AppTheme.overdueRose),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -122,8 +122,9 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _isValid ? AppTheme.skipAmber : AppTheme.warmGray,
+                      backgroundColor: _isValid
+                          ? AppTheme.skipAmber
+                          : AppTheme.warmGray,
                     ),
                     child: const Text('Confirm Skip'),
                   ),

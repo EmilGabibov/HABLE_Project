@@ -14,12 +14,38 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
   bool _isLoading = false;
 
   final List<String> characters = [
-    '👾', '🤖', '👽', '👻', '👹', '👺', '💀', '💩', '🐱'
+    '👾',
+    '🤖',
+    '👽',
+    '👻',
+    '👹',
+    '👺',
+    '💀',
+    '💩',
+    '🐱',
   ];
 
   final List<String> emojis = [
-    '🤡', '🤪', '🤓', '😎', '🥸', '🤯', '🥶', '🥵', '🤢', '🤮',
-    '🤠', '🥳', '🤫', '🤭', '🫢', '🫣', '🫠', '🫡', '🥴', '🤤'
+    '🤡',
+    '🤪',
+    '🤓',
+    '😎',
+    '🥸',
+    '🤯',
+    '🥶',
+    '🥵',
+    '🤢',
+    '🤮',
+    '🤠',
+    '🥳',
+    '🤫',
+    '🤭',
+    '🫢',
+    '🫣',
+    '🫠',
+    '🫡',
+    '🥴',
+    '🤤',
   ];
 
   Future<void> _selectAvatar(String emoji) async {
@@ -31,9 +57,9 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
     if (success) {
       Navigator.of(context).pop();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update avatar')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to update avatar')));
     }
   }
 
@@ -67,12 +93,13 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
             const SizedBox(height: 16),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.sageGreen))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.sageGreen,
+                      ),
+                    )
                   : TabBarView(
-                      children: [
-                        _buildGrid(characters),
-                        _buildGrid(emojis),
-                      ],
+                      children: [_buildGrid(characters), _buildGrid(emojis)],
                     ),
             ),
           ],
@@ -100,10 +127,7 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 32),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 32)),
             ),
           ),
         );

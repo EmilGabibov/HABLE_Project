@@ -23,24 +23,17 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? AppTheme.sageGreen.withValues(alpha: 0.15);
+    final bgColor =
+        backgroundColor ?? AppTheme.sageGreen.withValues(alpha: 0.15);
     final size = radius * 2;
 
     if (_isEmoji) {
       return Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
         child: Center(
-          child: Text(
-            avatarUrl!,
-            style: TextStyle(
-              fontSize: radius,
-            ),
-          ),
+          child: Text(avatarUrl!, style: TextStyle(fontSize: radius)),
         ),
       );
     }
@@ -57,10 +50,7 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
       child: Center(
         child: Text(
           username?.isNotEmpty == true ? username![0].toUpperCase() : '?',

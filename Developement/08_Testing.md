@@ -238,6 +238,23 @@ Then rerun `npm run db:setup`.
 - Post-registration: App automatically routed to `HomeScreen` without requiring manual login. ✅
 
 **Phase 4: Authenticated Home & UI**
+
+## 12. Anonymous Usage Diagnostics Checks
+
+**Date:** 2026-07-11  
+**Targets:** Flutter unit test + backend TypeScript compile
+
+**Executed checks:**
+1. Ran `flutter analyze` from the app root and verified the diagnostics additions introduced no analyzer issues.
+2. Ran `flutter test test/usage_diagnostics_service_test.dart`.
+3. Ran `npx tsc --noEmit` in `backend/`.
+
+**Coverage verified:**
+- `UsageDiagnosticsService` records only aggregate counters (`app_open`, `screen_visit`) and rounded visible duration totals.
+- Visible duration rounds to 5-second buckets before persistence.
+- Upload payload generation omits user/account/device identifiers and auth fields.
+- Remote upload does not run unless explicitly enabled.
+- Worker-side development routes typecheck cleanly after adding `usage_aggregate_buckets` handling and the aggregate HTML/JSON report surface.
 - Home screen displayed with:
   - Welcome message "Good morning" ✅
   - User display name: `testuser_smoke1` ✅

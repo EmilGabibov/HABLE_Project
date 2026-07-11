@@ -20,10 +20,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  color: AppTheme.sageGreen,
-                ),
+                Icon(Icons.calendar_today_rounded, color: AppTheme.sageGreen),
                 const SizedBox(width: 8),
                 Text(
                   'Calendar Subscription',
@@ -50,7 +47,9 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Calendar URL copied to clipboard'),
+                                content: Text(
+                                  'Calendar URL copied to clipboard',
+                                ),
                                 duration: Duration(seconds: 2),
                               ),
                             );
@@ -69,9 +68,8 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                         children: [
                           Text(
                             'Tap to copy',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppTheme.sageGreen,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: AppTheme.sageGreen),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -79,9 +77,8 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                               RegExp(r'https?://[^/]+'),
                               '...',
                             ),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(overflow: TextOverflow.ellipsis),
                             maxLines: 2,
                           ),
                         ],
@@ -99,15 +96,13 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                 ],
               )
             else if (calendarState.isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              )
+              const Center(child: CircularProgressIndicator())
             else
               Text(
                 calendarState.error ?? 'Failed to load calendar feed',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.red,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.red),
               ),
             const SizedBox(height: 12),
             Row(
@@ -117,8 +112,8 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                     onPressed: calendarState.isLoading
                         ? null
                         : () => ref
-                            .read(calendarFeedProvider.notifier)
-                            .fetchCalendarFeedUrl(),
+                              .read(calendarFeedProvider.notifier)
+                              .fetchCalendarFeedUrl(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.sageGreen,
                       foregroundColor: Colors.white,

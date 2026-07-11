@@ -17,13 +17,17 @@ class InvitationBanner extends ConsumerWidget {
     return invitationsAsync.when(
       data: (invitations) {
         if (invitations.isEmpty) return const SizedBox.shrink();
-        
+
         final friends = friendsAsync.value ?? [];
 
         return Column(
           children: invitations.map((inv) {
-            String displayUsername = inv.requesterId.length > 8 ? inv.requesterId.substring(0, 8) : inv.requesterId;
-            final match = friends.where((f) => f.friendUserId == inv.requesterId);
+            String displayUsername = inv.requesterId.length > 8
+                ? inv.requesterId.substring(0, 8)
+                : inv.requesterId;
+            final match = friends.where(
+              (f) => f.friendUserId == inv.requesterId,
+            );
             if (match.isNotEmpty) {
               displayUsername = match.first.username;
             }

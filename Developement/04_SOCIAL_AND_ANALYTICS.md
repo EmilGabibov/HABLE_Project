@@ -60,7 +60,15 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Component 2: Historical Progression (Line Chart).** Render a 30-day trailing window of daily point accumulation.
 * **Achievement State:** Discrete icon badges representing historical success for `COMPLETED` habits.
 
-## 7. Waterfall Onboarding Sequence
+## 7. Anonymous Development Diagnostics
+
+* **Scope:** Hable may collect only coarse development aggregates for `app_open`, `screen_visit`, and rounded `screen_visible_ms`. Allowlisted screen labels are static (`auth`, `home`, `profile`, `social_hub`, `habit_form`, `onboarding`) and must never include usernames, habit titles, route arguments, or free-form text.
+* **Storage Rules:** Flutter stores aggregate buckets in Drift. Optional remote upload writes only to `usage_aggregate_buckets` in D1. No user ID, email, username, auth token, device/install/session ID, IP address, user agent, cookie, localStorage identifier, fingerprinting probe, or raw event timeline belongs in diagnostics data.
+* **Remote Upload Gate:** Remote diagnostics are disabled by default and require an explicit compile-time flag. The client should upload without auth headers so aggregate data cannot be linked back to accounts.
+* **Report Surface:** The Worker may expose a development-only aggregate report (`/api/dev/usage-report`) that shows coarse totals only and hides low-volume buckets. This is not a product analytics dashboard and must not become a per-user drilldown tool.
+* **Tooling Boundary:** The requested `21st-dev` React/shadcn dashboard component is out of scope for the Flutter app because there is no compatible admin shell in this repo. A future dedicated admin-web task can revisit that stack if needed.
+
+## 8. Waterfall Onboarding Sequence
 
 * **Step 1:** Profile Initialization (username, UUID).
 * **Step 2:** Core Selection (standard or custom).

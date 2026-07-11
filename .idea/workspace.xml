@@ -8,31 +8,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd1ab86b-db97-4164-a492-03ba983685aa" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/markdown.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Developement/01_SCHEMA_AND_CORE_LOGIC.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/01_SCHEMA_AND_CORE_LOGIC.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Developement/02_OFFLINE_ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/02_OFFLINE_ARCHITECTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Developement/03_UI_UX_AND_ANIMATIONS.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/03_UI_UX_AND_ANIMATIONS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Developement/08_Testing.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/08_Testing.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/00_AGENT_DIRECTIVES.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/00_AGENT_DIRECTIVES.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/05_SEARCH_ENGINE_ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/05_SEARCH_ENGINE_ARCHITECTURE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/TWIN_TEST_HARNESS.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/TWIN_TEST_HARNESS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Developement/Task0_Raw.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/Task0_Raw.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Developement/Task1_Engineered.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/Task1_Engineered.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schema.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/config/api_config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/config/api_config.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/database/database.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/database.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/database/database.g.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/database.g.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/database/tables.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/tables.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/providers/auth_provider.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/screens/auth_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/auth_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/screens/home_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/home_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/screens/profile_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/profile_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widgets/calendar_subscription_card.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/calendar_subscription_card.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widgets/habit_partner_row.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/habit_partner_row.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widgets/mud_long_press_button.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/mud_long_press_button.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/leaderboard_card_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/leaderboard_card_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/Task2_Archived.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/Task2_Archived.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/providers/resistance_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/providers/resistance_provider.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

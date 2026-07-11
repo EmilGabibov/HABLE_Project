@@ -10,7 +10,11 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final connectivity = ConnectivityService();
   const storage = FlutterSecureStorage();
 
-  final service = SyncService(db: db, connectivity: connectivity, storage: storage);
+  final service = SyncService(
+    db: db,
+    connectivity: connectivity,
+    storage: storage,
+  );
   service.init();
 
   ref.onDispose(() => service.dispose());

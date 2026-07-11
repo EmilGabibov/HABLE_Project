@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/habit_providers.dart';
+import 'providers/usage_diagnostics_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/usage_tracked_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,10 +19,12 @@ class HableApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(usageDiagnosticsProvider);
     return MaterialApp(
       title: 'Hable',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: [usageRouteObserver],
       home: const _AppGate(),
     );
   }
@@ -35,9 +39,7 @@ class _AppGate extends ConsumerWidget {
     final authState = ref.watch(authProvider);
 
     if (!authState.isInitialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!authState.isAuthenticated || authState.userId == null) {
@@ -47,12 +49,9 @@ class _AppGate extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
       data: (_) => HomeScreen(userId: authState.userId!),
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, stack) => Scaffold(
-        body: Center(child: Text('Error: $err')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
     );
   }
 }

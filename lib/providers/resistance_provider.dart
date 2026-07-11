@@ -13,7 +13,7 @@ class ResistanceState {
 
   static const initial = ResistanceState(
     resistanceCoefficient: 1.0,
-    calculatedDurationMs: 1500,
+    calculatedDurationMs: 2000,
   );
 }
 
@@ -21,18 +21,21 @@ typedef ResistanceParams = ({int currentDay, int totalDuration});
 
 /// Isolates the "Mud" physics math from the UI thread.
 /// Input: currentDay, totalDuration
-/// Output: resistanceCoefficient [0.0–1.0], calculatedDurationMs [400–1500]
-final resistanceProvider = Provider.family<ResistanceState, ResistanceParams>((ref, params) {
-  const maxDurationMs = 1500;
-  const minDurationMs = 400;
+/// Output: resistanceCoefficient [0.0–1.0], calculatedDurationMs [600–2000]
+final resistanceProvider = Provider.family<ResistanceState, ResistanceParams>((
+  ref,
+  params,
+) {
+  const maxDurationMs = 2000;
+  const minDurationMs = 600;
 
   if (params.totalDuration <= 0) {
     return ResistanceState.initial;
   }
 
   final r = (1.0 - (params.currentDay / params.totalDuration)).clamp(0.0, 1.0);
-  final durationMs =
-      (minDurationMs + ((maxDurationMs - minDurationMs) * r)).toInt();
+  final durationMs = (minDurationMs + ((maxDurationMs - minDurationMs) * r))
+      .toInt();
 
   return ResistanceState(
     resistanceCoefficient: r,

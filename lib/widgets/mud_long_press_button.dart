@@ -15,10 +15,13 @@ class MudLongPressButton extends StatefulWidget {
   final int calculatedDurationMs;
   final VoidCallback onCompletion;
   final bool isCompleted;
+
   /// Per-habit accent color for the ring arc. Defaults to sage green.
   final Color habitColor;
+
   /// Optional habit icon/emoji to render inside the ring.
   final String? habitIcon;
+
   /// Reusable visual parameters for icon scale, opacity, ring thickness, etc.
   final HabitVisualParameters visualParameters;
 
@@ -80,31 +83,29 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       ),
     ).curve;
 
-    _curveAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: dynamicCurve),
-    )
-      ..addListener(_handleHapticFeedback)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          HapticFeedback.lightImpact();
-          widget.onCompletion();
-        }
-      });
+    _curveAnimation =
+        Tween<double>(
+            begin: 0.0,
+            end: 1.0,
+          ).animate(CurvedAnimation(parent: _controller, curve: dynamicCurve))
+          ..addListener(_handleHapticFeedback)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              HapticFeedback.lightImpact();
+              widget.onCompletion();
+            }
+          });
 
     // ─ Icon animations: fade in and scale down during hold ─
     _iconOpacityAnimation = Tween<double>(
       begin: widget.visualParameters.idleIconOpacity,
       end: widget.visualParameters.completedIconOpacity,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _iconScaleAnimation = Tween<double>(
       begin: widget.visualParameters.idleIconScale,
       end: widget.visualParameters.completedIconScale,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   void _handleHapticFeedback() {
@@ -134,7 +135,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           _controller.animateTo(
             0.0,
             duration: Duration(
-                milliseconds: (widget.calculatedDurationMs * 0.5).toInt()),
+              milliseconds: (widget.calculatedDurationMs * 0.5).toInt(),
+            ),
             curve: Curves.easeOutQuint,
           );
         }
@@ -158,9 +160,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         child: SizedBox(
           width: 180,
           height: 180,
-          child: Center(
-            child: _buildIconContent(),
-          ),
+          child: Center(child: _buildIconContent()),
         ),
       ),
     );
@@ -212,7 +212,10 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         children: [
           // Animated habit icon inside the ring
           AnimatedBuilder(
-            animation: Listenable.merge([_iconScaleAnimation, _iconOpacityAnimation]),
+            animation: Listenable.merge([
+              _iconScaleAnimation,
+              _iconOpacityAnimation,
+            ]),
             builder: (context, child) {
               return Opacity(
                 opacity: _iconOpacityAnimation.value,
@@ -252,7 +255,6 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       );
     }
   }
-
 }
 
 class _MudButtonPainter extends CustomPainter {

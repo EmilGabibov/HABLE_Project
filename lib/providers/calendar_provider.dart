@@ -9,11 +9,7 @@ class CalendarFeedState {
   final String? feedUrl;
   final String? error;
 
-  CalendarFeedState({
-    this.isLoading = false,
-    this.feedUrl,
-    this.error,
-  });
+  CalendarFeedState({this.isLoading = false, this.feedUrl, this.error});
 
   CalendarFeedState copyWith({
     bool? isLoading,
@@ -40,10 +36,7 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
     try {
       final authState = ref.read(authProvider);
       if (!authState.isAuthenticated) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Not authenticated',
-        );
+        state = state.copyWith(isLoading: false, error: 'Not authenticated');
         return;
       }
 
@@ -70,10 +63,7 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -82,10 +72,7 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
     try {
       final authState = ref.read(authProvider);
       if (!authState.isAuthenticated) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Not authenticated',
-        );
+        state = state.copyWith(isLoading: false, error: 'Not authenticated');
         return;
       }
 
@@ -112,16 +99,12 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }
 
 final calendarFeedProvider =
     NotifierProvider<CalendarFeedNotifier, CalendarFeedState>(
-  () => CalendarFeedNotifier(),
-);
-
+      () => CalendarFeedNotifier(),
+    );

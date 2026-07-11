@@ -6221,6 +6221,650 @@ class AchievementUnlocksCompanion extends UpdateCompanion<AchievementUnlock> {
   }
 }
 
+class $UsageAggregateBucketsTable extends UsageAggregateBuckets
+    with TableInfo<$UsageAggregateBucketsTable, UsageAggregateBucket> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsageAggregateBucketsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _bucketDateMeta = const VerificationMeta(
+    'bucketDate',
+  );
+  @override
+  late final GeneratedColumn<String> bucketDate = GeneratedColumn<String>(
+    'bucket_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _platformMeta = const VerificationMeta(
+    'platform',
+  );
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+    'platform',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _buildChannelMeta = const VerificationMeta(
+    'buildChannel',
+  );
+  @override
+  late final GeneratedColumn<String> buildChannel = GeneratedColumn<String>(
+    'build_channel',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _screenNameMeta = const VerificationMeta(
+    'screenName',
+  );
+  @override
+  late final GeneratedColumn<String> screenName = GeneratedColumn<String>(
+    'screen_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metricNameMeta = const VerificationMeta(
+    'metricName',
+  );
+  @override
+  late final GeneratedColumn<String> metricName = GeneratedColumn<String>(
+    'metric_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _countMeta = const VerificationMeta('count');
+  @override
+  late final GeneratedColumn<int> count = GeneratedColumn<int>(
+    'count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _totalDurationMsMeta = const VerificationMeta(
+    'totalDurationMs',
+  );
+  @override
+  late final GeneratedColumn<int> totalDurationMs = GeneratedColumn<int>(
+    'total_duration_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _uploadedCountMeta = const VerificationMeta(
+    'uploadedCount',
+  );
+  @override
+  late final GeneratedColumn<int> uploadedCount = GeneratedColumn<int>(
+    'uploaded_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _uploadedTotalDurationMsMeta =
+      const VerificationMeta('uploadedTotalDurationMs');
+  @override
+  late final GeneratedColumn<int> uploadedTotalDurationMs =
+      GeneratedColumn<int>(
+        'uploaded_total_duration_ms',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    bucketDate,
+    platform,
+    buildChannel,
+    screenName,
+    metricName,
+    count,
+    totalDurationMs,
+    uploadedCount,
+    uploadedTotalDurationMs,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'usage_aggregate_buckets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UsageAggregateBucket> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('bucket_date')) {
+      context.handle(
+        _bucketDateMeta,
+        bucketDate.isAcceptableOrUnknown(data['bucket_date']!, _bucketDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketDateMeta);
+    }
+    if (data.containsKey('platform')) {
+      context.handle(
+        _platformMeta,
+        platform.isAcceptableOrUnknown(data['platform']!, _platformMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_platformMeta);
+    }
+    if (data.containsKey('build_channel')) {
+      context.handle(
+        _buildChannelMeta,
+        buildChannel.isAcceptableOrUnknown(
+          data['build_channel']!,
+          _buildChannelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_buildChannelMeta);
+    }
+    if (data.containsKey('screen_name')) {
+      context.handle(
+        _screenNameMeta,
+        screenName.isAcceptableOrUnknown(data['screen_name']!, _screenNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_screenNameMeta);
+    }
+    if (data.containsKey('metric_name')) {
+      context.handle(
+        _metricNameMeta,
+        metricName.isAcceptableOrUnknown(data['metric_name']!, _metricNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_metricNameMeta);
+    }
+    if (data.containsKey('count')) {
+      context.handle(
+        _countMeta,
+        count.isAcceptableOrUnknown(data['count']!, _countMeta),
+      );
+    }
+    if (data.containsKey('total_duration_ms')) {
+      context.handle(
+        _totalDurationMsMeta,
+        totalDurationMs.isAcceptableOrUnknown(
+          data['total_duration_ms']!,
+          _totalDurationMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('uploaded_count')) {
+      context.handle(
+        _uploadedCountMeta,
+        uploadedCount.isAcceptableOrUnknown(
+          data['uploaded_count']!,
+          _uploadedCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('uploaded_total_duration_ms')) {
+      context.handle(
+        _uploadedTotalDurationMsMeta,
+        uploadedTotalDurationMs.isAcceptableOrUnknown(
+          data['uploaded_total_duration_ms']!,
+          _uploadedTotalDurationMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    bucketDate,
+    platform,
+    buildChannel,
+    screenName,
+    metricName,
+  };
+  @override
+  UsageAggregateBucket map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsageAggregateBucket(
+      bucketDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bucket_date'],
+      )!,
+      platform: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}platform'],
+      )!,
+      buildChannel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}build_channel'],
+      )!,
+      screenName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}screen_name'],
+      )!,
+      metricName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metric_name'],
+      )!,
+      count: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}count'],
+      )!,
+      totalDurationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_duration_ms'],
+      )!,
+      uploadedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}uploaded_count'],
+      )!,
+      uploadedTotalDurationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}uploaded_total_duration_ms'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UsageAggregateBucketsTable createAlias(String alias) {
+    return $UsageAggregateBucketsTable(attachedDatabase, alias);
+  }
+}
+
+class UsageAggregateBucket extends DataClass
+    implements Insertable<UsageAggregateBucket> {
+  final String bucketDate;
+  final String platform;
+  final String buildChannel;
+  final String screenName;
+  final String metricName;
+  final int count;
+  final int totalDurationMs;
+  final int uploadedCount;
+  final int uploadedTotalDurationMs;
+  final DateTime updatedAt;
+  const UsageAggregateBucket({
+    required this.bucketDate,
+    required this.platform,
+    required this.buildChannel,
+    required this.screenName,
+    required this.metricName,
+    required this.count,
+    required this.totalDurationMs,
+    required this.uploadedCount,
+    required this.uploadedTotalDurationMs,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['bucket_date'] = Variable<String>(bucketDate);
+    map['platform'] = Variable<String>(platform);
+    map['build_channel'] = Variable<String>(buildChannel);
+    map['screen_name'] = Variable<String>(screenName);
+    map['metric_name'] = Variable<String>(metricName);
+    map['count'] = Variable<int>(count);
+    map['total_duration_ms'] = Variable<int>(totalDurationMs);
+    map['uploaded_count'] = Variable<int>(uploadedCount);
+    map['uploaded_total_duration_ms'] = Variable<int>(uploadedTotalDurationMs);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UsageAggregateBucketsCompanion toCompanion(bool nullToAbsent) {
+    return UsageAggregateBucketsCompanion(
+      bucketDate: Value(bucketDate),
+      platform: Value(platform),
+      buildChannel: Value(buildChannel),
+      screenName: Value(screenName),
+      metricName: Value(metricName),
+      count: Value(count),
+      totalDurationMs: Value(totalDurationMs),
+      uploadedCount: Value(uploadedCount),
+      uploadedTotalDurationMs: Value(uploadedTotalDurationMs),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UsageAggregateBucket.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsageAggregateBucket(
+      bucketDate: serializer.fromJson<String>(json['bucketDate']),
+      platform: serializer.fromJson<String>(json['platform']),
+      buildChannel: serializer.fromJson<String>(json['buildChannel']),
+      screenName: serializer.fromJson<String>(json['screenName']),
+      metricName: serializer.fromJson<String>(json['metricName']),
+      count: serializer.fromJson<int>(json['count']),
+      totalDurationMs: serializer.fromJson<int>(json['totalDurationMs']),
+      uploadedCount: serializer.fromJson<int>(json['uploadedCount']),
+      uploadedTotalDurationMs: serializer.fromJson<int>(
+        json['uploadedTotalDurationMs'],
+      ),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'bucketDate': serializer.toJson<String>(bucketDate),
+      'platform': serializer.toJson<String>(platform),
+      'buildChannel': serializer.toJson<String>(buildChannel),
+      'screenName': serializer.toJson<String>(screenName),
+      'metricName': serializer.toJson<String>(metricName),
+      'count': serializer.toJson<int>(count),
+      'totalDurationMs': serializer.toJson<int>(totalDurationMs),
+      'uploadedCount': serializer.toJson<int>(uploadedCount),
+      'uploadedTotalDurationMs': serializer.toJson<int>(
+        uploadedTotalDurationMs,
+      ),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UsageAggregateBucket copyWith({
+    String? bucketDate,
+    String? platform,
+    String? buildChannel,
+    String? screenName,
+    String? metricName,
+    int? count,
+    int? totalDurationMs,
+    int? uploadedCount,
+    int? uploadedTotalDurationMs,
+    DateTime? updatedAt,
+  }) => UsageAggregateBucket(
+    bucketDate: bucketDate ?? this.bucketDate,
+    platform: platform ?? this.platform,
+    buildChannel: buildChannel ?? this.buildChannel,
+    screenName: screenName ?? this.screenName,
+    metricName: metricName ?? this.metricName,
+    count: count ?? this.count,
+    totalDurationMs: totalDurationMs ?? this.totalDurationMs,
+    uploadedCount: uploadedCount ?? this.uploadedCount,
+    uploadedTotalDurationMs:
+        uploadedTotalDurationMs ?? this.uploadedTotalDurationMs,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UsageAggregateBucket copyWithCompanion(UsageAggregateBucketsCompanion data) {
+    return UsageAggregateBucket(
+      bucketDate: data.bucketDate.present
+          ? data.bucketDate.value
+          : this.bucketDate,
+      platform: data.platform.present ? data.platform.value : this.platform,
+      buildChannel: data.buildChannel.present
+          ? data.buildChannel.value
+          : this.buildChannel,
+      screenName: data.screenName.present
+          ? data.screenName.value
+          : this.screenName,
+      metricName: data.metricName.present
+          ? data.metricName.value
+          : this.metricName,
+      count: data.count.present ? data.count.value : this.count,
+      totalDurationMs: data.totalDurationMs.present
+          ? data.totalDurationMs.value
+          : this.totalDurationMs,
+      uploadedCount: data.uploadedCount.present
+          ? data.uploadedCount.value
+          : this.uploadedCount,
+      uploadedTotalDurationMs: data.uploadedTotalDurationMs.present
+          ? data.uploadedTotalDurationMs.value
+          : this.uploadedTotalDurationMs,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsageAggregateBucket(')
+          ..write('bucketDate: $bucketDate, ')
+          ..write('platform: $platform, ')
+          ..write('buildChannel: $buildChannel, ')
+          ..write('screenName: $screenName, ')
+          ..write('metricName: $metricName, ')
+          ..write('count: $count, ')
+          ..write('totalDurationMs: $totalDurationMs, ')
+          ..write('uploadedCount: $uploadedCount, ')
+          ..write('uploadedTotalDurationMs: $uploadedTotalDurationMs, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    bucketDate,
+    platform,
+    buildChannel,
+    screenName,
+    metricName,
+    count,
+    totalDurationMs,
+    uploadedCount,
+    uploadedTotalDurationMs,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsageAggregateBucket &&
+          other.bucketDate == this.bucketDate &&
+          other.platform == this.platform &&
+          other.buildChannel == this.buildChannel &&
+          other.screenName == this.screenName &&
+          other.metricName == this.metricName &&
+          other.count == this.count &&
+          other.totalDurationMs == this.totalDurationMs &&
+          other.uploadedCount == this.uploadedCount &&
+          other.uploadedTotalDurationMs == this.uploadedTotalDurationMs &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UsageAggregateBucketsCompanion
+    extends UpdateCompanion<UsageAggregateBucket> {
+  final Value<String> bucketDate;
+  final Value<String> platform;
+  final Value<String> buildChannel;
+  final Value<String> screenName;
+  final Value<String> metricName;
+  final Value<int> count;
+  final Value<int> totalDurationMs;
+  final Value<int> uploadedCount;
+  final Value<int> uploadedTotalDurationMs;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UsageAggregateBucketsCompanion({
+    this.bucketDate = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.buildChannel = const Value.absent(),
+    this.screenName = const Value.absent(),
+    this.metricName = const Value.absent(),
+    this.count = const Value.absent(),
+    this.totalDurationMs = const Value.absent(),
+    this.uploadedCount = const Value.absent(),
+    this.uploadedTotalDurationMs = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UsageAggregateBucketsCompanion.insert({
+    required String bucketDate,
+    required String platform,
+    required String buildChannel,
+    required String screenName,
+    required String metricName,
+    this.count = const Value.absent(),
+    this.totalDurationMs = const Value.absent(),
+    this.uploadedCount = const Value.absent(),
+    this.uploadedTotalDurationMs = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : bucketDate = Value(bucketDate),
+       platform = Value(platform),
+       buildChannel = Value(buildChannel),
+       screenName = Value(screenName),
+       metricName = Value(metricName);
+  static Insertable<UsageAggregateBucket> custom({
+    Expression<String>? bucketDate,
+    Expression<String>? platform,
+    Expression<String>? buildChannel,
+    Expression<String>? screenName,
+    Expression<String>? metricName,
+    Expression<int>? count,
+    Expression<int>? totalDurationMs,
+    Expression<int>? uploadedCount,
+    Expression<int>? uploadedTotalDurationMs,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (bucketDate != null) 'bucket_date': bucketDate,
+      if (platform != null) 'platform': platform,
+      if (buildChannel != null) 'build_channel': buildChannel,
+      if (screenName != null) 'screen_name': screenName,
+      if (metricName != null) 'metric_name': metricName,
+      if (count != null) 'count': count,
+      if (totalDurationMs != null) 'total_duration_ms': totalDurationMs,
+      if (uploadedCount != null) 'uploaded_count': uploadedCount,
+      if (uploadedTotalDurationMs != null)
+        'uploaded_total_duration_ms': uploadedTotalDurationMs,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UsageAggregateBucketsCompanion copyWith({
+    Value<String>? bucketDate,
+    Value<String>? platform,
+    Value<String>? buildChannel,
+    Value<String>? screenName,
+    Value<String>? metricName,
+    Value<int>? count,
+    Value<int>? totalDurationMs,
+    Value<int>? uploadedCount,
+    Value<int>? uploadedTotalDurationMs,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UsageAggregateBucketsCompanion(
+      bucketDate: bucketDate ?? this.bucketDate,
+      platform: platform ?? this.platform,
+      buildChannel: buildChannel ?? this.buildChannel,
+      screenName: screenName ?? this.screenName,
+      metricName: metricName ?? this.metricName,
+      count: count ?? this.count,
+      totalDurationMs: totalDurationMs ?? this.totalDurationMs,
+      uploadedCount: uploadedCount ?? this.uploadedCount,
+      uploadedTotalDurationMs:
+          uploadedTotalDurationMs ?? this.uploadedTotalDurationMs,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (bucketDate.present) {
+      map['bucket_date'] = Variable<String>(bucketDate.value);
+    }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
+    if (buildChannel.present) {
+      map['build_channel'] = Variable<String>(buildChannel.value);
+    }
+    if (screenName.present) {
+      map['screen_name'] = Variable<String>(screenName.value);
+    }
+    if (metricName.present) {
+      map['metric_name'] = Variable<String>(metricName.value);
+    }
+    if (count.present) {
+      map['count'] = Variable<int>(count.value);
+    }
+    if (totalDurationMs.present) {
+      map['total_duration_ms'] = Variable<int>(totalDurationMs.value);
+    }
+    if (uploadedCount.present) {
+      map['uploaded_count'] = Variable<int>(uploadedCount.value);
+    }
+    if (uploadedTotalDurationMs.present) {
+      map['uploaded_total_duration_ms'] = Variable<int>(
+        uploadedTotalDurationMs.value,
+      );
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsageAggregateBucketsCompanion(')
+          ..write('bucketDate: $bucketDate, ')
+          ..write('platform: $platform, ')
+          ..write('buildChannel: $buildChannel, ')
+          ..write('screenName: $screenName, ')
+          ..write('metricName: $metricName, ')
+          ..write('count: $count, ')
+          ..write('totalDurationMs: $totalDurationMs, ')
+          ..write('uploadedCount: $uploadedCount, ')
+          ..write('uploadedTotalDurationMs: $uploadedTotalDurationMs, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6250,6 +6894,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $AchievementUnlocksTable achievementUnlocks =
       $AchievementUnlocksTable(this);
+  late final $UsageAggregateBucketsTable usageAggregateBuckets =
+      $UsageAggregateBucketsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6268,6 +6914,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     milestoneEvents,
     acceptedFriends,
     achievementUnlocks,
+    usageAggregateBuckets,
   ];
 }
 
@@ -10095,6 +10742,334 @@ typedef $$AchievementUnlocksTableProcessedTableManager =
       AchievementUnlock,
       PrefetchHooks Function()
     >;
+typedef $$UsageAggregateBucketsTableCreateCompanionBuilder =
+    UsageAggregateBucketsCompanion Function({
+      required String bucketDate,
+      required String platform,
+      required String buildChannel,
+      required String screenName,
+      required String metricName,
+      Value<int> count,
+      Value<int> totalDurationMs,
+      Value<int> uploadedCount,
+      Value<int> uploadedTotalDurationMs,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UsageAggregateBucketsTableUpdateCompanionBuilder =
+    UsageAggregateBucketsCompanion Function({
+      Value<String> bucketDate,
+      Value<String> platform,
+      Value<String> buildChannel,
+      Value<String> screenName,
+      Value<String> metricName,
+      Value<int> count,
+      Value<int> totalDurationMs,
+      Value<int> uploadedCount,
+      Value<int> uploadedTotalDurationMs,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UsageAggregateBucketsTableFilterComposer
+    extends Composer<_$AppDatabase, $UsageAggregateBucketsTable> {
+  $$UsageAggregateBucketsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get bucketDate => $composableBuilder(
+    column: $table.bucketDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get buildChannel => $composableBuilder(
+    column: $table.buildChannel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get screenName => $composableBuilder(
+    column: $table.screenName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metricName => $composableBuilder(
+    column: $table.metricName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalDurationMs => $composableBuilder(
+    column: $table.totalDurationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get uploadedCount => $composableBuilder(
+    column: $table.uploadedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get uploadedTotalDurationMs => $composableBuilder(
+    column: $table.uploadedTotalDurationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UsageAggregateBucketsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsageAggregateBucketsTable> {
+  $$UsageAggregateBucketsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get bucketDate => $composableBuilder(
+    column: $table.bucketDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get buildChannel => $composableBuilder(
+    column: $table.buildChannel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get screenName => $composableBuilder(
+    column: $table.screenName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metricName => $composableBuilder(
+    column: $table.metricName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalDurationMs => $composableBuilder(
+    column: $table.totalDurationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get uploadedCount => $composableBuilder(
+    column: $table.uploadedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get uploadedTotalDurationMs => $composableBuilder(
+    column: $table.uploadedTotalDurationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UsageAggregateBucketsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsageAggregateBucketsTable> {
+  $$UsageAggregateBucketsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get bucketDate => $composableBuilder(
+    column: $table.bucketDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
+  GeneratedColumn<String> get buildChannel => $composableBuilder(
+    column: $table.buildChannel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get screenName => $composableBuilder(
+    column: $table.screenName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get metricName => $composableBuilder(
+    column: $table.metricName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get count =>
+      $composableBuilder(column: $table.count, builder: (column) => column);
+
+  GeneratedColumn<int> get totalDurationMs => $composableBuilder(
+    column: $table.totalDurationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get uploadedCount => $composableBuilder(
+    column: $table.uploadedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get uploadedTotalDurationMs => $composableBuilder(
+    column: $table.uploadedTotalDurationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UsageAggregateBucketsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsageAggregateBucketsTable,
+          UsageAggregateBucket,
+          $$UsageAggregateBucketsTableFilterComposer,
+          $$UsageAggregateBucketsTableOrderingComposer,
+          $$UsageAggregateBucketsTableAnnotationComposer,
+          $$UsageAggregateBucketsTableCreateCompanionBuilder,
+          $$UsageAggregateBucketsTableUpdateCompanionBuilder,
+          (
+            UsageAggregateBucket,
+            BaseReferences<
+              _$AppDatabase,
+              $UsageAggregateBucketsTable,
+              UsageAggregateBucket
+            >,
+          ),
+          UsageAggregateBucket,
+          PrefetchHooks Function()
+        > {
+  $$UsageAggregateBucketsTableTableManager(
+    _$AppDatabase db,
+    $UsageAggregateBucketsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsageAggregateBucketsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UsageAggregateBucketsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UsageAggregateBucketsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> bucketDate = const Value.absent(),
+                Value<String> platform = const Value.absent(),
+                Value<String> buildChannel = const Value.absent(),
+                Value<String> screenName = const Value.absent(),
+                Value<String> metricName = const Value.absent(),
+                Value<int> count = const Value.absent(),
+                Value<int> totalDurationMs = const Value.absent(),
+                Value<int> uploadedCount = const Value.absent(),
+                Value<int> uploadedTotalDurationMs = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsageAggregateBucketsCompanion(
+                bucketDate: bucketDate,
+                platform: platform,
+                buildChannel: buildChannel,
+                screenName: screenName,
+                metricName: metricName,
+                count: count,
+                totalDurationMs: totalDurationMs,
+                uploadedCount: uploadedCount,
+                uploadedTotalDurationMs: uploadedTotalDurationMs,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String bucketDate,
+                required String platform,
+                required String buildChannel,
+                required String screenName,
+                required String metricName,
+                Value<int> count = const Value.absent(),
+                Value<int> totalDurationMs = const Value.absent(),
+                Value<int> uploadedCount = const Value.absent(),
+                Value<int> uploadedTotalDurationMs = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UsageAggregateBucketsCompanion.insert(
+                bucketDate: bucketDate,
+                platform: platform,
+                buildChannel: buildChannel,
+                screenName: screenName,
+                metricName: metricName,
+                count: count,
+                totalDurationMs: totalDurationMs,
+                uploadedCount: uploadedCount,
+                uploadedTotalDurationMs: uploadedTotalDurationMs,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UsageAggregateBucketsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsageAggregateBucketsTable,
+      UsageAggregateBucket,
+      $$UsageAggregateBucketsTableFilterComposer,
+      $$UsageAggregateBucketsTableOrderingComposer,
+      $$UsageAggregateBucketsTableAnnotationComposer,
+      $$UsageAggregateBucketsTableCreateCompanionBuilder,
+      $$UsageAggregateBucketsTableUpdateCompanionBuilder,
+      (
+        UsageAggregateBucket,
+        BaseReferences<
+          _$AppDatabase,
+          $UsageAggregateBucketsTable,
+          UsageAggregateBucket
+        >,
+      ),
+      UsageAggregateBucket,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10124,4 +11099,6 @@ class $AppDatabaseManager {
       $$AcceptedFriendsTableTableManager(_db, _db.acceptedFriends);
   $$AchievementUnlocksTableTableManager get achievementUnlocks =>
       $$AchievementUnlocksTableTableManager(_db, _db.achievementUnlocks);
+  $$UsageAggregateBucketsTableTableManager get usageAggregateBuckets =>
+      $$UsageAggregateBucketsTableTableManager(_db, _db.usageAggregateBuckets);
 }

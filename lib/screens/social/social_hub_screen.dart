@@ -12,6 +12,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/3d/habit_environment_visualizer.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/leaderboard_card.dart';
+import '../../widgets/usage_tracked_screen.dart';
 
 final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
@@ -183,42 +184,42 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Social Hub'),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.favorite_rounded), text: 'Friends'),
-            Tab(icon: Icon(Icons.people_alt_rounded), text: 'Requests'),
-            Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Leaderboard'),
-            Tab(icon: Icon(Icons.search_rounded), text: 'Find Friends'),
-            Tab(icon: Icon(Icons.mail_rounded), text: 'Inbox'),
-          ],
-          labelColor: AppTheme.sageGreen,
-          indicatorColor: AppTheme.sageGreen,
-        ),
-      ),
-      body: Column(
-        children: [
-          // 3D Environment Header
-          const HabitEnvironmentVisualizer(height: 250),
-
-          // Tab Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildFriendsTab(),
-                _buildRequestsTab(),
-                _buildLeaderboardTab(),
-                _buildSearchTab(),
-                _buildInboxTab(),
-              ],
-            ),
+    return UsageTrackedScreen(
+      screenName: 'social_hub',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Social Hub'),
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(icon: Icon(Icons.favorite_rounded), text: 'Friends'),
+              Tab(icon: Icon(Icons.people_alt_rounded), text: 'Requests'),
+              Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Leaderboard'),
+              Tab(icon: Icon(Icons.search_rounded), text: 'Find Friends'),
+              Tab(icon: Icon(Icons.mail_rounded), text: 'Inbox'),
+            ],
+            labelColor: AppTheme.sageGreen,
+            indicatorColor: AppTheme.sageGreen,
           ),
-        ],
+        ),
+        body: Column(
+          children: [
+            const HabitEnvironmentVisualizer(height: 250),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildFriendsTab(),
+                  _buildRequestsTab(),
+                  _buildLeaderboardTab(),
+                  _buildSearchTab(),
+                  _buildInboxTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

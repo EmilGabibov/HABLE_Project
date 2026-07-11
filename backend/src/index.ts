@@ -172,6 +172,7 @@ let ensurePartnershipSchemaPromise: Promise<void> | null = null
 let ensureGamificationSchemaPromise: Promise<void> | null = null
 let ensureCalendarFeedSchemaPromise: Promise<void> | null = null
 let ensureAuthSchemaPromise: Promise<void> | null = null
+let ensureUsageDiagnosticsSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
@@ -277,6 +278,48 @@ async function ensurePartnershipRoleSchema(env: Bindings): Promise<void> {
   }
 
   await ensurePartnershipSchemaPromise
+}
+
+function isDevUsageDiagnosticsAllowed(env: Bindings, requestUrl: string): boolean {
+  return env.ENVIRONMENT === 'development' || isLocalRequest(requestUrl)
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+async function ensureUsageDiagnosticsSchema(env: Bindings): Promise<void> {
+  if (!ensureUsageDiagnosticsSchemaPromise) {
+    ensureUsageDiagnosticsSchemaPromise = (async () => {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS usage_aggregate_buckets (
+          bucket_date TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          build_channel TEXT NOT NULL,
+          screen_name TEXT NOT NULL,
+          metric_name TEXT NOT NULL,
+          count INTEGER NOT NULL DEFAULT 0,
+          total_duration_ms INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (bucket_date, platform, build_channel, screen_name, metric_name)
+        )
+      `).run()
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_usage_aggregate_buckets_date
+        ON usage_aggregate_buckets(bucket_date, platform, build_channel)
+      `).run()
+    })().catch((error) => {
+      ensureUsageDiagnosticsSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensureUsageDiagnosticsSchemaPromise
 }
 
 async function areAcceptedFriends(env: Bindings, leftUserId: string, rightUserId: string): Promise<boolean> {
@@ -560,6 +603,250 @@ async function getGamificationPayload(env: Bindings, userId: string) {
     newly_unlocked_badges: newlyUnlocked ?? [],
   }
 }
+
+app.post('/api/dev/usage-aggregate', async (c) => {
+  if (!isDevUsageDiagnosticsAllowed(c.env, c.req.url)) {
+    return c.json({ error: 'Development usage diagnostics are disabled.' }, 403)
+  }
+
+  await ensureUsageDiagnosticsSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as {
+    buckets?: Array<Record<string, unknown>>
+  }
+  const buckets = Array.isArray(body.buckets) ? body.buckets : []
+  if (buckets.length == 0) {
+    return c.json({ error: 'Missing aggregate buckets' }, 400)
+  }
+
+  const allowedScreens = new Set(['app', 'auth', 'home', 'profile', 'social_hub', 'habit_form', 'onboarding'])
+  const allowedMetrics = new Set(['app_open', 'screen_visit', 'screen_visible_ms'])
+  const allowedPlatforms = new Set(['android', 'ios', 'macos', 'windows', 'linux', 'web', 'fuchsia'])
+
+  for (const bucket of buckets) {
+    const bucketDate = String(bucket.bucket_date ?? '').trim()
+    const platform = String(bucket.platform ?? '').trim()
+    const buildChannel = String(bucket.build_channel ?? '').trim()
+    const screenName = String(bucket.screen_name ?? '').trim()
+    const metricName = String(bucket.metric_name ?? '').trim()
+    const count = Number(bucket.count ?? 0)
+    const totalDurationMs = Number(bucket.total_duration_ms ?? 0)
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(bucketDate)) {
+      return c.json({ error: 'Invalid bucket_date' }, 400)
+    }
+    if (!allowedPlatforms.has(platform)) {
+      return c.json({ error: 'Invalid platform' }, 400)
+    }
+    if (!buildChannel || buildChannel.length > 32) {
+      return c.json({ error: 'Invalid build_channel' }, 400)
+    }
+    if (!allowedScreens.has(screenName)) {
+      return c.json({ error: 'Invalid screen_name' }, 400)
+    }
+    if (!allowedMetrics.has(metricName)) {
+      return c.json({ error: 'Invalid metric_name' }, 400)
+    }
+    if (!Number.isInteger(count) || count < 0 || count > 100000) {
+      return c.json({ error: 'Invalid count' }, 400)
+    }
+    if (!Number.isInteger(totalDurationMs) || totalDurationMs < 0 || totalDurationMs > 86400000) {
+      return c.json({ error: 'Invalid total_duration_ms' }, 400)
+    }
+    if (metricName === 'screen_visible_ms' && totalDurationMs % 5000 !== 0) {
+      return c.json({ error: 'Visible durations must be rounded to 5-second buckets' }, 400)
+    }
+    if (count === 0 && totalDurationMs === 0) {
+      continue
+    }
+
+    await c.env.DB.prepare(`
+      INSERT INTO usage_aggregate_buckets (
+        bucket_date,
+        platform,
+        build_channel,
+        screen_name,
+        metric_name,
+        count,
+        total_duration_ms,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(bucket_date, platform, build_channel, screen_name, metric_name)
+      DO UPDATE SET
+        count = usage_aggregate_buckets.count + excluded.count,
+        total_duration_ms = usage_aggregate_buckets.total_duration_ms + excluded.total_duration_ms,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      bucketDate,
+      platform,
+      buildChannel,
+      screenName,
+      metricName,
+      count,
+      totalDurationMs,
+    ).run()
+  }
+
+  return c.json({ ok: true })
+})
+
+app.get('/api/dev/usage-report', async (c) => {
+  if (!isDevUsageDiagnosticsAllowed(c.env, c.req.url)) {
+    return c.text('Development usage diagnostics are disabled.', 403)
+  }
+
+  await ensureUsageDiagnosticsSchema(c.env)
+  const format = c.req.query('format')
+  const { results } = await c.env.DB.prepare(`
+    SELECT
+      bucket_date,
+      platform,
+      build_channel,
+      screen_name,
+      metric_name,
+      count,
+      total_duration_ms,
+      updated_at
+    FROM usage_aggregate_buckets
+    WHERE count >= 2 OR total_duration_ms >= 10000
+    ORDER BY bucket_date DESC, platform ASC, build_channel ASC, screen_name ASC, metric_name ASC
+    LIMIT 500
+  `).all()
+
+  if (format === 'json') {
+    return c.json({ rows: results ?? [] })
+  }
+
+  const rows = (results ?? []) as Array<Record<string, unknown>>
+  const rowsHtml = rows.length > 0
+    ? rows.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.bucket_date)}</td>
+          <td>${escapeHtml(row.platform)}</td>
+          <td>${escapeHtml(row.build_channel)}</td>
+          <td>${escapeHtml(row.screen_name)}</td>
+          <td>${escapeHtml(row.metric_name)}</td>
+          <td>${escapeHtml(row.count)}</td>
+          <td>${escapeHtml(row.total_duration_ms)}</td>
+          <td>${escapeHtml(row.updated_at)}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="8">No aggregate buckets met the minimum privacy threshold yet.</td></tr>'
+
+  return c.html(`
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Hable Dev Usage Report</title>
+        <style>
+          :root {
+            color-scheme: light;
+            --bg: #f4f1e8;
+            --card: rgba(255, 255, 255, 0.78);
+            --ink: #1d2b24;
+            --muted: #61706a;
+            --line: rgba(29, 43, 36, 0.12);
+            --accent: #8aa17b;
+          }
+          body {
+            margin: 0;
+            font-family: "SF Pro Display", "Segoe UI", sans-serif;
+            background:
+              radial-gradient(circle at top left, rgba(138, 161, 123, 0.24), transparent 28%),
+              linear-gradient(135deg, #f6f3eb, #ebe4d6);
+            color: var(--ink);
+          }
+          .wrap {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 40px 20px 72px;
+          }
+          .hero {
+            padding: 28px;
+            border-radius: 28px;
+            background: var(--card);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 18px 48px rgba(48, 63, 54, 0.08);
+          }
+          h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 4vw, 3.6rem);
+            line-height: 0.96;
+          }
+          p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 64ch;
+          }
+          .table-card {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 24px;
+            background: var(--card);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 18px 48px rgba(48, 63, 54, 0.08);
+            overflow: auto;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+          }
+          th, td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--line);
+            white-space: nowrap;
+          }
+          th {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+          }
+          .pill {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(138, 161, 123, 0.16);
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <main class="wrap">
+          <section class="hero">
+            <h1>Hable<br/>Dev Usage Report</h1>
+            <p>Aggregate-only diagnostics for development. This report omits identifiers, hides low-volume buckets, and shows only coarse counts plus rounded visible duration totals.</p>
+            <div class="pill">Development-only surface</div>
+          </section>
+          <section class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Platform</th>
+                  <th>Channel</th>
+                  <th>Screen</th>
+                  <th>Metric</th>
+                  <th>Count</th>
+                  <th>Total Duration Ms</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </section>
+        </main>
+      </body>
+    </html>
+  `)
+})
 
 // 1. Auth Endpoints
 app.post('/api/auth/register', async (c) => {
@@ -1257,12 +1544,15 @@ app.get('/api/sync/daily', async (c) => {
       h.title,
       h.color_hex,
       h.target_duration,
+      h.status,
+      MAX(h.target_duration - COALESCE(vhp.current_duration, 0), 0) as viewer_remaining_days,
       p.habit_id,
       p.partner_id,
       p.role
     FROM partnerships p
     JOIN users u ON p.partner_id = u.id
     LEFT JOIN habit_progress hp ON p.partner_id = hp.user_id AND p.habit_id = hp.habit_id
+    LEFT JOIN habit_progress vhp ON p.user_id = vhp.user_id AND p.habit_id = vhp.habit_id
     LEFT JOIN habits h ON p.habit_id = h.id
     WHERE p.user_id = ?
       AND p.partner_id != ?

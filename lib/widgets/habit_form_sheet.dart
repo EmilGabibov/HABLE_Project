@@ -5,6 +5,7 @@ import '../providers/habit_actions_provider.dart';
 import '../providers/social_providers.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
+import 'usage_tracked_screen.dart';
 
 const List<String> _pastelColors = [
   'FF9CAF88', // Sage Green
@@ -36,13 +37,16 @@ class HabitFormSheet extends ConsumerStatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: HabitFormSheet(
-          existingHabit: existingHabit,
-          prefilledTitle: prefilledTitle,
+      builder: (context) => UsageTrackedScreen(
+        screenName: 'habit_form',
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: HabitFormSheet(
+            existingHabit: existingHabit,
+            prefilledTitle: prefilledTitle,
+          ),
         ),
       ),
     );

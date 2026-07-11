@@ -1,12 +1,13 @@
 # Twin-App Friend Flow Test Harness
 
-This guide provides instructions for testing the end-to-end mutual habit tracking and nudging flow on a single Android device using two isolated instances of the Hable app.
+This guide provides instructions for testing the end-to-end friendship, habit invitation, shared-habit tracking, and nudging flow on a single Android device or emulator using two isolated instances of the Hable app.
 
 ## Prerequisites
 
 1. An Android device or emulator connected and accessible via ADB (`adb devices`).
 2. The Cloudflare Worker backend must be running locally.
-3. The local database (`schema.sql`) must be seeded with test users (`local-user-1`, `local-user-2`) and the shared habit (`shared-habit-1`).
+3. The local database (`schema.sql`) must be applied locally with `npm run db:setup`.
+4. The app flavors are launched with seeded identities via `SEED_USER_ID` and `SEED_USERNAME`.
 
 ## 1. Start the Local Backend
 
@@ -37,7 +38,7 @@ flutter run --flavor primary \
 
 - This installs an app named **Hable Primary**.
 - It bypasses normal onboarding and creates a local Drift database belonging to `local-user-1`.
-- It also seeds `shared-habit-1` locally.
+- The current dev seed path also inserts a starter local habit so the seeded user can reach Home quickly, but shared-habit verification should still use the invite flow below rather than assuming a pre-linked partnership.
 
 ## 3. Install the Friend App (Bob)
 
@@ -52,26 +53,31 @@ flutter run --flavor friend \
 
 - This installs an app named **Hable Friend**.
 - It creates an isolated local Drift database belonging to `local-user-2`.
-- It also seeds `shared-habit-1` locally.
+- It uses a separate local Drift database and package id from the primary flavor.
 
 ## 4. Test the Mutual Flow
 
-With both apps installed, you can now test the social features:
+With both apps installed, test the current social path in this order:
 
-1. **Verify Mutual Habit**: Open both apps. You should see the "Shared Dev Habit". Wait for the daily sync, or trigger it.
-2. **Verify Partner Ticker**: In the primary app (Alice), Bob's avatar should appear in the partner ticker at the bottom. In the friend app (Bob), Alice's avatar should appear.
-3. **Send a Nudge**: Tap Bob's avatar in the primary app. This enqueues a nudge in the local Drift `SyncQueue`.
-4. **Sync**: Wait for the background sync to process the queue and send the nudge to the backend.
-5. **Receive Nudge**: Open the friend app (Bob). During the next daily sync pull, the nudge should be received and processed.
-6. **Habit Completion**: Complete the habit in one app. After sync, the other app should reflect the completed status (e.g., the partner avatar will have a glowing border).
-7. **Preset Habit Invite**: In Alice's app, create a new habit from a preset and select Bob in the partner picker. Let the sync queue send the habit and invite.
-8. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, accept it, then verify the partnership appears only after acceptance.
-9. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
+1. **Friend Request**: In Alice's app, open Social Hub -> Find Friends, search for Bob, and send a friend request.
+2. **Acceptance**: In Bob's app, open Social Hub -> Requests and accept Alice's request.
+3. **Accepted Friend Cache**: Reopen or sync Alice's app and verify Bob now appears as an accepted friend for local invite surfaces.
+4. **Habit Invite**: In Alice's app, create a habit from Home or Profile and select Bob from the accepted-friend partner chips.
+5. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, and accept it.
+6. **Shared Habit Visibility**: After acceptance and sync, verify the shared habit appears on both apps.
+7. **Progress Sync**: Complete the shared habit on Alice, flush/open Bob, and verify Bob sees Alice's updated per-card partner state. Then complete the same shared habit on Bob and verify Bob's own challenge day advances locally and Alice sees Bob's updated partner state after sync.
+8. **Archive Sync**: Archive the shared habit on Alice and verify it disappears from both active Home lists after daily sync while still remaining in archived/history surfaces locally.
+9. **Skip Privacy**: Trigger a skip with journal text on one side and verify the shared partner state updates without exposing that free-form journal text in the other install.
+10. **Per-Card Social Status**: On the shared habit card, verify partner/supporter avatars render inside the card with role-aware state.
+11. **Send a Nudge**: Trigger a nudge from the shared-habit context and wait for the sync queue to flush.
+12. **Receive Nudge**: Open or sync the receiving app and verify the nudge is visible through the current in-app social state.
+13. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
 
 ## Troubleshooting
 
 - **Android package collision**: Ensure you are using the `--flavor` flag so that the `applicationIdSuffix` applies correctly.
 - **Connection refused**: Run `adb reverse tcp:8787 tcp:8787` again if the emulator loses the port mapping.
 - **Stale data**: To reset, uninstall both apps from the device to wipe the local Drift databases, and restart the Cloudflare local worker to reset the in-memory D1 data.
-- **No partner chips**: Confirm `npm run db:setup` has applied `schema.sql`, run `adb reverse tcp:8787 tcp:8787`, and check logcat for `[SyncService] GET /api/sync/daily successful`. Open Alice after the accepted friendship exists so `/api/sync/daily` can populate the local accepted-friends cache before testing habit invites.
+- **No accepted-friend chips**: Confirm `npm run db:setup` has applied `schema.sql`, run `adb reverse tcp:8787 tcp:8787`, and check logs for a successful `/api/sync/daily`. Open Alice after the accepted friendship exists so the local `accepted_friends` cache is refreshed before testing habit invites.
+- **No shared habit after acceptance**: Verify the owner habit sync succeeded before the invitation was sent, then reopen Bob or trigger another daily sync pull.
 - **Old local D1 state**: If `schema.sql` fails with `no such column: role`, run `npx wrangler d1 execute hable_db --local --command "ALTER TABLE partnerships ADD COLUMN role TEXT NOT NULL DEFAULT 'partner';"` once, then rerun `npm run db:setup`.

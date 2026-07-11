@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/usage_tracked_screen.dart';
 import 'onboarding_complete_screen.dart';
 
 /// Step 3: Duration Setting — 21 days, 66 days, or custom integer.
@@ -58,86 +59,80 @@ class _OnboardingDurationScreenState extends State<OnboardingDurationScreen> {
   Widget build(BuildContext context) {
     final canProceed = _effectiveDuration != null && _effectiveDuration! > 0;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 60),
-              Text(
-                'How long?',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Choose a duration for "${widget.habitTitle}".',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 40),
-
-              // 21 days
-              _DurationOption(
-                days: 21,
-                label: '21 Days',
-                subtitle: 'Build the foundation',
-                isSelected: !_useCustomDuration && _selectedDuration == 21,
-                onTap: () => setState(() {
-                  _selectedDuration = 21;
-                  _useCustomDuration = false;
-                }),
-              ),
-              const SizedBox(height: 12),
-
-              // 66 days
-              _DurationOption(
-                days: 66,
-                label: '66 Days',
-                subtitle: 'Lock it in permanently',
-                isSelected: !_useCustomDuration && _selectedDuration == 66,
-                onTap: () => setState(() {
-                  _selectedDuration = 66;
-                  _useCustomDuration = false;
-                }),
-              ),
-              const SizedBox(height: 12),
-
-              // Custom
-              _DurationOption(
-                days: null,
-                label: 'Custom',
-                subtitle: 'Set your own number of days',
-                isSelected: _useCustomDuration,
-                onTap: () => setState(() {
-                  _useCustomDuration = true;
-                  _selectedDuration = null;
-                }),
-              ),
-
-              if (_useCustomDuration) ...[
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _customController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    hintText: 'Number of days (e.g., 30)',
+    return UsageTrackedScreen(
+      screenName: 'onboarding',
+      child: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 60),
+                Text(
+                  'How long?',
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Choose a duration for "${widget.habitTitle}".',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 40),
+                _DurationOption(
+                  days: 21,
+                  label: '21 Days',
+                  subtitle: 'Build the foundation',
+                  isSelected: !_useCustomDuration && _selectedDuration == 21,
+                  onTap: () => setState(() {
+                    _selectedDuration = 21;
+                    _useCustomDuration = false;
+                  }),
+                ),
+                const SizedBox(height: 12),
+                _DurationOption(
+                  days: 66,
+                  label: '66 Days',
+                  subtitle: 'Lock it in permanently',
+                  isSelected: !_useCustomDuration && _selectedDuration == 66,
+                  onTap: () => setState(() {
+                    _selectedDuration = 66;
+                    _useCustomDuration = false;
+                  }),
+                ),
+                const SizedBox(height: 12),
+                _DurationOption(
+                  days: null,
+                  label: 'Custom',
+                  subtitle: 'Set your own number of days',
+                  isSelected: _useCustomDuration,
+                  onTap: () => setState(() {
+                    _useCustomDuration = true;
+                    _selectedDuration = null;
+                  }),
+                ),
+                if (_useCustomDuration) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _customController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Number of days (e.g., 30)',
+                    ),
+                    onChanged: (_) => setState(() {}),
                   ),
-                  onChanged: (_) => setState(() {}),
+                ],
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: canProceed ? _proceed : null,
+                    child: const Text('Continue'),
+                  ),
                 ),
+                const SizedBox(height: 32),
               ],
-
-              const Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: canProceed ? _proceed : null,
-                  child: const Text('Continue'),
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),
@@ -200,10 +195,11 @@ class _DurationOption extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    Text(subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(label, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                 ),
               ),

@@ -23,6 +23,7 @@ part 'database.g.dart';
     MilestoneEvents,
     AcceptedFriends,
     AchievementUnlocks,
+    UsageAggregateBuckets,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -30,7 +31,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -64,6 +65,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 8) {
         await m.addColumn(users, users.email);
         await m.addColumn(users, users.emailVerifiedAt);
+      }
+      if (from < 9) {
+        await m.createTable(usageAggregateBuckets);
       }
     },
   );
@@ -153,6 +157,27 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     }
+  }
+
+  Future<void> completeHabitDay(String habitId) async {
+    final habit = await getHabit(habitId);
+    if (habit == null) return;
+
+    final remainingDays = habit.currentDuration > 0
+        ? habit.currentDuration - 1
+        : 0;
+    final nextStatus = remainingDays == 0
+        ? HabitStatus.completed
+        : HabitStatus.active;
+
+    await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
+      HabitsCompanion(
+        currentDuration: Value(remainingDays),
+        status: Value(nextStatus),
+        updatedAt: Value(DateTime.now()),
+        isSynced: const Value(false),
+      ),
+    );
   }
 
   Future<void> updateHabitStatus(String habitId, HabitStatus newStatus) =>
@@ -467,6 +492,22 @@ class AppDatabase extends _$AppDatabase {
         const SyncQueueCompanion(isProcessed: Value(true)),
       );
 
+  Future<void> markHabitSynced(String habitId) =>
+      (update(habits)..where((h) => h.habitId.equals(habitId))).write(
+        HabitsCompanion(
+          updatedAt: Value(DateTime.now()),
+          isSynced: const Value(true),
+        ),
+      );
+
+  Future<void> markLogSynced(String logId) =>
+      (update(logs)..where((l) => l.logId.equals(logId))).write(
+        LogsCompanion(
+          updatedAt: Value(DateTime.now()),
+          isSynced: const Value(true),
+        ),
+      );
+
   // ---------------------------------------------------------------------------
   // Quote operations
   // ---------------------------------------------------------------------------
@@ -489,6 +530,85 @@ class AppDatabase extends _$AppDatabase {
           ..limit(1))
         .getSingleOrNull();
   }
+
+  // ---------------------------------------------------------------------------
+  // Usage diagnostics
+  // ---------------------------------------------------------------------------
+
+  Future<void> incrementUsageAggregateBucket({
+    required String bucketDate,
+    required String platform,
+    required String buildChannel,
+    required String screenName,
+    required String metricName,
+    required int countDelta,
+    required int durationMsDelta,
+    required DateTime updatedAt,
+  }) async {
+    await customStatement(
+      '''
+      INSERT INTO usage_aggregate_buckets (
+        bucket_date,
+        platform,
+        build_channel,
+        screen_name,
+        metric_name,
+        count,
+        total_duration_ms,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(bucket_date, platform, build_channel, screen_name, metric_name)
+      DO UPDATE SET
+        count = usage_aggregate_buckets.count + excluded.count,
+        total_duration_ms = usage_aggregate_buckets.total_duration_ms + excluded.total_duration_ms,
+        updated_at = excluded.updated_at
+      ''',
+      [
+        bucketDate,
+        platform,
+        buildChannel,
+        screenName,
+        metricName,
+        countDelta,
+        durationMsDelta,
+        updatedAt.millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  Future<List<UsageAggregateBucket>> getUsageAggregateBuckets() =>
+      (select(usageAggregateBuckets)..orderBy([
+            (t) => OrderingTerm.desc(t.bucketDate),
+            (t) => OrderingTerm.asc(t.screenName),
+            (t) => OrderingTerm.asc(t.metricName),
+          ]))
+          .get();
+
+  Future<List<UsageAggregateBucket>> getPendingUsageAggregateBuckets() =>
+      (select(usageAggregateBuckets)..where(
+            (t) =>
+                t.count.isBiggerThan(t.uploadedCount) |
+                t.totalDurationMs.isBiggerThan(t.uploadedTotalDurationMs),
+          ))
+          .get();
+
+  Future<void> markUsageAggregateBucketUploaded(UsageAggregateBucket row) =>
+      (update(usageAggregateBuckets)..where(
+            (t) =>
+                t.bucketDate.equals(row.bucketDate) &
+                t.platform.equals(row.platform) &
+                t.buildChannel.equals(row.buildChannel) &
+                t.screenName.equals(row.screenName) &
+                t.metricName.equals(row.metricName),
+          ))
+          .write(
+            UsageAggregateBucketsCompanion(
+              uploadedCount: Value(row.count),
+              uploadedTotalDurationMs: Value(row.totalDurationMs),
+              updatedAt: Value(DateTime.now().toUtc()),
+            ),
+          );
 
   // ---------------------------------------------------------------------------
   // Unsynced records for background push

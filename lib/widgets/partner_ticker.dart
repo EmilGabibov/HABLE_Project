@@ -58,14 +58,12 @@ class PartnerTicker extends StatelessWidget {
                       backgroundColor: habitColor.withValues(alpha: 0.9),
                       duration: const Duration(seconds: 2),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   );
                 },
-                child: _PartnerAvatar(
-                  partner: partner,
-                  habitColor: habitColor,
-                ),
+                child: _PartnerAvatar(partner: partner, habitColor: habitColor),
               );
             },
           ),
@@ -83,11 +81,13 @@ class _PartnerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        partner.username.isNotEmpty ? partner.username[0].toUpperCase() : '?';
+    final initial = partner.username.isNotEmpty
+        ? partner.username[0].toUpperCase()
+        : '?';
 
     return Semantics(
-      label: '${partner.username}, ${partner.hasCompletedToday ? "completed today" : "not completed yet"}. Tap to nudge.',
+      label:
+          '${partner.username}, ${partner.hasCompletedToday ? "completed today" : "not completed yet"}. Tap to nudge.',
       button: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,

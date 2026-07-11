@@ -23,7 +23,7 @@ class TokenizationResult {
 class _TokenizationTask {
   final String documentId;
   final String text;
-  
+
   _TokenizationTask(this.documentId, this.text);
 }
 
@@ -35,7 +35,7 @@ class SearchEngine {
   Future<void> indexDocument(String documentId, String text) async {
     final task = _TokenizationTask(documentId, text);
     final result = await compute(_tokenize, task);
-    
+
     // Merge the result safely in the main isolate
     _mergeIndex(result);
   }
@@ -43,18 +43,21 @@ class SearchEngine {
   /// Internal tokenization logic that runs in an isolate
   static TokenizationResult _tokenize(_TokenizationTask task) {
     final Map<String, List<int>> localIndex = {};
-    
+
     // Simple tokenizer: lowercase, replace punctuation with spaces, split by whitespace
-    final normalized = task.text.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), ' ');
+    final normalized = task.text.toLowerCase().replaceAll(
+      RegExp(r'[^\w\s]'),
+      ' ',
+    );
     final tokens = normalized.split(RegExp(r'\s+'));
-    
+
     for (int i = 0; i < tokens.length; i++) {
       final token = tokens[i].trim();
       if (token.isNotEmpty) {
         localIndex.putIfAbsent(token, () => []).add(i);
       }
     }
-    
+
     return TokenizationResult(task.documentId, localIndex);
   }
 
@@ -63,7 +66,7 @@ class SearchEngine {
     for (final entry in result.invertedIndex.entries) {
       final term = entry.key;
       final positions = entry.value;
-      
+
       _index.putIfAbsent(term, () => {})[result.documentId] = positions;
     }
   }
@@ -76,11 +79,15 @@ class SearchEngine {
     }
 
     final docMap = _index[term]!;
-    final unsortedHits = docMap.entries.map((e) => SearchHit(
-      documentId: e.key,
-      termFrequency: e.value.length,
-      positions: e.value,
-    )).toList();
+    final unsortedHits = docMap.entries
+        .map(
+          (e) => SearchHit(
+            documentId: e.key,
+            termFrequency: e.value.length,
+            positions: e.value,
+          ),
+        )
+        .toList();
 
     // Use custom merge sort for ranking
     return _mergeSortHits(unsortedHits);

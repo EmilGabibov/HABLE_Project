@@ -135,14 +135,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> login(String username, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'username': username, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -175,11 +174,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> testLogin(String userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId}),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'user_id': userId}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -211,14 +212,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> register(String username, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/auth/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'username': username, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -251,11 +251,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> requestPin(String email) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/auth/request-pin'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/auth/request-pin'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email}),
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         state = state.copyWith(isLoading: false);
         return true;
@@ -274,18 +276,24 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> resetPassword(String email, String pin, String newPassword) async {
+  Future<bool> resetPassword(
+    String email,
+    String pin,
+    String newPassword,
+  ) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/auth/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'pin': pin,
-          'new_password': newPassword,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/auth/reset-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': email,
+              'pin': pin,
+              'new_password': newPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         state = state.copyWith(isLoading: false);
         return true;
@@ -313,14 +321,16 @@ class AuthNotifier extends Notifier<AuthState> {
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/user/email/request-pin'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'email': email}),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/user/email/request-pin'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'email': email}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         state = state.copyWith(isLoading: false);
@@ -351,14 +361,16 @@ class AuthNotifier extends Notifier<AuthState> {
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/user/email/verify-pin'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'email': email, 'pin': pin}),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/user/email/verify-pin'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'email': email, 'pin': pin}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -393,23 +405,27 @@ class AuthNotifier extends Notifier<AuthState> {
     if (token == null || userId == null) return false;
 
     try {
-      final response = await http.put(
-        Uri.parse('$apiBaseUrl/api/user/avatar'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'avatar_url': avatarUrl}),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('$apiBaseUrl/api/user/avatar'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'avatar_url': avatarUrl}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         // Update local database
-        await _db.into(_db.users).insertOnConflictUpdate(
-          UsersCompanion(
-            userId: Value(userId),
-            avatarUrl: Value(avatarUrl),
-          ),
-        );
+        await _db
+            .into(_db.users)
+            .insertOnConflictUpdate(
+              UsersCompanion(
+                userId: Value(userId),
+                avatarUrl: Value(avatarUrl),
+              ),
+            );
         return true;
       }
       return false;
@@ -453,16 +469,20 @@ class AuthNotifier extends Notifier<AuthState> {
     DateTime? emailVerifiedAt,
   }) async {
     // Upsert user into local Drift DB so the app can function offline
-    await _db.into(_db.users).insertOnConflictUpdate(UsersCompanion(
-      userId: Value(userId),
-      username: Value(username),
-      email: Value(email?.toString()),
-      emailVerifiedAt: Value(emailVerifiedAt),
-      avatarUrl: Value(avatarUrl),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-      isSynced: const Value(true),
-    ));
+    await _db
+        .into(_db.users)
+        .insertOnConflictUpdate(
+          UsersCompanion(
+            userId: Value(userId),
+            username: Value(username),
+            email: Value(email?.toString()),
+            emailVerifiedAt: Value(emailVerifiedAt),
+            avatarUrl: Value(avatarUrl),
+            createdAt: Value(DateTime.now()),
+            updatedAt: Value(DateTime.now()),
+            isSynced: const Value(true),
+          ),
+        );
   }
 }
 

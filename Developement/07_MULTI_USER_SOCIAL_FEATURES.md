@@ -35,6 +35,7 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Private Invitation State:** Pending invites are visible only to sender and recipient. Accepting an invite creates the partnership rows for that habit; declining does not expose progress.
 - **Mutual Tracking After Accept:** Only after acceptance does the partner appear in social surfaces such as `PartnerTicker`, daily sync payloads, and future 3D linked habit views.
 - **Current Card Surface:** The practical MVP surface is the Home habit card itself: role-aware avatars, daily-completion state, and capped partner counts should sit next to the habit rather than in a disconnected global strip.
+- **Lifecycle Reconciliation:** Daily sync must carry enough metadata for the receiving install to keep shared habits aligned with backend truth, including archive state and the viewer's own remaining-days progress, instead of only showing the partner's snapshot.
 
 ## Technical Implementation Considerations
 

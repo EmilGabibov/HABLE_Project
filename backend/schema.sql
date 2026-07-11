@@ -133,6 +133,21 @@ CREATE TABLE IF NOT EXISTS calendar_feed_tokens (
 CREATE INDEX IF NOT EXISTS idx_calendar_feed_tokens_hash
 ON calendar_feed_tokens(token_hash);
 
+CREATE TABLE IF NOT EXISTS usage_aggregate_buckets (
+    bucket_date TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    build_channel TEXT NOT NULL,
+    screen_name TEXT NOT NULL,
+    metric_name TEXT NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0,
+    total_duration_ms INTEGER NOT NULL DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (bucket_date, platform, build_channel, screen_name, metric_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_usage_aggregate_buckets_date
+ON usage_aggregate_buckets(bucket_date, platform, build_channel);
+
 -- Insert some dummy data for local testing
 INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES 
 ('local-user-1', 'Alice', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),

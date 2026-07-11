@@ -22,125 +22,117 @@ class AppTheme {
 
   // ── Glassmorphism helper ─────────────────────────────────────────────────
   static BoxDecoration get glassmorphism => BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 24,
-            spreadRadius: 0,
-          ),
-        ],
-      );
+    color: Colors.white.withValues(alpha: 0.15),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.05),
+        blurRadius: 24,
+        spreadRadius: 0,
+      ),
+    ],
+  );
 
   static BoxDecoration get glassmorphismDark => BoxDecoration(
-        color: deepCharcoal.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 32,
-            spreadRadius: 0,
-          ),
-        ],
-      );
+    color: deepCharcoal.withValues(alpha: 0.6),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.2),
+        blurRadius: 32,
+        spreadRadius: 0,
+      ),
+    ],
+  );
 
   // ── Theme Data ───────────────────────────────────────────────────────────
   static ThemeData get lightTheme => ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: surface,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: sageGreen,
-          brightness: Brightness.light,
-          surface: surface,
-          primary: sageGreen,
-          secondary: mutedLavender,
-          error: overdueRose,
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: surface,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: sageGreen,
+      brightness: Brightness.light,
+      surface: surface,
+      primary: sageGreen,
+      secondary: mutedLavender,
+      error: overdueRose,
+    ),
+    textTheme: GoogleFonts.nunitoTextTheme().copyWith(
+      headlineLarge: GoogleFonts.nunito(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: deepCharcoal,
+        height: 1.3,
+      ),
+      headlineMedium: GoogleFonts.nunito(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: deepCharcoal,
+        height: 1.3,
+      ),
+      titleLarge: GoogleFonts.nunito(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: deepCharcoal,
+      ),
+      titleMedium: GoogleFonts.nunito(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: deepCharcoal,
+      ),
+      bodyLarge: GoogleFonts.nunito(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: deepCharcoal,
+        height: 1.6,
+      ),
+      bodyMedium: GoogleFonts.nunito(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: warmGray,
+        height: 1.5,
+      ),
+      labelLarge: GoogleFonts.nunito(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: sageGreen,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: GoogleFonts.nunito(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
         ),
-        textTheme: GoogleFonts.nunitoTextTheme().copyWith(
-          headlineLarge: GoogleFonts.nunito(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: deepCharcoal,
-            height: 1.3,
-          ),
-          headlineMedium: GoogleFonts.nunito(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: deepCharcoal,
-            height: 1.3,
-          ),
-          titleLarge: GoogleFonts.nunito(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: deepCharcoal,
-          ),
-          titleMedium: GoogleFonts.nunito(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: deepCharcoal,
-          ),
-          bodyLarge: GoogleFonts.nunito(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: deepCharcoal,
-            height: 1.6,
-          ),
-          bodyMedium: GoogleFonts.nunito(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: warmGray,
-            height: 1.5,
-          ),
-          labelLarge: GoogleFonts.nunito(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: sageGreen,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: GoogleFonts.nunito(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: surfaceVariant,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: sageGreen, width: 1.5),
-          ),
-          hintStyle: GoogleFonts.nunito(
-            color: warmGray.withValues(alpha: 0.6),
-          ),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        ),
-      );
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: surfaceVariant,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: sageGreen, width: 1.5),
+      ),
+      hintStyle: GoogleFonts.nunito(color: warmGray.withValues(alpha: 0.6)),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    ),
+  );
 }

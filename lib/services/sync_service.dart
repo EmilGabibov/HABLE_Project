@@ -66,6 +66,7 @@ class SyncService {
   /// Send a mutation payload to the Cloudflare Worker.
   Future<void> _sendToCloudflare(SyncQueueData item) async {
     final headers = await _getAuthHeaders();
+    final payload = jsonDecode(item.payload) as Map<String, dynamic>;
     if (item.action == SyncAction.sendNudge) {
       try {
         final response = await http.post(
@@ -149,6 +150,10 @@ class SyncService {
             'Failed to sync habit: ${response.statusCode} - ${response.body}',
           );
         }
+        final habitId = payload['habit_id']?.toString();
+        if (habitId != null && habitId.isNotEmpty) {
+          await _db.markHabitSynced(habitId);
+        }
         debugPrint('[SyncService] POST SYNC_HABIT successful');
       } catch (e) {
         debugPrint('[SyncService] Habit sync failed: $e');
@@ -165,6 +170,10 @@ class SyncService {
           throw Exception(
             'Failed to log habit: ${response.statusCode} - ${response.body}',
           );
+        }
+        final logId = payload['log_id']?.toString();
+        if (logId != null && logId.isNotEmpty) {
+          await _db.markLogSynced(logId);
         }
         debugPrint('[SyncService] POST SYNC_LOG successful');
       } catch (e) {
@@ -254,10 +263,15 @@ class SyncService {
                   targetDuration: Value(
                     (partner['target_duration'] as num?)?.toInt() ?? 30,
                   ),
-                  currentDuration: const Value(
-                    0,
-                  ), // user's own current duration is fetched elsewhere or starts at 0
-                  status: const Value(HabitStatus.active),
+                  currentDuration: Value(
+                    (partner['viewer_remaining_days'] as num?)?.toInt() ??
+                        ((partner['target_duration'] as num?)?.toInt() ?? 30),
+                  ),
+                  status: Value(
+                    (partner['status']?.toString() ?? 'active') == 'abandoned'
+                        ? HabitStatus.abandoned
+                        : HabitStatus.active,
+                  ),
                   colorHex: Value(
                     partner['color_hex']?.toString() ?? 'FF9CAF88',
                   ),

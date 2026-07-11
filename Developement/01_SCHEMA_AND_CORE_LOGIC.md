@@ -36,6 +36,8 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * **`habit_invitations` table:** `id` (PK), `requester_id`, `recipient_id`, `habit_id`, `status`, `created_at`. Pending duplicates for the same requester/recipient/habit are idempotent.
 * **`accepted_friends` table:** Drift-only cache of accepted friends (`friend_user_id`, `username`, `avatar_url`) populated from daily sync for offline habit-invite pickers.
 * **`SearchDocuments` table:** Local Drift-only metadata for offline search (id, title, author, source, etc).
+* **`UsageAggregateBuckets` table:** Drift-only coarse diagnostics buckets keyed by `bucket_date`, `platform`, `build_channel`, `screen_name`, and `metric_name`, with aggregate `count`, aggregate `total_duration_ms`, and local upload-watermark columns. This table must never include user IDs, emails, usernames, auth tokens, device/session/install IDs, IPs, user agents, habit titles, or route parameters.
+* **`usage_aggregate_buckets` table:** D1-only development aggregate sink keyed by the same coarse dimensions. It stores only rolled-up counts and rounded duration totals for `app_open`, `screen_visit`, and `screen_visible_ms`.
 
 ### B. Cloudflare KV (Key-Value) - High-Speed Transient Data
 
@@ -52,3 +54,5 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * `GET /api/social/search` & `GET /api/social/leaderboard` - Used by the Social Hub UI.
 * `POST /api/social/friend-request` & `/accept` & `GET /api/social/friend-request` - Friend request lifecycle.
 * `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit. Accepting an invite adds the recipient as `partner` and fans out directed partnership rows to existing participants.
+* `POST /api/dev/usage-aggregate` - Development-only anonymous aggregate upsert endpoint. Accepts only allowlisted screen labels plus rounded counts/duration totals and must reject any user-linked dimensions.
+* `GET /api/dev/usage-report` - Development-only HTML/JSON report for aggregate buckets. It must show only coarse totals and hide low-volume buckets rather than exposing a user-level event stream.

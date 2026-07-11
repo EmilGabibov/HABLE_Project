@@ -10,4 +10,3 @@ Future<QueryExecutor> openConnection() async {
   final file = File(p.join(dbFolder.path, 'hable.sqlite'));
   return NativeDatabase.createInBackground(file);
 }
-
