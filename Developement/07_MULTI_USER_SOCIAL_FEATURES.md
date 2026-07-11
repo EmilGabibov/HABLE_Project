@@ -36,6 +36,7 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Mutual Tracking After Accept:** Only after acceptance does the partner appear in social surfaces such as `PartnerTicker`, daily sync payloads, and future 3D linked habit views.
 - **Current Card Surface:** The practical MVP surface is the Home habit card itself: role-aware avatars, daily-completion state, and capped partner counts should sit next to the habit rather than in a disconnected global strip.
 - **Lifecycle Reconciliation:** Daily sync must carry enough metadata for the receiving install to keep shared habits aligned with backend truth, including archive state and the viewer's own remaining-days progress, instead of only showing the partner's snapshot.
+- **Unified Notification Surface:** The same daily sync pass should also hydrate a Drift-backed notification center for nudges, friend requests, accepted-friend changes, invites, and private messages. Social events should not stay trapped inside their source tabs if the user misses them live.
 
 ## Technical Implementation Considerations
 

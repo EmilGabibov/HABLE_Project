@@ -23,6 +23,8 @@ part 'database.g.dart';
     MilestoneEvents,
     AcceptedFriends,
     AchievementUnlocks,
+    NotificationEvents,
+    ReminderSettings,
     UsageAggregateBuckets,
   ],
 )
@@ -31,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -68,6 +70,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await m.createTable(usageAggregateBuckets);
+      }
+      if (from < 10) {
+        await m.createTable(notificationEvents);
+        await m.createTable(reminderSettings);
       }
     },
   );
@@ -704,6 +710,10 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertAcceptedFriend(AcceptedFriendsCompanion friend) =>
       into(acceptedFriends).insertOnConflictUpdate(friend);
 
+  Future<AcceptedFriend?> getAcceptedFriend(String friendUserId) => (select(
+    acceptedFriends,
+  )..where((f) => f.friendUserId.equals(friendUserId))).getSingleOrNull();
+
   Stream<List<AcceptedFriend>> watchAcceptedFriends() =>
       select(acceptedFriends).watch();
 
@@ -719,6 +729,75 @@ class AppDatabase extends _$AppDatabase {
             ..where((a) => a.userId.equals(userId))
             ..orderBy([(a) => OrderingTerm.desc(a.unlockedAt)]))
           .watch();
+
+  // ---------------------------------------------------------------------------
+  // Notification center operations
+  // ---------------------------------------------------------------------------
+
+  Future<void> upsertNotificationEvent(NotificationEventsCompanion event) =>
+      into(notificationEvents).insertOnConflictUpdate(event);
+
+  Stream<List<NotificationEvent>> watchNotificationsForUser(String userId) =>
+      (select(notificationEvents)
+            ..where((n) => n.userId.equals(userId))
+            ..orderBy([
+              (n) => OrderingTerm.asc(n.readAt),
+              (n) => OrderingTerm.desc(n.createdAt),
+            ]))
+          .watch();
+
+  Stream<List<NotificationEvent>> watchUnreadNotificationsForUser(
+    String userId,
+  ) => (select(notificationEvents)
+        ..where((n) => n.userId.equals(userId) & n.readAt.isNull())
+        ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
+      .watch();
+
+  Future<void> markNotificationRead(String notificationId) =>
+      (update(notificationEvents)
+            ..where((n) => n.notificationId.equals(notificationId)))
+          .write(
+            NotificationEventsCompanion(
+              readAt: Value(DateTime.now()),
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
+
+  Future<void> markAllNotificationsRead(String userId) {
+    final now = DateTime.now();
+    return (update(notificationEvents)
+          ..where((n) => n.userId.equals(userId) & n.readAt.isNull()))
+        .write(
+          NotificationEventsCompanion(
+            readAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+  }
+
+  Future<void> deleteExpiredNotificationEvents() =>
+      (delete(notificationEvents)
+            ..where(
+              (n) =>
+                  n.expiresAt.isNotNull() &
+                  n.expiresAt.isSmallerThanValue(DateTime.now()),
+            ))
+          .go();
+
+  // ---------------------------------------------------------------------------
+  // Reminder settings operations
+  // ---------------------------------------------------------------------------
+
+  Future<void> saveReminderSetting(ReminderSettingsCompanion setting) =>
+      into(reminderSettings).insertOnConflictUpdate(setting);
+
+  Future<ReminderSetting?> getReminderSetting(String userId) => (select(
+    reminderSettings,
+  )..where((r) => r.userId.equals(userId))).getSingleOrNull();
+
+  Stream<ReminderSetting?> watchReminderSetting(String userId) => (select(
+    reminderSettings,
+  )..where((r) => r.userId.equals(userId))).watchSingleOrNull();
 
   // ---------------------------------------------------------------------------
   // Habit color palette assignment

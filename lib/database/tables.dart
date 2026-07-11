@@ -9,6 +9,16 @@ enum LogStatus { completed, skipped }
 /// Participant role for a shared habit.
 enum PartnershipRole { owner, partner, supporter }
 
+/// Local notification center event types.
+enum NotificationEventType {
+  nudge,
+  privateMessage,
+  habitInvitation,
+  friendRequest,
+  friendAccepted,
+  reminderSetting,
+}
+
 /// Sync queue action types for outbound mutations.
 enum SyncAction {
   createHabit,
@@ -210,6 +220,38 @@ class AchievementUnlocks extends Table {
 
   @override
   Set<Column> get primaryKey => {userId, achievementId};
+}
+
+/// Offline-first notification center events for the current user.
+class NotificationEvents extends Table {
+  TextColumn get notificationId => text()();
+  TextColumn get userId => text()();
+  TextColumn get type => textEnum<NotificationEventType>()();
+  TextColumn get sourceType => text()();
+  TextColumn get sourceId => text().nullable()();
+  TextColumn get title => text()();
+  TextColumn get body => text()();
+  TextColumn get actionRoute => text().nullable()();
+  TextColumn get actionPayloadJson => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get expiresAt => dateTime().nullable()();
+  DateTimeColumn get readAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {notificationId};
+}
+
+/// Per-user local reminder preference for one daily habit review reminder.
+class ReminderSettings extends Table {
+  TextColumn get userId => text()();
+  BoolColumn get isEnabled => boolean().withDefault(const Constant(false))();
+  IntColumn get hour => integer().withDefault(const Constant(20))();
+  IntColumn get minute => integer().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {userId};
 }
 
 /// Coarse anonymous diagnostics buckets for development-only usage reporting.

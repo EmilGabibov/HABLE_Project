@@ -220,6 +220,40 @@ class SyncService {
         final data = jsonDecode(response.body);
         debugPrint('[SyncService] GET /api/sync/daily successful');
 
+        await _db.deleteExpiredNotificationEvents();
+
+        // Persist accepted friends first so later notification rows can resolve
+        // usernames without waiting for another sync cycle.
+        final List<dynamic> acceptedFriends = data['accepted_friends'] ?? [];
+        for (final friend in acceptedFriends) {
+          final friendId = friend['friend_id']?.toString() ?? '';
+          if (friendId.isEmpty) continue;
+          final existingFriend = await _db.getAcceptedFriend(friendId);
+          await _db.upsertAcceptedFriend(
+            AcceptedFriendsCompanion(
+              friendUserId: Value(friendId),
+              username: Value(friend['username'].toString()),
+              avatarUrl: Value(friend['avatar_url']?.toString()),
+              updatedAt: Value(DateTime.now()),
+              isSynced: const Value(true),
+            ),
+          );
+
+          if (existingFriend == null) {
+            await _upsertNotificationEvent(
+              userId: userId,
+              notificationId: 'friend_accepted:$friendId',
+              type: NotificationEventType.friendAccepted,
+              sourceType: 'accepted_friend',
+              sourceId: friendId,
+              title: 'New friend connected',
+              body: 'You are now connected with ${friend['username']}.',
+              actionRoute: 'social_friends',
+              actionPayload: {'friend_id': friendId},
+            );
+          }
+        }
+
         // Persist partner snapshots → Drift (offline-first)
         final List<dynamic> partners = data['partners'] ?? [];
         for (final partner in partners) {
@@ -285,10 +319,34 @@ class SyncService {
           );
         }
 
-        // Log nudges (will be surfaced in UI in future task)
+        // Persist nudges as notification rows.
         final List<dynamic> nudges = data['nudges'] ?? [];
         for (final nudge in nudges) {
-          debugPrint('[SyncService] Received Nudge from ${nudge['senderId']}');
+          final senderId = nudge['senderId']?.toString() ?? '';
+          final timestamp = nudge['timestamp']?.toString();
+          if (senderId.isEmpty) continue;
+          final friend = await _db.getAcceptedFriend(senderId);
+          await _upsertNotificationEvent(
+            userId: userId,
+            notificationId: 'nudge:$senderId:${timestamp ?? 'now'}',
+            type: NotificationEventType.nudge,
+            sourceType: 'nudge',
+            sourceId: senderId,
+            title: 'You were nudged',
+            body:
+                '${friend?.username ?? 'A friend'} sent you a reminder on a shared habit.',
+            actionRoute: 'home',
+            actionPayload: {
+              'sender_id': senderId,
+              ...?timestamp == null ? null : {'timestamp': timestamp},
+            },
+            createdAt: DateTime.tryParse(timestamp ?? '') ?? DateTime.now(),
+            expiresAt: timestamp == null
+                ? null
+                : DateTime.tryParse(
+                    timestamp,
+                  )?.add(const Duration(hours: 24)),
+          );
         }
 
         // Persist private messages
@@ -305,6 +363,21 @@ class SyncService {
               updatedAt: Value(DateTime.now()),
               isSynced: const Value(true),
             ),
+          );
+
+          await _upsertNotificationEvent(
+            userId: userId,
+            notificationId: 'private_message:${msg['id']}',
+            type: NotificationEventType.privateMessage,
+            sourceType: 'private_message',
+            sourceId: msg['id']?.toString(),
+            title: 'New private message',
+            body: msg['message']?.toString() ?? 'Open Social Hub to read it.',
+            actionRoute: 'social_inbox',
+            actionPayload: {'message_id': msg['id']?.toString()},
+            createdAt:
+                DateTime.tryParse(msg['created_at']?.toString() ?? '') ??
+                DateTime.now(),
           );
         }
 
@@ -323,19 +396,48 @@ class SyncService {
               isSynced: const Value(true),
             ),
           );
+
+          final requesterId = inv['requester_id']?.toString() ?? '';
+          final requester = requesterId.isEmpty
+              ? null
+              : await _db.getAcceptedFriend(requesterId);
+          await _upsertNotificationEvent(
+            userId: userId,
+            notificationId: 'habit_invitation:${inv['id']}',
+            type: NotificationEventType.habitInvitation,
+            sourceType: 'habit_invitation',
+            sourceId: inv['id']?.toString(),
+            title: 'Habit invite',
+            body:
+                '${requester?.username ?? 'A friend'} invited you to a shared habit.',
+            actionRoute: 'home',
+            actionPayload: {
+              'invitation_id': inv['id']?.toString(),
+              'habit_id': inv['habit_id']?.toString(),
+            },
+            createdAt:
+                DateTime.tryParse(inv['created_at']?.toString() ?? '') ??
+                DateTime.now(),
+          );
         }
 
-        // Persist accepted friends
-        final List<dynamic> acceptedFriends = data['accepted_friends'] ?? [];
-        for (final friend in acceptedFriends) {
-          await _db.upsertAcceptedFriend(
-            AcceptedFriendsCompanion(
-              friendUserId: Value(friend['friend_id'].toString()),
-              username: Value(friend['username'].toString()),
-              avatarUrl: Value(friend['avatar_url']?.toString()),
-              updatedAt: Value(DateTime.now()),
-              isSynced: const Value(true),
-            ),
+        // Persist friend requests as notification rows.
+        final List<dynamic> friendRequests = data['friend_requests'] ?? [];
+        for (final request in friendRequests) {
+          await _upsertNotificationEvent(
+            userId: userId,
+            notificationId: 'friend_request:${request['id']}',
+            type: NotificationEventType.friendRequest,
+            sourceType: 'friend_request',
+            sourceId: request['id']?.toString(),
+            title: 'Friend request',
+            body:
+                '${request['requester_username'] ?? 'Someone'} wants to connect.',
+            actionRoute: 'social_requests',
+            actionPayload: {'request_id': request['id']?.toString()},
+            createdAt:
+                DateTime.tryParse(request['created_at']?.toString() ?? '') ??
+                DateTime.now(),
           );
         }
 
@@ -389,5 +491,40 @@ class SyncService {
 
   void dispose() {
     _connectivity.dispose();
+  }
+
+  Future<void> _upsertNotificationEvent({
+    required String userId,
+    required String notificationId,
+    required NotificationEventType type,
+    required String sourceType,
+    String? sourceId,
+    required String title,
+    required String body,
+    String? actionRoute,
+    Map<String, dynamic>? actionPayload,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+  }) async {
+    final now = DateTime.now();
+    await _db.upsertNotificationEvent(
+      NotificationEventsCompanion(
+        notificationId: Value(notificationId),
+        userId: Value(userId),
+        type: Value(type),
+        sourceType: Value(sourceType),
+        sourceId: Value(sourceId),
+        title: Value(title),
+        body: Value(body),
+        actionRoute: Value(actionRoute),
+        actionPayloadJson: Value(
+          actionPayload == null ? null : jsonEncode(actionPayload),
+        ),
+        createdAt: Value(createdAt ?? now),
+        expiresAt: Value(expiresAt),
+        readAt: const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
   }
 }

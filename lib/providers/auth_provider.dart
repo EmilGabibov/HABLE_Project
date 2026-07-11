@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' hide Column;
 import '../config/api_config.dart';
 import '../database/database.dart';
+import '../services/local_reminder_service.dart';
 import 'database_provider.dart';
 import 'package:flutter/foundation.dart';
 
@@ -126,6 +127,7 @@ class AuthNotifier extends Notifier<AuthState> {
         username: username,
         isInitialized: true,
       );
+      unawaited(_restoreReminderForUser(userId));
       return;
     }
 
@@ -153,6 +155,7 @@ class AuthNotifier extends Notifier<AuthState> {
           email: data['email'],
           emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
         );
+        await _restoreReminderForUser(data['user_id'].toString());
         state = state.copyWith(isLoading: false);
         return true;
       } else {
@@ -192,6 +195,7 @@ class AuthNotifier extends Notifier<AuthState> {
           email: data['email'],
           emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
         );
+        await _restoreReminderForUser(data['user_id'].toString());
         state = state.copyWith(isLoading: false);
         return true;
       }
@@ -230,6 +234,7 @@ class AuthNotifier extends Notifier<AuthState> {
           email: data['email'],
           emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
         );
+        await _restoreReminderForUser(data['user_id'].toString());
         state = state.copyWith(isLoading: false);
         return true;
       } else {
@@ -441,6 +446,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
+    final userId = state.userId;
+    if (userId != null) {
+      await _cancelReminderForUser(userId);
+    }
     await _storage.deleteAll();
     state = state.copyWith(
       isLoading: false,
@@ -483,6 +492,31 @@ class AuthNotifier extends Notifier<AuthState> {
             isSynced: const Value(true),
           ),
         );
+  }
+
+  Future<void> _restoreReminderForUser(String userId) async {
+    final setting = await _db.getReminderSetting(userId);
+    if (setting == null || !setting.isEnabled) return;
+
+    try {
+      await ref.read(localReminderServiceProvider).scheduleDailyReminder(
+        userId: userId,
+        hour: setting.hour,
+        minute: setting.minute,
+        title: 'Hable reminder',
+        body: 'Open Hable and check today\'s habits.',
+      );
+    } catch (error) {
+      debugPrint('Failed to restore reminder schedule: $error');
+    }
+  }
+
+  Future<void> _cancelReminderForUser(String userId) async {
+    try {
+      await ref.read(localReminderServiceProvider).cancelReminder(userId);
+    } catch (error) {
+      debugPrint('Failed to cancel reminder schedule: $error');
+    }
   }
 }
 

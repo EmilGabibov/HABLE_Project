@@ -24,11 +24,17 @@ class UsageTrackedScreen extends ConsumerStatefulWidget {
 class _UsageTrackedScreenState extends ConsumerState<UsageTrackedScreen>
     with RouteAware, WidgetsBindingObserver {
   ModalRoute<void>? _route;
+  late final Future<void> Function() _markVisibleCallback;
+  late final Future<void> Function() _markHiddenCallback;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final diagnostics = ref.read(usageDiagnosticsProvider);
+    _markVisibleCallback =
+        () => diagnostics.screenBecameVisible(widget.screenName);
+    _markHiddenCallback = () => diagnostics.screenBecameHidden(widget.screenName);
   }
 
   @override
@@ -95,15 +101,11 @@ class _UsageTrackedScreenState extends ConsumerState<UsageTrackedScreen>
   }
 
   Future<void> _markVisible() {
-    return ref
-        .read(usageDiagnosticsProvider)
-        .screenBecameVisible(widget.screenName);
+    return _markVisibleCallback();
   }
 
   Future<void> _markHidden() {
-    return ref
-        .read(usageDiagnosticsProvider)
-        .screenBecameHidden(widget.screenName);
+    return _markHiddenCallback();
   }
 
   @override

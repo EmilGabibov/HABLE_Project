@@ -32,6 +32,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Receiving a Nudge:**
   * During the background sync, the Worker checks KV for any active nudges.
   * Passed to the Flutter client in the sync payload, then immediately deleted from KV.
+  * Flutter should also normalize the received nudge into a local `notification_events` row so the user can revisit it from the notification center after the ephemeral KV event has been consumed.
 
 ## 3. The "Partner Whisper" UI
 
@@ -39,6 +40,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Payload Fields:** `GET /api/sync/daily` should provide `role` plus a daily completion bit (`has_completed_today`) for each partner snapshot so Flutter can render rings and role labels from Drift without guessing.
 * **Status Indicators:** Completed-today partners use the habit-colored ring; incomplete partners are muted; supporters carry a softer read-only tint. Overflow beyond four avatars collapses to `+N`.
 * **In-App Notification:** Sending a nudge should still produce a lightweight in-app snackbar, never an OS-level push notification in this MVP.
+* **Unified Social Notification Stream:** Friend requests, accepted-friend events, private messages, habit invitations, and nudges should all fan into the same Drift-backed notification center so Home and Social Hub share one unread model instead of bespoke badges.
 
 ## 4. The Daily Quote Engine
 
@@ -62,7 +64,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 
 ## 7. Anonymous Development Diagnostics
 
-* **Scope:** Hable may collect only coarse development aggregates for `app_open`, `screen_visit`, and rounded `screen_visible_ms`. Allowlisted screen labels are static (`auth`, `home`, `profile`, `social_hub`, `habit_form`, `onboarding`) and must never include usernames, habit titles, route arguments, or free-form text.
+* **Scope:** Hable may collect only coarse development aggregates for `app_open`, `screen_visit`, and rounded `screen_visible_ms`. Allowlisted screen labels are static (`auth`, `home`, `profile`, `social_hub`, `notification_center`, `habit_form`, `onboarding`) and must never include usernames, habit titles, route arguments, or free-form text.
 * **Storage Rules:** Flutter stores aggregate buckets in Drift. Optional remote upload writes only to `usage_aggregate_buckets` in D1. No user ID, email, username, auth token, device/install/session ID, IP address, user agent, cookie, localStorage identifier, fingerprinting probe, or raw event timeline belongs in diagnostics data.
 * **Remote Upload Gate:** Remote diagnostics are disabled by default and require an explicit compile-time flag. The client should upload without auth headers so aggregate data cannot be linked back to accounts.
 * **Report Surface:** The Worker may expose a development-only aggregate report (`/api/dev/usage-report`) that shows coarse totals only and hides low-volume buckets. This is not a product analytics dashboard and must not become a per-user drilldown tool.

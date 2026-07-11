@@ -14,6 +14,7 @@ const allowedUsageScreenNames = <String>{
   'home',
   'profile',
   'social_hub',
+  'notification_center',
   'habit_form',
   'onboarding',
 };

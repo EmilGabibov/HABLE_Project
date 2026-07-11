@@ -6221,6 +6221,1145 @@ class AchievementUnlocksCompanion extends UpdateCompanion<AchievementUnlock> {
   }
 }
 
+class $NotificationEventsTable extends NotificationEvents
+    with TableInfo<$NotificationEventsTable, NotificationEvent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NotificationEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _notificationIdMeta = const VerificationMeta(
+    'notificationId',
+  );
+  @override
+  late final GeneratedColumn<String> notificationId = GeneratedColumn<String>(
+    'notification_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<NotificationEventType, String>
+  type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<NotificationEventType>(
+        $NotificationEventsTable.$convertertype,
+      );
+  static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
+    'sourceType',
+  );
+  @override
+  late final GeneratedColumn<String> sourceType = GeneratedColumn<String>(
+    'source_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionRouteMeta = const VerificationMeta(
+    'actionRoute',
+  );
+  @override
+  late final GeneratedColumn<String> actionRoute = GeneratedColumn<String>(
+    'action_route',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _actionPayloadJsonMeta = const VerificationMeta(
+    'actionPayloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> actionPayloadJson =
+      GeneratedColumn<String>(
+        'action_payload_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expiresAt = GeneratedColumn<DateTime>(
+    'expires_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<DateTime> readAt = GeneratedColumn<DateTime>(
+    'read_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    notificationId,
+    userId,
+    type,
+    sourceType,
+    sourceId,
+    title,
+    body,
+    actionRoute,
+    actionPayloadJson,
+    createdAt,
+    expiresAt,
+    readAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'notification_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NotificationEvent> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('notification_id')) {
+      context.handle(
+        _notificationIdMeta,
+        notificationId.isAcceptableOrUnknown(
+          data['notification_id']!,
+          _notificationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_notificationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('source_type')) {
+      context.handle(
+        _sourceTypeMeta,
+        sourceType.isAcceptableOrUnknown(data['source_type']!, _sourceTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceTypeMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('action_route')) {
+      context.handle(
+        _actionRouteMeta,
+        actionRoute.isAcceptableOrUnknown(
+          data['action_route']!,
+          _actionRouteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('action_payload_json')) {
+      context.handle(
+        _actionPayloadJsonMeta,
+        actionPayloadJson.isAcceptableOrUnknown(
+          data['action_payload_json']!,
+          _actionPayloadJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(
+        _readAtMeta,
+        readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {notificationId};
+  @override
+  NotificationEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NotificationEvent(
+      notificationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notification_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      type: $NotificationEventsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      sourceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_type'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      actionRoute: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_route'],
+      ),
+      actionPayloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_payload_json'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expires_at'],
+      ),
+      readAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}read_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $NotificationEventsTable createAlias(String alias) {
+    return $NotificationEventsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<NotificationEventType, String, String>
+  $convertertype = const EnumNameConverter<NotificationEventType>(
+    NotificationEventType.values,
+  );
+}
+
+class NotificationEvent extends DataClass
+    implements Insertable<NotificationEvent> {
+  final String notificationId;
+  final String userId;
+  final NotificationEventType type;
+  final String sourceType;
+  final String? sourceId;
+  final String title;
+  final String body;
+  final String? actionRoute;
+  final String? actionPayloadJson;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final DateTime? readAt;
+  final DateTime updatedAt;
+  const NotificationEvent({
+    required this.notificationId,
+    required this.userId,
+    required this.type,
+    required this.sourceType,
+    this.sourceId,
+    required this.title,
+    required this.body,
+    this.actionRoute,
+    this.actionPayloadJson,
+    required this.createdAt,
+    this.expiresAt,
+    this.readAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['notification_id'] = Variable<String>(notificationId);
+    map['user_id'] = Variable<String>(userId);
+    {
+      map['type'] = Variable<String>(
+        $NotificationEventsTable.$convertertype.toSql(type),
+      );
+    }
+    map['source_type'] = Variable<String>(sourceType);
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    map['title'] = Variable<String>(title);
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || actionRoute != null) {
+      map['action_route'] = Variable<String>(actionRoute);
+    }
+    if (!nullToAbsent || actionPayloadJson != null) {
+      map['action_payload_json'] = Variable<String>(actionPayloadJson);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || expiresAt != null) {
+      map['expires_at'] = Variable<DateTime>(expiresAt);
+    }
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<DateTime>(readAt);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  NotificationEventsCompanion toCompanion(bool nullToAbsent) {
+    return NotificationEventsCompanion(
+      notificationId: Value(notificationId),
+      userId: Value(userId),
+      type: Value(type),
+      sourceType: Value(sourceType),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      title: Value(title),
+      body: Value(body),
+      actionRoute: actionRoute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionRoute),
+      actionPayloadJson: actionPayloadJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionPayloadJson),
+      createdAt: Value(createdAt),
+      expiresAt: expiresAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiresAt),
+      readAt: readAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory NotificationEvent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NotificationEvent(
+      notificationId: serializer.fromJson<String>(json['notificationId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      type: $NotificationEventsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
+      sourceType: serializer.fromJson<String>(json['sourceType']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      title: serializer.fromJson<String>(json['title']),
+      body: serializer.fromJson<String>(json['body']),
+      actionRoute: serializer.fromJson<String?>(json['actionRoute']),
+      actionPayloadJson: serializer.fromJson<String?>(
+        json['actionPayloadJson'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      expiresAt: serializer.fromJson<DateTime?>(json['expiresAt']),
+      readAt: serializer.fromJson<DateTime?>(json['readAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'notificationId': serializer.toJson<String>(notificationId),
+      'userId': serializer.toJson<String>(userId),
+      'type': serializer.toJson<String>(
+        $NotificationEventsTable.$convertertype.toJson(type),
+      ),
+      'sourceType': serializer.toJson<String>(sourceType),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'title': serializer.toJson<String>(title),
+      'body': serializer.toJson<String>(body),
+      'actionRoute': serializer.toJson<String?>(actionRoute),
+      'actionPayloadJson': serializer.toJson<String?>(actionPayloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'expiresAt': serializer.toJson<DateTime?>(expiresAt),
+      'readAt': serializer.toJson<DateTime?>(readAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  NotificationEvent copyWith({
+    String? notificationId,
+    String? userId,
+    NotificationEventType? type,
+    String? sourceType,
+    Value<String?> sourceId = const Value.absent(),
+    String? title,
+    String? body,
+    Value<String?> actionRoute = const Value.absent(),
+    Value<String?> actionPayloadJson = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> expiresAt = const Value.absent(),
+    Value<DateTime?> readAt = const Value.absent(),
+    DateTime? updatedAt,
+  }) => NotificationEvent(
+    notificationId: notificationId ?? this.notificationId,
+    userId: userId ?? this.userId,
+    type: type ?? this.type,
+    sourceType: sourceType ?? this.sourceType,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    title: title ?? this.title,
+    body: body ?? this.body,
+    actionRoute: actionRoute.present ? actionRoute.value : this.actionRoute,
+    actionPayloadJson: actionPayloadJson.present
+        ? actionPayloadJson.value
+        : this.actionPayloadJson,
+    createdAt: createdAt ?? this.createdAt,
+    expiresAt: expiresAt.present ? expiresAt.value : this.expiresAt,
+    readAt: readAt.present ? readAt.value : this.readAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  NotificationEvent copyWithCompanion(NotificationEventsCompanion data) {
+    return NotificationEvent(
+      notificationId: data.notificationId.present
+          ? data.notificationId.value
+          : this.notificationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      type: data.type.present ? data.type.value : this.type,
+      sourceType: data.sourceType.present
+          ? data.sourceType.value
+          : this.sourceType,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      title: data.title.present ? data.title.value : this.title,
+      body: data.body.present ? data.body.value : this.body,
+      actionRoute: data.actionRoute.present
+          ? data.actionRoute.value
+          : this.actionRoute,
+      actionPayloadJson: data.actionPayloadJson.present
+          ? data.actionPayloadJson.value
+          : this.actionPayloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationEvent(')
+          ..write('notificationId: $notificationId, ')
+          ..write('userId: $userId, ')
+          ..write('type: $type, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('actionRoute: $actionRoute, ')
+          ..write('actionPayloadJson: $actionPayloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    notificationId,
+    userId,
+    type,
+    sourceType,
+    sourceId,
+    title,
+    body,
+    actionRoute,
+    actionPayloadJson,
+    createdAt,
+    expiresAt,
+    readAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NotificationEvent &&
+          other.notificationId == this.notificationId &&
+          other.userId == this.userId &&
+          other.type == this.type &&
+          other.sourceType == this.sourceType &&
+          other.sourceId == this.sourceId &&
+          other.title == this.title &&
+          other.body == this.body &&
+          other.actionRoute == this.actionRoute &&
+          other.actionPayloadJson == this.actionPayloadJson &&
+          other.createdAt == this.createdAt &&
+          other.expiresAt == this.expiresAt &&
+          other.readAt == this.readAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class NotificationEventsCompanion extends UpdateCompanion<NotificationEvent> {
+  final Value<String> notificationId;
+  final Value<String> userId;
+  final Value<NotificationEventType> type;
+  final Value<String> sourceType;
+  final Value<String?> sourceId;
+  final Value<String> title;
+  final Value<String> body;
+  final Value<String?> actionRoute;
+  final Value<String?> actionPayloadJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> expiresAt;
+  final Value<DateTime?> readAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const NotificationEventsCompanion({
+    this.notificationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.sourceType = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.body = const Value.absent(),
+    this.actionRoute = const Value.absent(),
+    this.actionPayloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NotificationEventsCompanion.insert({
+    required String notificationId,
+    required String userId,
+    required NotificationEventType type,
+    required String sourceType,
+    this.sourceId = const Value.absent(),
+    required String title,
+    required String body,
+    this.actionRoute = const Value.absent(),
+    this.actionPayloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : notificationId = Value(notificationId),
+       userId = Value(userId),
+       type = Value(type),
+       sourceType = Value(sourceType),
+       title = Value(title),
+       body = Value(body);
+  static Insertable<NotificationEvent> custom({
+    Expression<String>? notificationId,
+    Expression<String>? userId,
+    Expression<String>? type,
+    Expression<String>? sourceType,
+    Expression<String>? sourceId,
+    Expression<String>? title,
+    Expression<String>? body,
+    Expression<String>? actionRoute,
+    Expression<String>? actionPayloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? expiresAt,
+    Expression<DateTime>? readAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (notificationId != null) 'notification_id': notificationId,
+      if (userId != null) 'user_id': userId,
+      if (type != null) 'type': type,
+      if (sourceType != null) 'source_type': sourceType,
+      if (sourceId != null) 'source_id': sourceId,
+      if (title != null) 'title': title,
+      if (body != null) 'body': body,
+      if (actionRoute != null) 'action_route': actionRoute,
+      if (actionPayloadJson != null) 'action_payload_json': actionPayloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (readAt != null) 'read_at': readAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NotificationEventsCompanion copyWith({
+    Value<String>? notificationId,
+    Value<String>? userId,
+    Value<NotificationEventType>? type,
+    Value<String>? sourceType,
+    Value<String?>? sourceId,
+    Value<String>? title,
+    Value<String>? body,
+    Value<String?>? actionRoute,
+    Value<String?>? actionPayloadJson,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? expiresAt,
+    Value<DateTime?>? readAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return NotificationEventsCompanion(
+      notificationId: notificationId ?? this.notificationId,
+      userId: userId ?? this.userId,
+      type: type ?? this.type,
+      sourceType: sourceType ?? this.sourceType,
+      sourceId: sourceId ?? this.sourceId,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      actionRoute: actionRoute ?? this.actionRoute,
+      actionPayloadJson: actionPayloadJson ?? this.actionPayloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      readAt: readAt ?? this.readAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (notificationId.present) {
+      map['notification_id'] = Variable<String>(notificationId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $NotificationEventsTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (sourceType.present) {
+      map['source_type'] = Variable<String>(sourceType.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (actionRoute.present) {
+      map['action_route'] = Variable<String>(actionRoute.value);
+    }
+    if (actionPayloadJson.present) {
+      map['action_payload_json'] = Variable<String>(actionPayloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<DateTime>(expiresAt.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<DateTime>(readAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationEventsCompanion(')
+          ..write('notificationId: $notificationId, ')
+          ..write('userId: $userId, ')
+          ..write('type: $type, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('actionRoute: $actionRoute, ')
+          ..write('actionPayloadJson: $actionPayloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReminderSettingsTable extends ReminderSettings
+    with TableInfo<$ReminderSettingsTable, ReminderSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReminderSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isEnabledMeta = const VerificationMeta(
+    'isEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> isEnabled = GeneratedColumn<bool>(
+    'is_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(20),
+  );
+  static const VerificationMeta _minuteMeta = const VerificationMeta('minute');
+  @override
+  late final GeneratedColumn<int> minute = GeneratedColumn<int>(
+    'minute',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    isEnabled,
+    hour,
+    minute,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reminder_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReminderSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('is_enabled')) {
+      context.handle(
+        _isEnabledMeta,
+        isEnabled.isAcceptableOrUnknown(data['is_enabled']!, _isEnabledMeta),
+      );
+    }
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    }
+    if (data.containsKey('minute')) {
+      context.handle(
+        _minuteMeta,
+        minute.isAcceptableOrUnknown(data['minute']!, _minuteMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  ReminderSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReminderSetting(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      isEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_enabled'],
+      )!,
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      minute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minute'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ReminderSettingsTable createAlias(String alias) {
+    return $ReminderSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
+  final String userId;
+  final bool isEnabled;
+  final int hour;
+  final int minute;
+  final DateTime updatedAt;
+  const ReminderSetting({
+    required this.userId,
+    required this.isEnabled,
+    required this.hour,
+    required this.minute,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['is_enabled'] = Variable<bool>(isEnabled);
+    map['hour'] = Variable<int>(hour);
+    map['minute'] = Variable<int>(minute);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ReminderSettingsCompanion toCompanion(bool nullToAbsent) {
+    return ReminderSettingsCompanion(
+      userId: Value(userId),
+      isEnabled: Value(isEnabled),
+      hour: Value(hour),
+      minute: Value(minute),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ReminderSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReminderSetting(
+      userId: serializer.fromJson<String>(json['userId']),
+      isEnabled: serializer.fromJson<bool>(json['isEnabled']),
+      hour: serializer.fromJson<int>(json['hour']),
+      minute: serializer.fromJson<int>(json['minute']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'isEnabled': serializer.toJson<bool>(isEnabled),
+      'hour': serializer.toJson<int>(hour),
+      'minute': serializer.toJson<int>(minute),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ReminderSetting copyWith({
+    String? userId,
+    bool? isEnabled,
+    int? hour,
+    int? minute,
+    DateTime? updatedAt,
+  }) => ReminderSetting(
+    userId: userId ?? this.userId,
+    isEnabled: isEnabled ?? this.isEnabled,
+    hour: hour ?? this.hour,
+    minute: minute ?? this.minute,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ReminderSetting copyWithCompanion(ReminderSettingsCompanion data) {
+    return ReminderSetting(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      isEnabled: data.isEnabled.present ? data.isEnabled.value : this.isEnabled,
+      hour: data.hour.present ? data.hour.value : this.hour,
+      minute: data.minute.present ? data.minute.value : this.minute,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReminderSetting(')
+          ..write('userId: $userId, ')
+          ..write('isEnabled: $isEnabled, ')
+          ..write('hour: $hour, ')
+          ..write('minute: $minute, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, isEnabled, hour, minute, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReminderSetting &&
+          other.userId == this.userId &&
+          other.isEnabled == this.isEnabled &&
+          other.hour == this.hour &&
+          other.minute == this.minute &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
+  final Value<String> userId;
+  final Value<bool> isEnabled;
+  final Value<int> hour;
+  final Value<int> minute;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ReminderSettingsCompanion({
+    this.userId = const Value.absent(),
+    this.isEnabled = const Value.absent(),
+    this.hour = const Value.absent(),
+    this.minute = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReminderSettingsCompanion.insert({
+    required String userId,
+    this.isEnabled = const Value.absent(),
+    this.hour = const Value.absent(),
+    this.minute = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId);
+  static Insertable<ReminderSetting> custom({
+    Expression<String>? userId,
+    Expression<bool>? isEnabled,
+    Expression<int>? hour,
+    Expression<int>? minute,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (isEnabled != null) 'is_enabled': isEnabled,
+      if (hour != null) 'hour': hour,
+      if (minute != null) 'minute': minute,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReminderSettingsCompanion copyWith({
+    Value<String>? userId,
+    Value<bool>? isEnabled,
+    Value<int>? hour,
+    Value<int>? minute,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ReminderSettingsCompanion(
+      userId: userId ?? this.userId,
+      isEnabled: isEnabled ?? this.isEnabled,
+      hour: hour ?? this.hour,
+      minute: minute ?? this.minute,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (isEnabled.present) {
+      map['is_enabled'] = Variable<bool>(isEnabled.value);
+    }
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (minute.present) {
+      map['minute'] = Variable<int>(minute.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReminderSettingsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('isEnabled: $isEnabled, ')
+          ..write('hour: $hour, ')
+          ..write('minute: $minute, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $UsageAggregateBucketsTable extends UsageAggregateBuckets
     with TableInfo<$UsageAggregateBucketsTable, UsageAggregateBucket> {
   @override
@@ -6894,6 +8033,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $AchievementUnlocksTable achievementUnlocks =
       $AchievementUnlocksTable(this);
+  late final $NotificationEventsTable notificationEvents =
+      $NotificationEventsTable(this);
+  late final $ReminderSettingsTable reminderSettings = $ReminderSettingsTable(
+    this,
+  );
   late final $UsageAggregateBucketsTable usageAggregateBuckets =
       $UsageAggregateBucketsTable(this);
   @override
@@ -6914,6 +8058,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     milestoneEvents,
     acceptedFriends,
     achievementUnlocks,
+    notificationEvents,
+    reminderSettings,
     usageAggregateBuckets,
   ];
 }
@@ -10742,6 +11888,590 @@ typedef $$AchievementUnlocksTableProcessedTableManager =
       AchievementUnlock,
       PrefetchHooks Function()
     >;
+typedef $$NotificationEventsTableCreateCompanionBuilder =
+    NotificationEventsCompanion Function({
+      required String notificationId,
+      required String userId,
+      required NotificationEventType type,
+      required String sourceType,
+      Value<String?> sourceId,
+      required String title,
+      required String body,
+      Value<String?> actionRoute,
+      Value<String?> actionPayloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime?> expiresAt,
+      Value<DateTime?> readAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$NotificationEventsTableUpdateCompanionBuilder =
+    NotificationEventsCompanion Function({
+      Value<String> notificationId,
+      Value<String> userId,
+      Value<NotificationEventType> type,
+      Value<String> sourceType,
+      Value<String?> sourceId,
+      Value<String> title,
+      Value<String> body,
+      Value<String?> actionRoute,
+      Value<String?> actionPayloadJson,
+      Value<DateTime> createdAt,
+      Value<DateTime?> expiresAt,
+      Value<DateTime?> readAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$NotificationEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $NotificationEventsTable> {
+  $$NotificationEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    NotificationEventType,
+    NotificationEventType,
+    String
+  >
+  get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionRoute => $composableBuilder(
+    column: $table.actionRoute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionPayloadJson => $composableBuilder(
+    column: $table.actionPayloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NotificationEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $NotificationEventsTable> {
+  $$NotificationEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionRoute => $composableBuilder(
+    column: $table.actionRoute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionPayloadJson => $composableBuilder(
+    column: $table.actionPayloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NotificationEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NotificationEventsTable> {
+  $$NotificationEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<NotificationEventType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get actionRoute => $composableBuilder(
+    column: $table.actionRoute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actionPayloadJson => $composableBuilder(
+    column: $table.actionPayloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$NotificationEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $NotificationEventsTable,
+          NotificationEvent,
+          $$NotificationEventsTableFilterComposer,
+          $$NotificationEventsTableOrderingComposer,
+          $$NotificationEventsTableAnnotationComposer,
+          $$NotificationEventsTableCreateCompanionBuilder,
+          $$NotificationEventsTableUpdateCompanionBuilder,
+          (
+            NotificationEvent,
+            BaseReferences<
+              _$AppDatabase,
+              $NotificationEventsTable,
+              NotificationEvent
+            >,
+          ),
+          NotificationEvent,
+          PrefetchHooks Function()
+        > {
+  $$NotificationEventsTableTableManager(
+    _$AppDatabase db,
+    $NotificationEventsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NotificationEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NotificationEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NotificationEventsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> notificationId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<NotificationEventType> type = const Value.absent(),
+                Value<String> sourceType = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String?> actionRoute = const Value.absent(),
+                Value<String?> actionPayloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> expiresAt = const Value.absent(),
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationEventsCompanion(
+                notificationId: notificationId,
+                userId: userId,
+                type: type,
+                sourceType: sourceType,
+                sourceId: sourceId,
+                title: title,
+                body: body,
+                actionRoute: actionRoute,
+                actionPayloadJson: actionPayloadJson,
+                createdAt: createdAt,
+                expiresAt: expiresAt,
+                readAt: readAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String notificationId,
+                required String userId,
+                required NotificationEventType type,
+                required String sourceType,
+                Value<String?> sourceId = const Value.absent(),
+                required String title,
+                required String body,
+                Value<String?> actionRoute = const Value.absent(),
+                Value<String?> actionPayloadJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> expiresAt = const Value.absent(),
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationEventsCompanion.insert(
+                notificationId: notificationId,
+                userId: userId,
+                type: type,
+                sourceType: sourceType,
+                sourceId: sourceId,
+                title: title,
+                body: body,
+                actionRoute: actionRoute,
+                actionPayloadJson: actionPayloadJson,
+                createdAt: createdAt,
+                expiresAt: expiresAt,
+                readAt: readAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NotificationEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $NotificationEventsTable,
+      NotificationEvent,
+      $$NotificationEventsTableFilterComposer,
+      $$NotificationEventsTableOrderingComposer,
+      $$NotificationEventsTableAnnotationComposer,
+      $$NotificationEventsTableCreateCompanionBuilder,
+      $$NotificationEventsTableUpdateCompanionBuilder,
+      (
+        NotificationEvent,
+        BaseReferences<
+          _$AppDatabase,
+          $NotificationEventsTable,
+          NotificationEvent
+        >,
+      ),
+      NotificationEvent,
+      PrefetchHooks Function()
+    >;
+typedef $$ReminderSettingsTableCreateCompanionBuilder =
+    ReminderSettingsCompanion Function({
+      required String userId,
+      Value<bool> isEnabled,
+      Value<int> hour,
+      Value<int> minute,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ReminderSettingsTableUpdateCompanionBuilder =
+    ReminderSettingsCompanion Function({
+      Value<String> userId,
+      Value<bool> isEnabled,
+      Value<int> hour,
+      Value<int> minute,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ReminderSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReminderSettingsTable> {
+  $$ReminderSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isEnabled => $composableBuilder(
+    column: $table.isEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minute => $composableBuilder(
+    column: $table.minute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReminderSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReminderSettingsTable> {
+  $$ReminderSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isEnabled => $composableBuilder(
+    column: $table.isEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minute => $composableBuilder(
+    column: $table.minute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReminderSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReminderSettingsTable> {
+  $$ReminderSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isEnabled =>
+      $composableBuilder(column: $table.isEnabled, builder: (column) => column);
+
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<int> get minute =>
+      $composableBuilder(column: $table.minute, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ReminderSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReminderSettingsTable,
+          ReminderSetting,
+          $$ReminderSettingsTableFilterComposer,
+          $$ReminderSettingsTableOrderingComposer,
+          $$ReminderSettingsTableAnnotationComposer,
+          $$ReminderSettingsTableCreateCompanionBuilder,
+          $$ReminderSettingsTableUpdateCompanionBuilder,
+          (
+            ReminderSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $ReminderSettingsTable,
+              ReminderSetting
+            >,
+          ),
+          ReminderSetting,
+          PrefetchHooks Function()
+        > {
+  $$ReminderSettingsTableTableManager(
+    _$AppDatabase db,
+    $ReminderSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReminderSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReminderSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReminderSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<bool> isEnabled = const Value.absent(),
+                Value<int> hour = const Value.absent(),
+                Value<int> minute = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReminderSettingsCompanion(
+                userId: userId,
+                isEnabled: isEnabled,
+                hour: hour,
+                minute: minute,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                Value<bool> isEnabled = const Value.absent(),
+                Value<int> hour = const Value.absent(),
+                Value<int> minute = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReminderSettingsCompanion.insert(
+                userId: userId,
+                isEnabled: isEnabled,
+                hour: hour,
+                minute: minute,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReminderSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReminderSettingsTable,
+      ReminderSetting,
+      $$ReminderSettingsTableFilterComposer,
+      $$ReminderSettingsTableOrderingComposer,
+      $$ReminderSettingsTableAnnotationComposer,
+      $$ReminderSettingsTableCreateCompanionBuilder,
+      $$ReminderSettingsTableUpdateCompanionBuilder,
+      (
+        ReminderSetting,
+        BaseReferences<_$AppDatabase, $ReminderSettingsTable, ReminderSetting>,
+      ),
+      ReminderSetting,
+      PrefetchHooks Function()
+    >;
 typedef $$UsageAggregateBucketsTableCreateCompanionBuilder =
     UsageAggregateBucketsCompanion Function({
       required String bucketDate,
@@ -11099,6 +12829,10 @@ class $AppDatabaseManager {
       $$AcceptedFriendsTableTableManager(_db, _db.acceptedFriends);
   $$AchievementUnlocksTableTableManager get achievementUnlocks =>
       $$AchievementUnlocksTableTableManager(_db, _db.achievementUnlocks);
+  $$NotificationEventsTableTableManager get notificationEvents =>
+      $$NotificationEventsTableTableManager(_db, _db.notificationEvents);
+  $$ReminderSettingsTableTableManager get reminderSettings =>
+      $$ReminderSettingsTableTableManager(_db, _db.reminderSettings);
   $$UsageAggregateBucketsTableTableManager get usageAggregateBuckets =>
       $$UsageAggregateBucketsTableTableManager(_db, _db.usageAggregateBuckets);
 }

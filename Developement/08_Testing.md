@@ -30,6 +30,8 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Home Habit Creation:** From Home, tap the header add button and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Nudges:** Tap a partner avatar to enqueue a nudge. Wait for background sync and verify receipt on the twin app.
+- **Notification Center:** After sending a nudge, message, invite, or friend request, verify the receiver's Home bell shows a local unread badge and the notification center lists the event even after reopening the app.
+- **Daily Reminder:** From Profile, enable the daily reminder, grant OS permission, choose a time, restart the app, and verify the setting persists locally and restores scheduling without another prompt. Then disable it and verify the scheduled reminder is canceled.
 
 *(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure.)*
 

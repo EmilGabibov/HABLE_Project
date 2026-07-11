@@ -10,6 +10,7 @@ import '../providers/resistance_provider.dart';
 import '../providers/quote_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
+import '../providers/notification_providers.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
 import '../models/habit_visual_state.dart';
@@ -21,6 +22,7 @@ import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/milestone_wish_carousel.dart';
 import '../widgets/usage_tracked_screen.dart';
+import 'notification_center_screen.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
@@ -140,6 +142,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           size: 22,
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final unreadAsync = ref.watch(
+                          unreadNotificationCountProvider,
+                        );
+                        final unreadCount = unreadAsync.value ?? 0;
+                        return IconButton(
+                          tooltip: 'Open notifications',
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => NotificationCenterScreen(
+                                  userId: widget.userId,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surfaceVariant,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: AppTheme.deepCharcoal,
+                                  size: 22,
+                                ),
+                              ),
+                              if (unreadCount > 0)
+                                Positioned(
+                                  right: -2,
+                                  top: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 2,
+                                    ),
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.overdueRose,
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(999),
+                                      ),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    child: Text(
+                                      unreadCount > 9
+                                          ? '9+'
+                                          : unreadCount.toString(),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(width: 8),
                     IconButton(

@@ -13,6 +13,7 @@ import '../widgets/user_avatar.dart';
 import '../widgets/avatar_picker_sheet.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notification_providers.dart';
 import '../providers/social_providers.dart';
 import '../providers/calendar_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -198,6 +199,13 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, _) => const SizedBox.shrink(),
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: _DailyReminderCard(userId: userId),
                 ),
               ),
 
@@ -854,6 +862,148 @@ class _CloudSyncActivationCardState
         ),
       ),
     );
+  }
+}
+
+class _DailyReminderCard extends ConsumerWidget {
+  final String userId;
+
+  const _DailyReminderCard({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reminderAsync = ref.watch(reminderSettingForUserProvider(userId));
+    final actions = ref.read(notificationActionsProvider);
+
+    return reminderAsync.when(
+      data: (setting) {
+        final enabled = setting?.isEnabled ?? false;
+        final hour = setting?.hour ?? 20;
+        final minute = setting?.minute ?? 0;
+        final timeLabel = _formatReminderTime(hour, minute);
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.alarm_rounded,
+                      color: AppTheme.deepCharcoal,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Daily reminder',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Switch(
+                      value: enabled,
+                      onChanged: (value) async {
+                        final success = await actions.updateDailyReminder(
+                          userId: userId,
+                          enabled: value,
+                          hour: hour,
+                          minute: minute,
+                        );
+                        if (!context.mounted) return;
+                        if (!success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Reminder permission was denied on this device.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  enabled
+                      ? 'A local reminder is scheduled for $timeLabel on this device.'
+                      : 'Enable one daily reminder to return to today\'s habits.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.warmGray.withValues(alpha: 0.9),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final initial = TimeOfDay(hour: hour, minute: minute);
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: initial,
+                        );
+                        if (picked == null || !context.mounted) return;
+                        if (!enabled) {
+                          await actions.updateReminderPreferenceTime(
+                            userId: userId,
+                            enabled: false,
+                            hour: picked.hour,
+                            minute: picked.minute,
+                          );
+                        } else {
+                          final success = await actions.updateDailyReminder(
+                            userId: userId,
+                            enabled: true,
+                            hour: picked.hour,
+                            minute: picked.minute,
+                          );
+                          if (!context.mounted) return;
+                          if (!success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Reminder permission was denied on this device.',
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.schedule_rounded),
+                      label: Text('Time: $timeLabel'),
+                    ),
+                    if (enabled)
+                      TextButton(
+                        onPressed: () async {
+                          await actions.updateDailyReminder(
+                            userId: userId,
+                            enabled: false,
+                            hour: hour,
+                            minute: minute,
+                          );
+                        },
+                        child: const Text('Turn off'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, _) => Text('Error: $error'),
+    );
+  }
+
+  String _formatReminderTime(int hour, int minute) {
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+    final minuteText = minute.toString().padLeft(2, '0');
+    return '$hour12:$minuteText $period';
   }
 }
 

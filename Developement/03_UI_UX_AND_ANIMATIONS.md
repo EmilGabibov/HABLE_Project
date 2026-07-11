@@ -9,10 +9,12 @@ This document provides the complete technical specification and native Flutter c
 * **Habit Creation:** The shared `HabitFormSheet` is the single post-onboarding creation/edit surface. Home exposes a labeled add button in the header and an empty-state Add habit button; Profile remains the management/editing surface. The sheet offers quick-select chips from `standard_habits.dart`, a day-duration field, color selection, and an accepted-friend partner picker for new habits.
 * **Home Suggestions:** Suggested preset cards are quick-start shortcuts for the empty Home state only. Once active habits exist, Home should prioritize today's habit cards and keep the add action compact.
 * **Home Progress Labels:** Home habit cards should distinguish challenge progress (`Challenge: Day X of N`) from consecutive-completion streaks. Avoid duplicating day count and fire-streak language around the ring.
+* **Notification Entry:** Home should expose a compact bell entry point with a local unread badge, not a full extra tab. The bell opens a dedicated notification center screen backed by Drift state.
 * **Skip Privacy:** The skip journal is a private local reflection surface. The UI may require the text before applying the skip penalty, but that free-form note must not be sent in shared-habit sync payloads or partner-facing APIs.
 * **Per-Card Social Context:** Habit cards should carry the primary partner/supporter status surface. Show up to four avatars inline, keep role/status visible without opening another screen, and use a simple `+N` overflow indicator for larger groups.
 * **Auth & Activation:** Initial signup/login should ask for username and password only. Email/PIN verification belongs in Profile as an optional cloud-sync/recovery activation card, so users can start quickly and opt into verified email later.
 * **Profile Progression:** Profile should display server-owned `total_points`, level name, and achievement unlocks cached from `/api/sync/daily`. Do not infer badges from completed local habits as the source of truth.
+* **Reminder Control Placement:** The smallest reminder MVP lives on Profile as a daily reminder card with explicit enable/disable and time selection. Permission prompts must come only from the user toggling reminders on.
 * **Role-Gated Actions:** Supporters can observe and nudge but must not see active completion/skip affordances. Profile habit edit/archive controls should disable gracefully when cached role data says the user is not the owner.
 
 ### 2. Mandatory Friction (Skipping)

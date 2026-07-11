@@ -87,7 +87,9 @@ final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
 
 // --- UI ---
 class SocialHubScreen extends ConsumerStatefulWidget {
-  const SocialHubScreen({super.key});
+  final int initialTabIndex;
+
+  const SocialHubScreen({super.key, this.initialTabIndex = 0});
 
   @override
   ConsumerState<SocialHubScreen> createState() => _SocialHubScreenState();
@@ -102,7 +104,11 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(
+      length: 5,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 4),
+    );
   }
 
   @override
