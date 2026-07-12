@@ -349,6 +349,98 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     }
   }
 
+  Future<void> _revokeFriendship({
+    required String friendUserId,
+    required String username,
+    String? avatarUrl,
+  }) async {
+    final auth = ref.read(authProvider);
+    if (auth.token == null) return;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/api/social/friend-request/revoke'),
+            headers: {
+              'Authorization': 'Bearer ${auth.token}',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'target_user_id': friendUserId}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final db = ref.read(databaseProvider);
+        await db.removeAcceptedFriend(friendUserId);
+        await db.cacheFriendRelationship(
+          userId: friendUserId,
+          username: username,
+          avatarUrl: avatarUrl,
+          relationshipState: 'none',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Removed $username from friends.')),
+          );
+        }
+      } else {
+        throw Exception(response.body);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove friend: $e')));
+      }
+    }
+  }
+
+  Future<void> _showFriendActionsMenu({
+    required BuildContext context,
+    required AcceptedFriend friend,
+    required Offset position,
+  }) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: const [
+        PopupMenuItem<String>(value: 'unfriend', child: Text('Unfriend')),
+      ],
+    );
+
+    if (!context.mounted || action != 'unfriend') return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove friend?'),
+        content: Text('Remove ${friend.username} from your friends list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _revokeFriendship(
+        friendUserId: friend.friendUserId,
+        username: friend.username,
+        avatarUrl: friend.avatarUrl,
+      );
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
@@ -388,7 +480,9 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                         icon: const Icon(Icons.sync_rounded),
                         tooltip: 'Sync now',
                         onPressed: () {
-                          ref.read(foregroundSyncControllerProvider.notifier).syncNow(userId);
+                          ref
+                              .read(foregroundSyncControllerProvider.notifier)
+                              .syncNow(userId);
                         },
                       ),
                     Semantics(
@@ -484,25 +578,23 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               );
             }
             return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final friend = friends[index];
-                  return Card(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: ListTile(
-                      leading: UserAvatar(
-                        avatarUrl: friend.avatarUrl,
-                        username: friend.username,
-                        radius: 20,
-                      ),
-                      title: Text(
-                        friend.username,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppTheme.warmGray,
-                      ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final friend = friends[index];
+                return Card(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onLongPressStart: (details) => _showFriendActionsMenu(
+                      context: context,
+                      friend: friend,
+                      position: details.globalPosition,
+                    ),
+                    onSecondaryTapDown: (details) => _showFriendActionsMenu(
+                      context: context,
+                      friend: friend,
+                      position: details.globalPosition,
+                    ),
+                    child: InkWell(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -513,16 +605,31 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                           ),
                         );
                       },
+                      borderRadius: BorderRadius.circular(16),
+                      child: ListTile(
+                        leading: UserAvatar(
+                          avatarUrl: friend.avatarUrl,
+                          username: friend.username,
+                          radius: 20,
+                        ),
+                        title: Text(
+                          friend.username,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('Long-press for actions'),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppTheme.warmGray,
+                        ),
+                      ),
                     ),
-                  );
-                },
-                childCount: friends.length,
-              ),
+                  ),
+                );
+              }, childCount: friends.length),
             );
           },
-          loading: () => const SliverFillRemaining(
-            child: HableSkeletonList(itemCount: 4),
-          ),
+          loading: () =>
+              const SliverFillRemaining(child: HableSkeletonList(itemCount: 4)),
           error: (e, _) => SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 32.0),
@@ -569,8 +676,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: notifications
-                            .any((n) => n.readAt == null)
+                    onPressed: notifications.any((n) => n.readAt == null)
                         ? () => actions.markAllRead(userId)
                         : null,
                     child: const Text('Mark all read'),
@@ -625,7 +731,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               children: const [
                 Padding(
                   padding: EdgeInsets.only(top: 32.0),
-                  child: Text('No leaderboard scores yet.', textAlign: TextAlign.center),
+                  child: Text(
+                    'No leaderboard scores yet.',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -652,7 +761,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               children: const [
                 Padding(
                   padding: EdgeInsets.only(top: 32.0),
-                  child: Text('No valid leaderboard scores found.', textAlign: TextAlign.center),
+                  child: Text(
+                    'No valid leaderboard scores found.',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -737,9 +849,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _FindFriendsSheet(
-        onSendRequest: _sendFriendRequest,
-      ),
+      builder: (_) => _FindFriendsSheet(onSendRequest: _sendFriendRequest),
     );
   }
 }
@@ -757,13 +867,15 @@ class _PendingRequestsSection extends StatelessWidget {
     required String requesterId,
     required String username,
     String? avatarUrl,
-  }) onAccept;
+  })
+  onAccept;
   final Future<void> Function({
     required String requestId,
     required String requesterId,
     required String username,
     String? avatarUrl,
-  }) onDecline;
+  })
+  onDecline;
 
   const _PendingRequestsSection({
     required this.requests,
@@ -788,52 +900,54 @@ class _PendingRequestsSection extends StatelessWidget {
               ),
             ),
           ),
-          ...requests.map((req) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: UserAvatar(
-                    avatarUrl: req.avatarUrl,
-                    username: req.username,
-                    radius: 20,
-                  ),
-                  title: Text(
-                    req.username,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: const Text('Sent you a friend request'),
-                  trailing: Wrap(
-                    spacing: 8,
-                    children: [
-                      OutlinedButton(
-                        onPressed: req.requestId == null
-                            ? null
-                            : () => onDecline(
-                                requestId: req.requestId!,
-                                requesterId: req.userId,
-                                username: req.username,
-                                avatarUrl: req.avatarUrl,
-                              ),
-                        child: const Text('Decline'),
-                      ),
-                      ElevatedButton(
-                        onPressed: req.requestId == null
-                            ? null
-                            : () => onAccept(
-                                requestId: req.requestId!,
-                                requesterId: req.userId,
-                                username: req.username,
-                                avatarUrl: req.avatarUrl,
-                              ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.sageGreen,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Accept'),
-                      ),
-                    ],
-                  ),
+          ...requests.map(
+            (req) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: UserAvatar(
+                  avatarUrl: req.avatarUrl,
+                  username: req.username,
+                  radius: 20,
                 ),
-              )),
+                title: Text(
+                  req.username,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Sent you a friend request'),
+                trailing: Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: req.requestId == null
+                          ? null
+                          : () => onDecline(
+                              requestId: req.requestId!,
+                              requesterId: req.userId,
+                              username: req.username,
+                              avatarUrl: req.avatarUrl,
+                            ),
+                      child: const Text('Decline'),
+                    ),
+                    ElevatedButton(
+                      onPressed: req.requestId == null
+                          ? null
+                          : () => onAccept(
+                              requestId: req.requestId!,
+                              requesterId: req.userId,
+                              username: req.username,
+                              avatarUrl: req.avatarUrl,
+                            ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.sageGreen,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Accept'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const Divider(),
         ],
       ),
@@ -942,8 +1056,12 @@ class _ActivityCard extends StatelessWidget {
 
 /// Bottom sheet for finding and adding new friends.
 class _FindFriendsSheet extends ConsumerStatefulWidget {
-  final Future<void> Function(String userId, String username, {String? avatarUrl})
-      onSendRequest;
+  final Future<void> Function(
+    String userId,
+    String username, {
+    String? avatarUrl,
+  })
+  onSendRequest;
 
   const _FindFriendsSheet({required this.onSendRequest});
 
@@ -1009,7 +1127,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                 child: _searchQuery.length < 2
                     ? const Padding(
                         padding: EdgeInsets.only(top: 32.0),
-                        child: Text('Type at least 2 characters to search.', textAlign: TextAlign.center),
+                        child: Text(
+                          'Type at least 2 characters to search.',
+                          textAlign: TextAlign.center,
+                        ),
                       )
                     : Consumer(
                         builder: (context, ref, _) {
@@ -1021,7 +1142,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                               if (results.isEmpty) {
                                 return const Padding(
                                   padding: EdgeInsets.only(top: 32.0),
-                                  child: Text('No matches found.', textAlign: TextAlign.center),
+                                  child: Text(
+                                    'No matches found.',
+                                    textAlign: TextAlign.center,
+                                  ),
                                 );
                               }
                               return ListView.builder(
@@ -1042,7 +1166,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                             ),
                             error: (e, _) => Padding(
                               padding: const EdgeInsets.only(top: 32.0),
-                              child: Text('Error: $e', textAlign: TextAlign.center),
+                              child: Text(
+                                'Error: $e',
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           );
                         },
@@ -1059,8 +1186,12 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
 /// A single search result tile in the Find Friends sheet.
 class _SearchResultTile extends ConsumerWidget {
   final dynamic user;
-  final Future<void> Function(String userId, String username, {String? avatarUrl})
-      onSendRequest;
+  final Future<void> Function(
+    String userId,
+    String username, {
+    String? avatarUrl,
+  })
+  onSendRequest;
 
   const _SearchResultTile({required this.user, required this.onSendRequest});
 
@@ -1074,41 +1205,40 @@ class _SearchResultTile extends ConsumerWidget {
     final isSelf = userId == currentUserId;
 
     return ListTile(
-      leading: UserAvatar(
-        avatarUrl: avatarUrl,
-        username: username,
-        radius: 20,
-      ),
+      leading: UserAvatar(avatarUrl: avatarUrl, username: username, radius: 20),
       title: Text(username),
       subtitle: Text(
-        isSelf 
-          ? 'You'
-          : switch (state) {
-              'accepted' => 'Accepted friend',
-              'pending_outgoing' => 'Request sent',
-              'pending_incoming' => 'Waiting for your response',
-              _ => 'Not connected',
-            },
+        isSelf
+            ? 'You'
+            : switch (state) {
+                'accepted' => 'Accepted friend',
+                'pending_outgoing' => 'Request sent',
+                'pending_incoming' => 'Waiting for your response',
+                _ => 'Not connected',
+              },
       ),
-      trailing: isSelf 
+      trailing: isSelf
           ? const Chip(label: Text('You'))
           : switch (state) {
               'accepted' => const Chip(
-                  avatar: Icon(Icons.check_rounded, size: 16),
-                  label: Text('Friends'),
-                ),
+                avatar: Icon(Icons.check_rounded, size: 16),
+                label: Text('Friends'),
+              ),
               'pending_outgoing' => const Chip(label: Text('Requested')),
-              'pending_incoming' => const Chip(label: Text('Respond in Friends')),
+              'pending_incoming' => const Chip(
+                label: Text('Respond in Friends'),
+              ),
               _ => IconButton(
-                  tooltip: 'Send friend request',
-                  icon: const Icon(
-                    Icons.person_add_rounded,
-                    color: AppTheme.sageGreen,
-                  ),
-                  onPressed: userId.isEmpty
-                      ? null
-                      : () => onSendRequest(userId, username, avatarUrl: avatarUrl),
+                tooltip: 'Send friend request',
+                icon: const Icon(
+                  Icons.person_add_rounded,
+                  color: AppTheme.sageGreen,
                 ),
+                onPressed: userId.isEmpty
+                    ? null
+                    : () =>
+                          onSendRequest(userId, username, avatarUrl: avatarUrl),
+              ),
             },
     );
   }

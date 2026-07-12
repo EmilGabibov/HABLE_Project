@@ -317,6 +317,22 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  Future<void> removeHabitLocally(String habitId) async {
+    await transaction(() async {
+      await (delete(logs)..where((l) => l.habitId.equals(habitId))).go();
+      await (delete(
+        partnerships,
+      )..where((p) => p.habitId.equals(habitId))).go();
+      await (delete(
+        partnerSnapshots,
+      )..where((p) => p.habitId.equals(habitId))).go();
+      await (delete(
+        habitInvitations,
+      )..where((i) => i.habitId.equals(habitId))).go();
+      await (delete(habits)..where((h) => h.habitId.equals(habitId))).go();
+    });
+  }
+
   Future<void> restoreHabit(String habitId) async {
     final habit = await getHabit(habitId);
     if (habit == null) return;
@@ -737,6 +753,23 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertAcceptedFriend(AcceptedFriendsCompanion friend) =>
       into(acceptedFriends).insertOnConflictUpdate(friend);
 
+  Future<void> removeAcceptedFriend(String friendUserId) => (delete(
+    acceptedFriends,
+  )..where((friend) => friend.friendUserId.equals(friendUserId))).go();
+
+  Future<void> clearAcceptedFriends() => delete(acceptedFriends).go();
+
+  Future<void> replaceAcceptedFriends(
+    Iterable<AcceptedFriendsCompanion> friends,
+  ) async {
+    await transaction(() async {
+      await clearAcceptedFriends();
+      for (final friend in friends) {
+        await into(acceptedFriends).insertOnConflictUpdate(friend);
+      }
+    });
+  }
+
   Future<AcceptedFriend?> getAcceptedFriend(String friendUserId) => (select(
     acceptedFriends,
   )..where((f) => f.friendUserId.equals(friendUserId))).getSingleOrNull();
@@ -804,8 +837,12 @@ class AppDatabase extends _$AppDatabase {
           .watch();
 
   Future<void> removeSelfFromSocialCaches(String currentUserId) async {
-    await (delete(acceptedFriends)..where((f) => f.friendUserId.equals(currentUserId))).go();
-    await (delete(friendRelationships)..where((r) => r.userId.equals(currentUserId))).go();
+    await (delete(
+      acceptedFriends,
+    )..where((f) => f.friendUserId.equals(currentUserId))).go();
+    await (delete(
+      friendRelationships,
+    )..where((r) => r.userId.equals(currentUserId))).go();
   }
 
   // ---------------------------------------------------------------------------

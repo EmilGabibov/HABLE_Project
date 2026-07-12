@@ -1,0 +1,12 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic [ref=f1e46]:
+          - alertdialog:
+            - generic [ref=f1e47]:
+              - generic [active]: Remove friend?
+            - generic: Remove alice1783851536893 from your friends list?
+            - button "Cancel" [ref=f1e49]
+            - button "Remove" [ref=f1e50]
+        - button "Dismiss" [ref=f1e51]

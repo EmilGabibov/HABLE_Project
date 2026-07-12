@@ -225,27 +225,42 @@ class SyncService {
         // Persist accepted friends first so later notification rows can resolve
         // usernames without waiting for another sync cycle.
         final List<dynamic> acceptedFriends = data['accepted_friends'] ?? [];
+        final acceptedFriendRows = <AcceptedFriendsCompanion>[];
         for (final friend in acceptedFriends) {
           final friendId = friend['friend_id']?.toString() ?? '';
           if (friendId.isEmpty || friendId == userId) continue;
-          final existingFriend = await _db.getAcceptedFriend(friendId);
-          await _db.upsertAcceptedFriend(
+          acceptedFriendRows.add(
             AcceptedFriendsCompanion(
               friendUserId: Value(friendId),
-              username: Value(friend['username'].toString()),
+              username: Value(friend['username']?.toString() ?? 'Friend'),
               avatarUrl: Value(friend['avatar_url']?.toString()),
               updatedAt: Value(DateTime.now()),
               isSynced: const Value(true),
             ),
           );
+        }
+        final existingFriends = await _db.watchAcceptedFriends().first;
+        final existingFriendIds = existingFriends
+            .map((friend) => friend.friendUserId)
+            .toSet();
+        final existingFriendById = {
+          for (final friend in existingFriends) friend.friendUserId: friend,
+        };
+        final nextFriendIds = acceptedFriendRows
+            .map((friend) => friend.friendUserId.value)
+            .toSet();
+        final revokedFriendIds = existingFriendIds.difference(nextFriendIds);
+        await _db.replaceAcceptedFriends(acceptedFriendRows);
+        for (final friend in acceptedFriends) {
+          final friendId = friend['friend_id']?.toString() ?? '';
+          if (friendId.isEmpty || friendId == userId) continue;
           await _db.cacheFriendRelationship(
             userId: friendId,
             username: friend['username']?.toString() ?? 'Friend',
             avatarUrl: friend['avatar_url']?.toString(),
             relationshipState: 'accepted',
           );
-
-          if (existingFriend == null) {
+          if (!existingFriendIds.contains(friendId)) {
             await _upsertNotificationEvent(
               userId: userId,
               notificationId: 'friend_accepted:$friendId',
@@ -259,13 +274,28 @@ class SyncService {
             );
           }
         }
+        for (final revokedFriendId in revokedFriendIds) {
+          final revokedFriend = existingFriendById[revokedFriendId];
+          await _db.cacheFriendRelationship(
+            userId: revokedFriendId,
+            username: revokedFriend?.username ?? revokedFriendId,
+            avatarUrl: revokedFriend?.avatarUrl,
+            relationshipState: 'none',
+          );
+        }
 
         // Persist partner snapshots → Drift (offline-first)
         final List<dynamic> partners = data['partners'] ?? [];
+        final existingPartnerHabits = await _db.watchAllPartners().first;
+        final existingPartnerHabitIds = existingPartnerHabits
+            .map((partner) => partner.habitId)
+            .toSet();
+        final nextPartnerHabitIds = <String>{};
         for (final partner in partners) {
           final habitId = partner['habit_id']?.toString() ?? '';
           final partnerUserId = partner['partner_id']?.toString() ?? '';
           if (habitId.isEmpty || partnerUserId.isEmpty) continue;
+          nextPartnerHabitIds.add(habitId);
 
           await _db.upsertPartnerSnapshot(
             PartnerSnapshotsCompanion(
@@ -323,6 +353,12 @@ class SyncService {
           debugPrint(
             '[SyncService] Upserted partner ${partner['username']} for habit $habitId',
           );
+        }
+        final revokedSharedHabitIds = existingPartnerHabitIds.difference(
+          nextPartnerHabitIds,
+        );
+        for (final habitId in revokedSharedHabitIds) {
+          await _db.removeHabitLocally(habitId);
         }
 
         // Persist nudges as notification rows.

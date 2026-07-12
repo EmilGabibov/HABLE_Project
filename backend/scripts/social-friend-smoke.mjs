@@ -173,6 +173,16 @@ async function run() {
   );
   assert(acceptedDuplicate.relationship_state === 'accepted', 'Accepted duplicate should stay accepted', acceptedDuplicate);
 
+  await expectResponse(
+    'Alice revokes Bob friendship',
+    await post('/api/social/friend-request/revoke', alice.token, {
+      target_user_id: bob.user_id,
+    }),
+  );
+
+  const revokedBob = await searchFor(alice.token, bob.username.slice(0, 8), bob.user_id);
+  assert(revokedBob.relationship_state === 'none', 'Alice should see Bob as revoked/none', revokedBob);
+
   console.log('Social friend smoke completed.');
 }
 

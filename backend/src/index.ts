@@ -1410,6 +1410,35 @@ app.post('/api/social/friend-request/decline', async (c) => {
   return c.json({ success: true, relationship_state: 'none' })
 })
 
+app.post('/api/social/friend-request/revoke', async (c) => {
+  await ensureFriendRequestSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
+  const { target_user_id } = await c.req.json()
+  const targetUserId = String(target_user_id ?? '').trim()
+
+  if (!targetUserId) return c.json({ error: 'Missing target_user_id' }, 400)
+  if (targetUserId === userId) {
+    return c.json({ error: 'Cannot revoke friendship with yourself' }, 400)
+  }
+
+  const result = await c.env.DB.prepare(`
+    UPDATE friend_requests
+    SET status = 'revoked'
+    WHERE status = 'accepted'
+      AND (
+        (requester_id = ? AND recipient_id = ?)
+        OR (requester_id = ? AND recipient_id = ?)
+      )
+  `).bind(userId, targetUserId, targetUserId, userId).run()
+
+  if (result.meta.changes === 0) {
+    return c.json({ error: 'Friendship not found or already revoked' }, 404)
+  }
+
+  return c.json({ success: true, relationship_state: 'none' })
+})
+
 // Mutual Habit Tracking (Partnerships)
 app.post('/api/social/partnerships', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
@@ -1625,6 +1654,31 @@ app.post('/api/sync/habit', async (c) => {
   await ensureOwnerMembership(c.env, habit_id, userId)
 
   return c.json({ success: true })
+})
+
+app.delete('/api/sync/habit/:habitId', async (c) => {
+  await ensurePartnershipRoleSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
+  const habitId = c.req.param('habitId')
+
+  const habit = await c.env.DB.prepare(
+    'SELECT id, user_id FROM habits WHERE id = ?'
+  ).bind(habitId).first<{ id: string; user_id: string }>()
+
+  if (!habit) {
+    return c.json({ success: true, deleted: false })
+  }
+  if (habit.user_id !== userId) {
+    return c.json({ error: 'Unauthorized: Only owners can delete a habit' }, 403)
+  }
+
+  await c.env.DB.prepare('DELETE FROM habit_logs WHERE habit_id = ?').bind(habitId).run()
+  await c.env.DB.prepare('DELETE FROM partnerships WHERE habit_id = ?').bind(habitId).run()
+  await c.env.DB.prepare('DELETE FROM habit_invitations WHERE habit_id = ?').bind(habitId).run()
+  await c.env.DB.prepare('DELETE FROM habits WHERE id = ?').bind(habitId).run()
+
+  return c.json({ success: true, deleted: true })
 })
 
 app.post('/api/sync/log', async (c) => {

@@ -59,466 +59,469 @@ class ProfileScreen extends ConsumerWidget {
             child: CustomScrollView(
               slivers: [
                 // Header
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Row(
-                    children: [
-                      if (showBackButton) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Row(
+                      children: [
+                        if (showBackButton) ...[
+                          IconButton(
+                            tooltip: 'Back',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: Icon(
+                              Icons.arrow_back_rounded,
+                              color: AppTheme.deepCharcoal,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          'Profile',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const Spacer(),
                         IconButton(
-                          tooltip: 'Back',
-                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: 'Open settings',
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => SettingsScreen(userId: userId),
+                              ),
+                            );
+                          },
                           icon: Icon(
-                            Icons.arrow_back_rounded,
+                            Icons.settings_rounded,
                             color: AppTheme.deepCharcoal,
                           ),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      Text(
-                        'Profile',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: 'Open settings',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => SettingsScreen(userId: userId),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.settings_rounded,
-                          color: AppTheme.deepCharcoal,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
 
-              // User card
-              SliverToBoxAdapter(
-                child: userAsync.when(
-                  data: (user) => Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Stack(
-                              children: [
-                                UserAvatar(
-                                  avatarUrl: user?.avatarUrl,
-                                  username: user?.username,
-                                  radius: 28,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                // User card
+                SliverToBoxAdapter(
+                  child: userAsync.when(
+                    data: (user) => Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Stack(
                                 children: [
-                                  Text(
-                                    user?.username ?? 'User',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleLarge,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '@${user?.username ?? 'user'}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      _InfoPill(
-                                        label: user?.levelName ?? 'Newbie',
-                                        color: AppTheme.sageGreen,
-                                      ),
-                                      _InfoPill(
-                                        label:
-                                            '${user?.totalScore ?? 0} points',
-                                        color: AppTheme.deepCharcoal,
-                                        fillColor: AppTheme.surfaceVariant,
-                                      ),
-                                    ],
+                                  UserAvatar(
+                                    avatarUrl: user?.avatarUrl,
+                                    username: user?.username,
+                                    radius: 28,
                                   ),
                                 ],
                               ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user?.username ?? 'User',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '@${user?.username ?? 'user'}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        _InfoPill(
+                                          label: user?.levelName ?? 'Newbie',
+                                          color: AppTheme.sageGreen,
+                                        ),
+                                        _InfoPill(
+                                          label:
+                                              '${user?.totalScore ?? 0} points',
+                                          color: AppTheme.deepCharcoal,
+                                          fillColor: AppTheme.surfaceVariant,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Text(
+                      'Server-owned progression syncs into Profile and Social Hub through local Drift.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.warmGray.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Pie chart — Completion Distribution
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Habit Distribution',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 20),
+                            distributionAsync.when(
+                              data: (dist) {
+                                final total = dist.values.fold(
+                                  0,
+                                  (a, b) => a + b,
+                                );
+                                if (total == 0) {
+                                  return SizedBox(
+                                    height: 160,
+                                    child: Center(
+                                      child: Text(
+                                        'No data yet',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return SizedBox(
+                                  height: 160,
+                                  child: PieChart(
+                                    PieChartData(
+                                      sectionsSpace: 3,
+                                      centerSpaceRadius: 36,
+                                      sections: [
+                                        PieChartSectionData(
+                                          value: dist['completed']!.toDouble(),
+                                          color: AppTheme.completionGreen,
+                                          title: '${dist['completed']}',
+                                          titleStyle: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                          radius: 40,
+                                        ),
+                                        PieChartSectionData(
+                                          value: dist['skipped']!.toDouble(),
+                                          color: AppTheme.skipAmber,
+                                          title: '${dist['skipped']}',
+                                          titleStyle: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                          radius: 40,
+                                        ),
+                                        PieChartSectionData(
+                                          value: dist['overdue']!.toDouble(),
+                                          color: AppTheme.overdueRose,
+                                          title: '${dist['overdue']}',
+                                          titleStyle: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                          radius: 40,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              loading: () => const _ChartSkeleton(),
+                              error: (_, _) => const _ChartSkeleton(),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _Legend(
+                                  color: AppTheme.completionGreen,
+                                  label: 'Completed',
+                                ),
+                                _Legend(
+                                  color: AppTheme.skipAmber,
+                                  label: 'Skipped',
+                                ),
+                                _Legend(
+                                  color: AppTheme.overdueRose,
+                                  label: 'Overdue',
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
                 ),
-              ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Text(
-                    'Server-owned progression syncs into Profile and Social Hub through local Drift.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.warmGray.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Pie chart — Completion Distribution
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Habit Distribution',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 20),
-                          distributionAsync.when(
-                            data: (dist) {
-                              final total = dist.values.fold(
-                                0,
-                                (a, b) => a + b,
-                              );
-                              if (total == 0) {
+                // Line chart — 30-day point velocity
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '30-Day Progress',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 20),
+                            historyAsync.when(
+                              data: (history) {
+                                if (history.isEmpty) {
+                                  return SizedBox(
+                                    height: 160,
+                                    child: Center(
+                                      child: Text(
+                                        'No data yet',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                  );
+                                }
                                 return SizedBox(
                                   height: 160,
-                                  child: Center(
-                                    child: Text(
-                                      'No data yet',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return SizedBox(
-                                height: 160,
-                                child: PieChart(
-                                  PieChartData(
-                                    sectionsSpace: 3,
-                                    centerSpaceRadius: 36,
-                                    sections: [
-                                      PieChartSectionData(
-                                        value: dist['completed']!.toDouble(),
-                                        color: AppTheme.completionGreen,
-                                        title: '${dist['completed']}',
-                                        titleStyle: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                        radius: 40,
+                                  child: LineChart(
+                                    LineChartData(
+                                      gridData: const FlGridData(show: false),
+                                      titlesData: const FlTitlesData(
+                                        show: false,
                                       ),
-                                      PieChartSectionData(
-                                        value: dist['skipped']!.toDouble(),
-                                        color: AppTheme.skipAmber,
-                                        title: '${dist['skipped']}',
-                                        titleStyle: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                        radius: 40,
-                                      ),
-                                      PieChartSectionData(
-                                        value: dist['overdue']!.toDouble(),
-                                        color: AppTheme.overdueRose,
-                                        title: '${dist['overdue']}',
-                                        titleStyle: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                        radius: 40,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                            loading: () => const _ChartSkeleton(),
-                            error: (_, _) => const _ChartSkeleton(),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _Legend(
-                                color: AppTheme.completionGreen,
-                                label: 'Completed',
-                              ),
-                              _Legend(
-                                color: AppTheme.skipAmber,
-                                label: 'Skipped',
-                              ),
-                              _Legend(
-                                color: AppTheme.overdueRose,
-                                label: 'Overdue',
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Line chart — 30-day point velocity
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '30-Day Progress',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 20),
-                          historyAsync.when(
-                            data: (history) {
-                              if (history.isEmpty) {
-                                return SizedBox(
-                                  height: 160,
-                                  child: Center(
-                                    child: Text(
-                                      'No data yet',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return SizedBox(
-                                height: 160,
-                                child: LineChart(
-                                  LineChartData(
-                                    gridData: const FlGridData(show: false),
-                                    titlesData: const FlTitlesData(show: false),
-                                    borderData: FlBorderData(show: false),
-                                    lineBarsData: [
-                                      LineChartBarData(
-                                        spots: history
-                                            .asMap()
-                                            .entries
-                                            .map(
-                                              (e) => FlSpot(
-                                                e.key.toDouble(),
-                                                e.value.value.toDouble(),
-                                              ),
-                                            )
-                                            .toList(),
-                                        isCurved: true,
-                                        color: AppTheme.sageGreen,
-                                        barWidth: 3,
-                                        dotData: const FlDotData(show: false),
-                                        belowBarData: BarAreaData(
-                                          show: true,
-                                          color: AppTheme.sageGreen.withValues(
-                                            alpha: 0.1,
+                                      borderData: FlBorderData(show: false),
+                                      lineBarsData: [
+                                        LineChartBarData(
+                                          spots: history
+                                              .asMap()
+                                              .entries
+                                              .map(
+                                                (e) => FlSpot(
+                                                  e.key.toDouble(),
+                                                  e.value.value.toDouble(),
+                                                ),
+                                              )
+                                              .toList(),
+                                          isCurved: true,
+                                          color: AppTheme.sageGreen,
+                                          barWidth: 3,
+                                          dotData: const FlDotData(show: false),
+                                          belowBarData: BarAreaData(
+                                            show: true,
+                                            color: AppTheme.sageGreen
+                                                .withValues(alpha: 0.1),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            loading: () => const _ChartSkeleton(),
-                            error: (_, _) => const _ChartSkeleton(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Achievement badges
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Achievements',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 16),
-                          achievementsAsync.when(
-                            data: (achievements) {
-                              if (achievements.isEmpty) {
-                                return Text(
-                                  'Complete a habit to earn your first badge!',
-                                  style: Theme.of(context).textTheme.bodyMedium,
                                 );
-                              }
-                              return Wrap(
-                                spacing: 12,
-                                runSpacing: 12,
-                                children: achievements
-                                    .map(
-                                      (a) => _AchievementBadge(
-                                        title: _achievementLabel(
-                                          a.achievementId,
+                              },
+                              loading: () => const _ChartSkeleton(),
+                              error: (_, _) => const _ChartSkeleton(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Achievement badges
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Achievements',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 16),
+                            achievementsAsync.when(
+                              data: (achievements) {
+                                if (achievements.isEmpty) {
+                                  return Text(
+                                    'Complete a habit to earn your first badge!',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  );
+                                }
+                                return Wrap(
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  children: achievements
+                                      .map(
+                                        (a) => _AchievementBadge(
+                                          title: _achievementLabel(
+                                            a.achievementId,
+                                          ),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, _) => const SizedBox.shrink(),
-                          ),
-                        ],
+                                      )
+                                      .toList(),
+                                );
+                              },
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // Calendar Feed Subscription
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Calendar Subscription',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add your habits to your native calendar app',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppTheme.warmGray.withValues(
-                                    alpha: 0.8,
+                // Calendar Feed Subscription
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Calendar Subscription',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Add your habits to your native calendar app',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: AppTheme.warmGray.withValues(
+                                      alpha: 0.8,
+                                    ),
                                   ),
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          _CalendarSubscriptionCard(),
-                        ],
+                            ),
+                            const SizedBox(height: 16),
+                            _CalendarSubscriptionCard(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // Manage Habits
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Manage Habits',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      TextButton.icon(
-                        onPressed: () => HabitFormSheet.show(context),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add New'),
-                      ),
-                    ],
+                // Manage Habits
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Manage Habits',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        TextButton.icon(
+                          onPressed: () => HabitFormSheet.show(context),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('Add New'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              allHabitsAsync.when(
-                data: (habits) {
-                  if (habits.isEmpty) {
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  }
+                allHabitsAsync.when(
+                  data: (habits) {
+                    if (habits.isEmpty) {
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    }
 
-                  final active = habits
-                      .where((h) => h.status == HabitStatus.active)
-                      .toList();
-                  final archived = habits
-                      .where((h) => h.status == HabitStatus.abandoned)
-                      .toList();
+                    final active = habits
+                        .where((h) => h.status == HabitStatus.active)
+                        .toList();
+                    final archived = habits
+                        .where((h) => h.status == HabitStatus.abandoned)
+                        .toList();
 
-                  return SliverList(
-                    delegate: SliverChildListDelegate([
-                      if (active.isNotEmpty) ...[
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
-                          child: Text(
-                            'Active',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.sageGreen,
+                    return SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (active.isNotEmpty) ...[
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
+                            child: Text(
+                              'Active',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.sageGreen,
+                              ),
                             ),
                           ),
-                        ),
-                        ...active.map(
-                          (h) => _HabitListTile(habit: h, isActive: true),
-                        ),
-                      ],
-                      if (archived.isNotEmpty) ...[
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Text(
-                            'Archived',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.overdueRose,
+                          ...active.map(
+                            (h) => _HabitListTile(habit: h, isActive: true),
+                          ),
+                        ],
+                        if (archived.isNotEmpty) ...[
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                            child: Text(
+                              'Archived',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.overdueRose,
+                              ),
                             ),
                           ),
-                        ),
-                        ...archived.map(
-                          (h) => _HabitListTile(habit: h, isActive: false),
-                        ),
-                      ],
-                    ]),
-                  );
-                },
-                loading: () =>
-                    const SliverToBoxAdapter(child: SizedBox.shrink()),
-                error: (_, _) =>
-                    const SliverToBoxAdapter(child: SizedBox.shrink()),
-              ),
+                          ...archived.map(
+                            (h) => _HabitListTile(habit: h, isActive: false),
+                          ),
+                        ],
+                      ]),
+                    );
+                  },
+                  loading: () =>
+                      const SliverToBoxAdapter(child: SizedBox.shrink()),
+                  error: (_, _) =>
+                      const SliverToBoxAdapter(child: SizedBox.shrink()),
+                ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -533,122 +536,129 @@ class ProfileScreen extends ConsumerWidget {
           child: CustomScrollView(
             slivers: [
               // Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: AppTheme.deepCharcoal,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Friend Profile',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Content
-            friendProfileAsync.when(
-              data: (data) {
-                final user = data.user;
-                final habits = data.habits;
-
-                return SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Friend Info Card
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              UserAvatar(
-                                avatarUrl: user['avatar_url'] as String?,
-                                username: user['username'] as String?,
-                                radius: 28,
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      (user['username'] as String?) ?? 'Friend',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleLarge,
-                                    ),
-                                    Text(
-                                      '${user['total_score'] ?? 0} points',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(color: AppTheme.sageGreen),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
-                      child: Text(
-                        'Active Habits',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.sageGreen,
-                        ),
-                      ),
-                    ),
-
-                    if (habits.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
-                        child: Text('No active habits.'),
-                      )
-                    else
-                      ...habits.map(
-                        (h) => _FriendHabitListTile(
-                          habitData: h,
-                          friendUserId: userId,
-                        ),
-                      ),
-                  ]),
-                );
-              },
-              loading: () => const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  child: Column(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Row(
                     children: [
-                      HableSkeletonCard(height: 86),
-                      HableSkeletonCard(height: 96),
-                      HableSkeletonCard(height: 96),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: AppTheme.deepCharcoal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Friend Profile',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ],
                   ),
                 ),
               ),
-              error: (err, _) => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 32.0),
-                  child: Text('Failed to load friend profile.', textAlign: TextAlign.center),
+              // Content
+              friendProfileAsync.when(
+                data: (data) {
+                  final user = data.user;
+                  final habits = data.habits;
+
+                  return SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Friend Info Card
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Row(
+                              children: [
+                                UserAvatar(
+                                  avatarUrl: user['avatar_url'] as String?,
+                                  username: user['username'] as String?,
+                                  radius: 28,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        (user['username'] as String?) ??
+                                            'Friend',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge,
+                                      ),
+                                      Text(
+                                        '${user['total_score'] ?? 0} points',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: AppTheme.sageGreen,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
+                        child: Text(
+                          'Active Habits',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.sageGreen,
+                          ),
+                        ),
+                      ),
+
+                      if (habits.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
+                          child: Text('No active habits.'),
+                        )
+                      else
+                        ...habits.map(
+                          (h) => _FriendHabitListTile(
+                            habitData: h,
+                            friendUserId: userId,
+                          ),
+                        ),
+                    ]),
+                  );
+                },
+                loading: () => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      children: [
+                        HableSkeletonCard(height: 86),
+                        HableSkeletonCard(height: 96),
+                        HableSkeletonCard(height: 96),
+                      ],
+                    ),
+                  ),
+                ),
+                error: (err, _) => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 32.0),
+                    child: Text(
+                      'Failed to load friend profile.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -1443,6 +1453,44 @@ class _HabitListTile extends ConsumerWidget {
                         .restoreHabit(habit.habitId)
                   : null,
             ),
+          IconButton(
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: AppTheme.overdueRose,
+            ),
+            onPressed: canEdit
+                ? () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Delete habit?'),
+                        content: Text(
+                          'This will permanently delete "${habit.title}" and remove it from synced devices.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed == true) {
+                      await ref
+                          .read(habitActionsProvider)
+                          .deleteHabit(habit.habitId);
+                    }
+                  }
+                : null,
+          ),
         ],
       ),
     );

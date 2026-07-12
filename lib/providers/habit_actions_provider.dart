@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../database/database.dart';
 import '../providers/auth_provider.dart';
 import 'database_provider.dart';
@@ -51,6 +55,30 @@ class HabitActionsController {
 
   Future<void> restoreHabit(String habitId) async {
     await _db.restoreHabit(habitId);
+    await _ref.read(syncServiceProvider).flushPending();
+  }
+
+  Future<void> deleteHabit(String habitId) async {
+    final token = _ref.read(authProvider).token;
+    if (token == null || _userId == null) return;
+
+    final response = await http
+        .delete(
+          Uri.parse('$apiBaseUrl/api/sync/habit/$habitId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        response.body.isNotEmpty ? response.body : 'Failed to delete habit',
+      );
+    }
+
+    await _db.removeHabitLocally(habitId);
     await _ref.read(syncServiceProvider).flushPending();
   }
 }

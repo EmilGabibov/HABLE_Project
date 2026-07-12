@@ -1,0 +1,10 @@
+- generic [ref=f2e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic [ref=f2e65]:
+          - generic:
+            - generic [ref=f2e66]: Find Friends
+            - textbox "Search username..." [active] [ref=f2e68]
+            - generic [ref=f2e69]: Type at least 2 characters to search.
+        - button "Scrim" [ref=f2e70]

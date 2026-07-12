@@ -32,3 +32,8 @@
 - [x] Transferred to [Document AI Agent Guideline For Cross-Platform Build Fix Workflow](Task1_Engineered.md#document-ai-agent-guideline-for-cross-platform-build-fix-workflow) — 2026-07-12 11:05 CEST
 
 - [x] Transferred to [Refine And Organize Development Documentation](Task1_Engineered.md#refine-and-organize-development-documentation) — 2026-07-12 11:00 CEST
+
+- [x] Transferred to [Design Web Multi-User Browser Test Plan For Core Social Habit And Leaderboard Flows](Task1_Engineered.md#design-web-multi-user-browser-test-plan-for-core-social-habit-and-leaderboard-flows) — 2026-07-12 11:31 CEST
+
+- [x] Transferred to [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task1_Engineered.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments) — 2026-07-12 11:56 CEST
+    

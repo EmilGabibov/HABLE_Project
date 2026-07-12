@@ -1,0 +1,33 @@
+- generic [active] [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic [ref=f1e69]:
+          - generic:
+            - group:
+              - generic [ref=f1e70]: New Habit
+              - button [ref=f1e71]
+              - generic [ref=f1e72]: Quick Select
+              - group:
+                - checkbox "💧 Hydration" [ref=f1e73]
+                - checkbox "📖 Reading" [ref=f1e74]
+                - checkbox "🧘 Meditation" [ref=f1e75]
+                - checkbox "🏃 Exercise" [ref=f1e76]
+                - checkbox "😴 Sleep Routine" [ref=f1e77]
+                - checkbox "📝 Journaling" [ref=f1e78]
+              - textbox "Habit Title" [ref=f1e80]
+              - textbox "Challenge Duration (days)" [ref=f1e82]
+              - generic [ref=f1e83]: Color
+              - button [ref=f1e84]
+              - button [ref=f1e85]
+              - button [ref=f1e86]
+              - button [ref=f1e87]
+              - button [ref=f1e88]
+              - button [ref=f1e89]
+              - button [ref=f1e90]
+              - button [ref=f1e91]
+              - button [ref=f1e92]
+              - generic [ref=f1e93]: Invite Partners
+              - generic [ref=f1e94]: No friends found. Add friends from the Social tab first.
+              - button "Save" [ref=f1e95]
+        - button "Scrim" [ref=f1e96]

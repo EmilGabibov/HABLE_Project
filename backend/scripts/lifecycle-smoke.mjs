@@ -43,6 +43,13 @@ function get(path, token) {
   });
 }
 
+function del(path, token) {
+  return fetch(`${baseUrl}${path}`, {
+    method: 'DELETE',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  });
+}
+
 function assert(condition, message, detail) {
   if (!condition) {
     throw new Error(`${message}${detail ? ` ${JSON.stringify(detail)}` : ''}`);
@@ -190,10 +197,26 @@ async function dailyPartnerRow(token, habitId, partnerId) {
   );
 }
 
+async function dailySync(token, label) {
+  return expectResponse(label, await get('/api/sync/daily', token));
+}
+
 async function run() {
   console.log(`Running lifecycle smoke against ${baseUrl}`);
   const aliceToken = await loginSeedUser('Alice', 'local-user-1');
   const bobToken = await loginSeedUser('Bob', 'local-user-2');
+  const aliceBaselineDaily = await dailySync(
+    aliceToken,
+    'Alice baseline daily sync',
+  );
+  const bobBaselineDaily = await dailySync(
+    bobToken,
+    'Bob baseline daily sync',
+  );
+  const aliceBaselinePoints =
+    Number(aliceBaselineDaily.gamification?.total_points ?? 0);
+  const bobBaselinePoints =
+    Number(bobBaselineDaily.gamification?.total_points ?? 0);
 
   await ensureFriendship(aliceToken, bobToken);
 
@@ -227,6 +250,27 @@ async function run() {
       logged_at: new Date().toISOString(),
     }),
   );
+  const bobAfterAliceCompletion = await dailySync(
+    bobToken,
+    'Bob daily sync after Alice completion',
+  );
+  const bobViewOfAlice = bobAfterAliceCompletion.partners.find(
+    (partner) =>
+      partner.habit_id === normalHabitId &&
+      partner.partner_id === 'local-user-1',
+  );
+  assert(
+    bobViewOfAlice?.has_completed_today === 1 ||
+      bobViewOfAlice?.has_completed_today === true,
+    'Bob did not see Alice as completed on shared habit card after Alice check-in',
+    bobViewOfAlice,
+  );
+  assert(
+    Number(bobAfterAliceCompletion.gamification?.total_points ?? 0) ===
+      bobBaselinePoints,
+    'Bob score changed before Bob completed the shared habit relative to baseline',
+    bobAfterAliceCompletion.gamification,
+  );
   await expectResponse(
     'Bob logs normal habit completion',
     await post('/api/sync/log', bobToken, {
@@ -235,6 +279,48 @@ async function run() {
       status: 'completed',
       logged_at: new Date().toISOString(),
     }),
+  );
+  const aliceAfterBobCompletion = await dailySync(
+    aliceToken,
+    'Alice daily sync after Bob completion',
+  );
+  const aliceViewOfBob = aliceAfterBobCompletion.partners.find(
+    (partner) =>
+      partner.habit_id === normalHabitId &&
+      partner.partner_id === 'local-user-2',
+  );
+  assert(
+    aliceViewOfBob?.has_completed_today === 1 ||
+      aliceViewOfBob?.has_completed_today === true,
+    'Alice did not see Bob as completed on shared habit card after Bob check-in',
+    aliceViewOfBob,
+  );
+  assert(
+    Number(aliceAfterBobCompletion.gamification?.total_points ?? 0) ===
+      aliceBaselinePoints + 10,
+    'Alice did not receive expected shared-habit score delta after all participants completed',
+    aliceAfterBobCompletion.gamification,
+  );
+  const bobAfterBobCompletion = await dailySync(
+    bobToken,
+    'Bob daily sync after Bob completion',
+  );
+  const bobViewOfAliceAfterBoth = bobAfterBobCompletion.partners.find(
+    (partner) =>
+      partner.habit_id === normalHabitId &&
+      partner.partner_id === 'local-user-1',
+  );
+  assert(
+    bobViewOfAliceAfterBoth?.has_completed_today === 1 ||
+      bobViewOfAliceAfterBoth?.has_completed_today === true,
+    'Bob lost Alice completion state after both participants completed',
+    bobViewOfAliceAfterBoth,
+  );
+  assert(
+    Number(bobAfterBobCompletion.gamification?.total_points ?? 0) ===
+      bobBaselinePoints + 10,
+    'Bob did not receive expected shared-habit score delta after all participants completed',
+    bobAfterBobCompletion.gamification,
   );
   const bobNormalAfterLog = await dailyPartnerRow(
     bobToken,
@@ -344,6 +430,21 @@ async function run() {
     bobNormalAfterArchive?.status === 'abandoned',
     'Bob did not receive archived status',
     bobNormalAfterArchive,
+  );
+
+  await expectResponse(
+    'Alice deletes normal habit',
+    await del(`/api/sync/habit/${normalHabitId}`, aliceToken),
+  );
+  const bobNormalAfterDelete = await dailyPartnerRow(
+    bobToken,
+    normalHabitId,
+    'local-user-1',
+  );
+  assert(
+    !bobNormalAfterDelete,
+    'Bob still received deleted habit metadata',
+    bobNormalAfterDelete,
   );
 
   const privateHabitId = `smoke-private-${runId}`;

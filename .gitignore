@@ -9,6 +9,8 @@
 graphify-out/
 node_modules/
 
+.tmp.driveupload
+.tmp.drivedownload
 
 # Flutter repo-specific
 /bin/cache/
