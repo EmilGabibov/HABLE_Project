@@ -69,10 +69,58 @@ class SyncService {
 
   /// Evaluates unread notifications to build a recap payload and schedules/updates the reminder.
   Future<void> coalesceAndScheduleSocialRecap(String userId) async {
-    if (_localReminderService == null || !_localReminderService!.supportsScheduling) return;
+    if (_localReminderService == null || !_localReminderService.supportsScheduling) return;
 
-    // Implementation logic to evaluate unread notifications and schedule reminder
-    // ...
+    final unread = await _db.getUnreadNotificationsForUser(userId);
+
+    final socialTypes = {
+      NotificationEventType.nudge,
+      NotificationEventType.habitInvitation,
+      NotificationEventType.friendRequest,
+      NotificationEventType.friendAccepted,
+    };
+    final socialUnread = unread.where((n) => socialTypes.contains(n.type)).toList();
+
+    if (socialUnread.isEmpty) return;
+
+    const title = 'Social Recap';
+    String body;
+    String payload;
+
+    final nudges = socialUnread.where((n) => n.type == NotificationEventType.nudge).length;
+    final invites = socialUnread.where((n) => n.type == NotificationEventType.habitInvitation).length;
+
+    if (socialUnread.length == 1) {
+      body = socialUnread.first.body;
+      payload = socialUnread.first.actionPayloadJson ?? '{"route": "social"}';
+    } else if (nudges > 0 && invites > 0) {
+      body = 'You have $nudges nudge${nudges == 1 ? '' : 's'} and $invites invite${invites == 1 ? '' : 's'}.';
+      payload = '{"route": "social"}';
+    } else if (nudges > 0) {
+      body = 'You have $nudges new nudge${nudges == 1 ? '' : 's'} from friends.';
+      payload = '{"route": "social"}';
+    } else if (invites > 0) {
+      body = 'You have $invites new habit invite${invites == 1 ? '' : 's'}.';
+      payload = '{"route": "social"}';
+    } else {
+      body = 'You have ${socialUnread.length} new social interaction${socialUnread.length == 1 ? '' : 's'}.';
+      payload = '{"route": "social"}';
+    }
+
+    final now = DateTime.now();
+    final scheduleMinute = now.minute + 1 >= 60 ? 0 : now.minute + 1;
+    final scheduleHour = now.minute + 1 >= 60 ? (now.hour + 1) % 24 : now.hour;
+
+    await _localReminderService.scheduleReminder(
+      userId: userId,
+      type: ReminderType.dailyHabit,
+      hour: scheduleHour,
+      minute: scheduleMinute,
+      title: title,
+      body: body,
+      payload: payload,
+    );
+    debugPrint('[SyncService] Scheduled social recap: $nudges nudges, $invites invites → "$body"');
   }
 
   /// Send a mutation payload to the Cloudflare Worker.
@@ -560,6 +608,9 @@ class SyncService {
           '[SyncService] Failed to pull daily sync: ${response.statusCode} - ${response.body}',
         );
       }
+
+      // After syncing social data, refresh the recap reminder from local state.
+      await coalesceAndScheduleSocialRecap(userId);
     } catch (e) {
       debugPrint('[SyncService] Pull Daily Sync Failed: $e');
     }

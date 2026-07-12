@@ -157,7 +157,7 @@ class LocalReminderService {
     }
 
     await _plugin.zonedSchedule(
-      id: _notificationIdForUserAndType(userId, type),
+      id: LocalReminderService.notificationIdForSlot(type),
       title: title,
       body: body,
       scheduledDate: scheduled,
@@ -191,27 +191,38 @@ class LocalReminderService {
     if (!supportsScheduling) return;
     await initialize();
     if (!_pluginAvailable) return;
-    await _plugin.cancel(id: _notificationIdForUserAndType(userId, type));
+    // Cancel any legacy hash-based ID that may still be scheduled from a prior build,
+    // then cancel the new stable slot ID.
+    await _plugin.cancel(id: _legacyHashIdForUserAndType(userId, type));
+    await _plugin.cancel(id: notificationIdForSlot(type));
   }
 
-  int _notificationIdForUserAndType(String userId, ReminderType type) {
-    // Generate a stable hash for the user
+  /// Returns the stable, slot-based OS notification ID for [type].
+  ///
+  /// Reserved ranges:
+  ///   100 – 199  → self-habit daily reminders  (dailyHabit = 100)
+  ///   200 – 299  → friend-activity reminders   (friendActivity = 200, reserved)
+  ///
+  /// IDs are global to the device (one user at a time) and require no user hash.
+  static int notificationIdForSlot(ReminderType type) {
+    switch (type) {
+      case ReminderType.dailyHabit:
+        return 100;
+    }
+  }
+
+  /// Legacy: hash-based ID used before slot ranges were introduced.
+  /// Only used during the one-time migration cancel in [cancelReminder].
+  static int _legacyHashIdForUserAndType(String userId, ReminderType type) {
     var hash = 17;
     for (final codeUnit in userId.codeUnits) {
       hash = 37 * hash + codeUnit;
     }
     final stableUserInt = hash & 0x7FFFFFFF;
-    
-    // Assign a fixed slot range base for each type
-    int baseSlot;
     switch (type) {
       case ReminderType.dailyHabit:
-        baseSlot = 1000;
-        break;
+        return 1000 + (stableUserInt % 1000);
     }
-    
-    // Each type gets a block of 1000 IDs to avoid conflicts
-    return baseSlot + (stableUserInt % 1000);
   }
 }
 

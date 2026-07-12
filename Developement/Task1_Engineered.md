@@ -617,7 +617,7 @@
 **Completion notes:** Completed on 2026-07-12. Created `MascotReminderCopyHelper` using a day-of-the-year deterministic seed to rotate daily reminder copy. Replaced hardcoded strings in `notification_providers.dart` and `auth_provider.dart`. Added a dedicated unit test.
 
 <a id="coalesce-social-reminder-recaps-and-route-notification-taps-into-shell-state"></a>
-### [ ] Coalesce Social Reminder Recaps And Route Notification Taps Into Shell State
+### [x] Coalesce Social Reminder Recaps And Route Notification Taps Into Shell State
 
 **Raw source:** Task 4: Notification Coalescing & Nudge Deep-Linking. Action: Implement logic to merge incoming social pings into a single "Daily Recap" notification. Tapping the social reminder must route the user directly to the Social Hub or a specific partnered habit card. Files: `lib/services/sync_service.dart`, `lib/main.dart`.
 
@@ -656,10 +656,10 @@
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** Completed on 2026-07-12. Added `coalesceAndScheduleSocialRecap()` to `SyncService` which reads unread social `NotificationEvent` rows from Drift (nudge, habitInvitation, friendRequest, friendAccepted), coalesces them into a single OS notification recap, and schedules it via `LocalReminderService` with a `{"route": "social"}` payload. Wired `onDidReceiveNotificationResponse` in `LocalReminderService.initialize()` and exposed `onPayloadTapped` stream + `getInitialPayload()` for cold-start handling. App-level tap routing in `_AppGate` decodes the payload and calls `switchToTab()` on `MainNavigationShellState` (made public via `GlobalKey`). Added 4 unit tests in `notification_recap_test.dart` covering single-nudge passthrough, multi-nudge coalescing, mixed nudge+invite, and empty-state no-op. Built and deployed to Cloudflare Pages: https://5e28b7ca.hable.pages.dev
 
 <a id="replace-hash-based-reminder-notification-ids-with-stable-slot-ranges"></a>
-### [ ] Replace Hash-Based Reminder Notification IDs With Stable Slot Ranges
+### [x] Replace Hash-Based Reminder Notification IDs With Stable Slot Ranges
 
 **Raw source:** Task 2: Idempotent Notification ID Management. Action: Implement a stable integer ID system for `flutter_local_notifications`. Use reserved ranges (e.g., 100-199 for personal, 200-299 for friends) to ensure that updating a reminder time overwrites the previous schedule instead of creating duplicate daily alerts. Files: `lib/services/local_reminder_service.dart`.
 
@@ -697,4 +697,4 @@
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** Completed on 2026-07-12. Replaced `_notificationIdForUserAndType()` hash derivation with `static int notificationIdForSlot(ReminderType type)` — a simple lookup table mapping each reminder type to a fixed constant (dailyHabit → 100, friendActivity range reserved at 200). `scheduleReminder` now uses `notificationIdForSlot(type)` directly. `cancelReminder` also cancels the old hash-based legacy ID alongside the new slot ID to silently migrate existing users on first cancel. Added 4 unit tests in `notification_id_slot_test.dart` verifying ID stability, range boundaries, and non-overlap with the reserved friend-activity range.

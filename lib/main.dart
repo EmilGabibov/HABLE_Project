@@ -12,7 +12,6 @@ import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'providers/local_reminder_provider.dart';
 import 'services/background_sync_service.dart';
 import 'services/local_reminder_service.dart';
 

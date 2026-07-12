@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/connectivity_service.dart';
+import '../services/local_reminder_service.dart';
 import '../services/sync_service.dart';
 import 'database_provider.dart';
 import 'habit_providers.dart';

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
 import 'package:hable/services/connectivity_service.dart';
@@ -6,36 +7,51 @@ import 'package:hable/services/local_reminder_service.dart';
 import 'package:hable/services/sync_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:drift/native.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:drift/drift.dart' show Value;
 
-@GenerateNiceMocks([
-  MockSpec<LocalReminderService>(),
-  MockSpec<ConnectivityService>(),
-  MockSpec<FlutterSecureStorage>(),
-])
-import 'notification_recap_test.mocks.dart';
+/// Fake LocalReminderService that captures scheduleReminder calls.
+class FakeLocalReminderService extends LocalReminderService {
+  final List<Map<String, dynamic>> scheduledCalls = [];
+
+  @override
+  bool get supportsScheduling => true;
+
+  @override
+  Future<void> scheduleReminder({
+    required String userId,
+    required ReminderType type,
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    scheduledCalls.add({
+      'userId': userId,
+      'type': type,
+      'hour': hour,
+      'minute': minute,
+      'title': title,
+      'body': body,
+      'payload': payload,
+    });
+  }
+}
 
 void main() {
   late AppDatabase db;
-  late MockLocalReminderService mockReminderService;
-  late MockConnectivityService mockConnectivity;
-  late MockFlutterSecureStorage mockStorage;
+  late FakeLocalReminderService fakeReminderService;
   late SyncService syncService;
 
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
-    mockReminderService = MockLocalReminderService();
-    mockConnectivity = MockConnectivityService();
-    mockStorage = MockFlutterSecureStorage();
-
-    when(mockReminderService.supportsScheduling).thenReturn(true);
+    fakeReminderService = FakeLocalReminderService();
 
     syncService = SyncService(
       db: db,
-      connectivity: mockConnectivity,
-      storage: mockStorage,
-      localReminderService: mockReminderService,
+      connectivity: ConnectivityService(),
+      storage: const FlutterSecureStorage(),
+      localReminderService: fakeReminderService,
     );
   });
 
@@ -43,64 +59,97 @@ void main() {
     await db.close();
   });
 
-  test('coalesceAndScheduleSocialRecap creates correct title and body for single nudge', () async {
+  test('coalesceAndScheduleSocialRecap passes single nudge body and payload unchanged', () async {
     await db.upsertNotificationEvent(
       NotificationEventsCompanion.insert(
         notificationId: '1',
         userId: 'user1',
-        type: 'nudge',
+        type: NotificationEventType.nudge,
+        sourceType: 'nudge',
         title: 'Nudge',
         body: 'Alice nudged you',
-        createdAt: DateTime.now(),
-        actionPayloadJson: '{"route": "social", "subTab": 1}',
+        createdAt: Value(DateTime.now()),
+        actionPayloadJson: const Value('{"route": "social", "subTab": 1}'),
       ),
     );
 
     await syncService.coalesceAndScheduleSocialRecap('user1');
 
-    verify(mockReminderService.scheduleReminder(
-      userId: 'user1',
-      type: ReminderType.dailyHabit,
-      hour: anyNamed('hour'),
-      minute: anyNamed('minute'),
-      title: 'Social Recap',
-      body: 'Alice nudged you',
-      payload: '{"route": "social", "subTab": 1}',
-    )).called(1);
+    expect(fakeReminderService.scheduledCalls, hasLength(1));
+    final call = fakeReminderService.scheduledCalls.first;
+    expect(call['title'], 'Social Recap');
+    expect(call['body'], 'Alice nudged you');
+    expect(call['payload'], '{"route": "social", "subTab": 1}');
+    expect(call['type'], ReminderType.dailyHabit);
   });
 
-  test('coalesceAndScheduleSocialRecap coalesces multiple nudges', () async {
+  test('coalesceAndScheduleSocialRecap coalesces multiple nudges into recap copy', () async {
     await db.upsertNotificationEvent(
       NotificationEventsCompanion.insert(
         notificationId: '1',
         userId: 'user1',
-        type: 'nudge',
+        type: NotificationEventType.nudge,
+        sourceType: 'nudge',
         title: 'Nudge',
         body: 'Alice nudged you',
-        createdAt: DateTime.now(),
+        createdAt: Value(DateTime.now()),
       ),
     );
     await db.upsertNotificationEvent(
       NotificationEventsCompanion.insert(
         notificationId: '2',
         userId: 'user1',
-        type: 'nudge',
+        type: NotificationEventType.nudge,
+        sourceType: 'nudge',
         title: 'Nudge',
         body: 'Bob nudged you',
-        createdAt: DateTime.now(),
+        createdAt: Value(DateTime.now()),
       ),
     );
 
     await syncService.coalesceAndScheduleSocialRecap('user1');
 
-    verify(mockReminderService.scheduleReminder(
-      userId: 'user1',
-      type: ReminderType.dailyHabit,
-      hour: anyNamed('hour'),
-      minute: anyNamed('minute'),
-      title: 'Social Recap',
-      body: 'You have 2 new nudges from friends.',
-      payload: '{"route": "social"}',
-    )).called(1);
+    expect(fakeReminderService.scheduledCalls, hasLength(1));
+    final call = fakeReminderService.scheduledCalls.first;
+    expect(call['title'], 'Social Recap');
+    expect(call['body'], 'You have 2 new nudges from friends.');
+    expect(call['payload'], '{"route": "social"}');
+  });
+
+  test('coalesceAndScheduleSocialRecap coalesces nudges and invites together', () async {
+    await db.upsertNotificationEvent(
+      NotificationEventsCompanion.insert(
+        notificationId: '1',
+        userId: 'user1',
+        type: NotificationEventType.nudge,
+        sourceType: 'nudge',
+        title: 'Nudge',
+        body: 'Alice nudged you',
+        createdAt: Value(DateTime.now()),
+      ),
+    );
+    await db.upsertNotificationEvent(
+      NotificationEventsCompanion.insert(
+        notificationId: '2',
+        userId: 'user1',
+        type: NotificationEventType.habitInvitation,
+        sourceType: 'habit_invitation',
+        title: 'Invite',
+        body: 'Bob invited you',
+        createdAt: Value(DateTime.now()),
+      ),
+    );
+
+    await syncService.coalesceAndScheduleSocialRecap('user1');
+
+    expect(fakeReminderService.scheduledCalls, hasLength(1));
+    final call = fakeReminderService.scheduledCalls.first;
+    expect(call['body'], 'You have 1 nudge and 1 invite.');
+  });
+
+  test('coalesceAndScheduleSocialRecap skips scheduling when no social events', () async {
+    await syncService.coalesceAndScheduleSocialRecap('user1');
+
+    expect(fakeReminderService.scheduledCalls, isEmpty);
   });
 }
