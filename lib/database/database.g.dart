@@ -7492,6 +7492,16 @@ class $ReminderSettingsTable extends ReminderSettings
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<ReminderType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('dailyHabit'),
+      ).withConverter<ReminderType>($ReminderSettingsTable.$convertertype);
   static const VerificationMeta _isEnabledMeta = const VerificationMeta(
     'isEnabled',
   );
@@ -7527,6 +7537,20 @@ class $ReminderSettingsTable extends ReminderSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _isPermissionDeniedMeta =
+      const VerificationMeta('isPermissionDenied');
+  @override
+  late final GeneratedColumn<bool> isPermissionDenied = GeneratedColumn<bool>(
+    'is_permission_denied',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_permission_denied" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -7542,9 +7566,11 @@ class $ReminderSettingsTable extends ReminderSettings
   @override
   List<GeneratedColumn> get $columns => [
     userId,
+    type,
     isEnabled,
     hour,
     minute,
+    isPermissionDenied,
     updatedAt,
   ];
   @override
@@ -7585,6 +7611,15 @@ class $ReminderSettingsTable extends ReminderSettings
         minute.isAcceptableOrUnknown(data['minute']!, _minuteMeta),
       );
     }
+    if (data.containsKey('is_permission_denied')) {
+      context.handle(
+        _isPermissionDeniedMeta,
+        isPermissionDenied.isAcceptableOrUnknown(
+          data['is_permission_denied']!,
+          _isPermissionDeniedMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -7595,7 +7630,7 @@ class $ReminderSettingsTable extends ReminderSettings
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {userId};
+  Set<GeneratedColumn> get $primaryKey => {userId, type};
   @override
   ReminderSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -7604,6 +7639,12 @@ class $ReminderSettingsTable extends ReminderSettings
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
       )!,
+      type: $ReminderSettingsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
       isEnabled: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_enabled'],
@@ -7616,6 +7657,10 @@ class $ReminderSettingsTable extends ReminderSettings
         DriftSqlType.int,
         data['${effectivePrefix}minute'],
       )!,
+      isPermissionDenied: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_permission_denied'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -7627,28 +7672,41 @@ class $ReminderSettingsTable extends ReminderSettings
   $ReminderSettingsTable createAlias(String alias) {
     return $ReminderSettingsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<ReminderType, String, String> $convertertype =
+      const EnumNameConverter<ReminderType>(ReminderType.values);
 }
 
 class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   final String userId;
+  final ReminderType type;
   final bool isEnabled;
   final int hour;
   final int minute;
+  final bool isPermissionDenied;
   final DateTime updatedAt;
   const ReminderSetting({
     required this.userId,
+    required this.type,
     required this.isEnabled,
     required this.hour,
     required this.minute,
+    required this.isPermissionDenied,
     required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['user_id'] = Variable<String>(userId);
+    {
+      map['type'] = Variable<String>(
+        $ReminderSettingsTable.$convertertype.toSql(type),
+      );
+    }
     map['is_enabled'] = Variable<bool>(isEnabled);
     map['hour'] = Variable<int>(hour);
     map['minute'] = Variable<int>(minute);
+    map['is_permission_denied'] = Variable<bool>(isPermissionDenied);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -7656,9 +7714,11 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   ReminderSettingsCompanion toCompanion(bool nullToAbsent) {
     return ReminderSettingsCompanion(
       userId: Value(userId),
+      type: Value(type),
       isEnabled: Value(isEnabled),
       hour: Value(hour),
       minute: Value(minute),
+      isPermissionDenied: Value(isPermissionDenied),
       updatedAt: Value(updatedAt),
     );
   }
@@ -7670,9 +7730,13 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ReminderSetting(
       userId: serializer.fromJson<String>(json['userId']),
+      type: $ReminderSettingsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
       isEnabled: serializer.fromJson<bool>(json['isEnabled']),
       hour: serializer.fromJson<int>(json['hour']),
       minute: serializer.fromJson<int>(json['minute']),
+      isPermissionDenied: serializer.fromJson<bool>(json['isPermissionDenied']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -7681,32 +7745,44 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
+      'type': serializer.toJson<String>(
+        $ReminderSettingsTable.$convertertype.toJson(type),
+      ),
       'isEnabled': serializer.toJson<bool>(isEnabled),
       'hour': serializer.toJson<int>(hour),
       'minute': serializer.toJson<int>(minute),
+      'isPermissionDenied': serializer.toJson<bool>(isPermissionDenied),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
   ReminderSetting copyWith({
     String? userId,
+    ReminderType? type,
     bool? isEnabled,
     int? hour,
     int? minute,
+    bool? isPermissionDenied,
     DateTime? updatedAt,
   }) => ReminderSetting(
     userId: userId ?? this.userId,
+    type: type ?? this.type,
     isEnabled: isEnabled ?? this.isEnabled,
     hour: hour ?? this.hour,
     minute: minute ?? this.minute,
+    isPermissionDenied: isPermissionDenied ?? this.isPermissionDenied,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   ReminderSetting copyWithCompanion(ReminderSettingsCompanion data) {
     return ReminderSetting(
       userId: data.userId.present ? data.userId.value : this.userId,
+      type: data.type.present ? data.type.value : this.type,
       isEnabled: data.isEnabled.present ? data.isEnabled.value : this.isEnabled,
       hour: data.hour.present ? data.hour.value : this.hour,
       minute: data.minute.present ? data.minute.value : this.minute,
+      isPermissionDenied: data.isPermissionDenied.present
+          ? data.isPermissionDenied.value
+          : this.isPermissionDenied,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -7715,63 +7791,86 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   String toString() {
     return (StringBuffer('ReminderSetting(')
           ..write('userId: $userId, ')
+          ..write('type: $type, ')
           ..write('isEnabled: $isEnabled, ')
           ..write('hour: $hour, ')
           ..write('minute: $minute, ')
+          ..write('isPermissionDenied: $isPermissionDenied, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(userId, isEnabled, hour, minute, updatedAt);
+  int get hashCode => Object.hash(
+    userId,
+    type,
+    isEnabled,
+    hour,
+    minute,
+    isPermissionDenied,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ReminderSetting &&
           other.userId == this.userId &&
+          other.type == this.type &&
           other.isEnabled == this.isEnabled &&
           other.hour == this.hour &&
           other.minute == this.minute &&
+          other.isPermissionDenied == this.isPermissionDenied &&
           other.updatedAt == this.updatedAt);
 }
 
 class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
   final Value<String> userId;
+  final Value<ReminderType> type;
   final Value<bool> isEnabled;
   final Value<int> hour;
   final Value<int> minute;
+  final Value<bool> isPermissionDenied;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const ReminderSettingsCompanion({
     this.userId = const Value.absent(),
+    this.type = const Value.absent(),
     this.isEnabled = const Value.absent(),
     this.hour = const Value.absent(),
     this.minute = const Value.absent(),
+    this.isPermissionDenied = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ReminderSettingsCompanion.insert({
     required String userId,
+    this.type = const Value.absent(),
     this.isEnabled = const Value.absent(),
     this.hour = const Value.absent(),
     this.minute = const Value.absent(),
+    this.isPermissionDenied = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : userId = Value(userId);
   static Insertable<ReminderSetting> custom({
     Expression<String>? userId,
+    Expression<String>? type,
     Expression<bool>? isEnabled,
     Expression<int>? hour,
     Expression<int>? minute,
+    Expression<bool>? isPermissionDenied,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
+      if (type != null) 'type': type,
       if (isEnabled != null) 'is_enabled': isEnabled,
       if (hour != null) 'hour': hour,
       if (minute != null) 'minute': minute,
+      if (isPermissionDenied != null)
+        'is_permission_denied': isPermissionDenied,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -7779,17 +7878,21 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
 
   ReminderSettingsCompanion copyWith({
     Value<String>? userId,
+    Value<ReminderType>? type,
     Value<bool>? isEnabled,
     Value<int>? hour,
     Value<int>? minute,
+    Value<bool>? isPermissionDenied,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
     return ReminderSettingsCompanion(
       userId: userId ?? this.userId,
+      type: type ?? this.type,
       isEnabled: isEnabled ?? this.isEnabled,
       hour: hour ?? this.hour,
       minute: minute ?? this.minute,
+      isPermissionDenied: isPermissionDenied ?? this.isPermissionDenied,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -7801,6 +7904,11 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
     }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $ReminderSettingsTable.$convertertype.toSql(type.value),
+      );
+    }
     if (isEnabled.present) {
       map['is_enabled'] = Variable<bool>(isEnabled.value);
     }
@@ -7809,6 +7917,9 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     }
     if (minute.present) {
       map['minute'] = Variable<int>(minute.value);
+    }
+    if (isPermissionDenied.present) {
+      map['is_permission_denied'] = Variable<bool>(isPermissionDenied.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -7823,9 +7934,11 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
   String toString() {
     return (StringBuffer('ReminderSettingsCompanion(')
           ..write('userId: $userId, ')
+          ..write('type: $type, ')
           ..write('isEnabled: $isEnabled, ')
           ..write('hour: $hour, ')
           ..write('minute: $minute, ')
+          ..write('isPermissionDenied: $isPermissionDenied, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -13001,18 +13114,22 @@ typedef $$NotificationEventsTableProcessedTableManager =
 typedef $$ReminderSettingsTableCreateCompanionBuilder =
     ReminderSettingsCompanion Function({
       required String userId,
+      Value<ReminderType> type,
       Value<bool> isEnabled,
       Value<int> hour,
       Value<int> minute,
+      Value<bool> isPermissionDenied,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
 typedef $$ReminderSettingsTableUpdateCompanionBuilder =
     ReminderSettingsCompanion Function({
       Value<String> userId,
+      Value<ReminderType> type,
       Value<bool> isEnabled,
       Value<int> hour,
       Value<int> minute,
+      Value<bool> isPermissionDenied,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -13031,6 +13148,12 @@ class $$ReminderSettingsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<ReminderType, ReminderType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
   ColumnFilters<bool> get isEnabled => $composableBuilder(
     column: $table.isEnabled,
     builder: (column) => ColumnFilters(column),
@@ -13043,6 +13166,11 @@ class $$ReminderSettingsTableFilterComposer
 
   ColumnFilters<int> get minute => $composableBuilder(
     column: $table.minute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPermissionDenied => $composableBuilder(
+    column: $table.isPermissionDenied,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13066,6 +13194,11 @@ class $$ReminderSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isEnabled => $composableBuilder(
     column: $table.isEnabled,
     builder: (column) => ColumnOrderings(column),
@@ -13078,6 +13211,11 @@ class $$ReminderSettingsTableOrderingComposer
 
   ColumnOrderings<int> get minute => $composableBuilder(
     column: $table.minute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPermissionDenied => $composableBuilder(
+    column: $table.isPermissionDenied,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13099,6 +13237,9 @@ class $$ReminderSettingsTableAnnotationComposer
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<ReminderType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
   GeneratedColumn<bool> get isEnabled =>
       $composableBuilder(column: $table.isEnabled, builder: (column) => column);
 
@@ -13107,6 +13248,11 @@ class $$ReminderSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get minute =>
       $composableBuilder(column: $table.minute, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPermissionDenied => $composableBuilder(
+    column: $table.isPermissionDenied,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -13150,32 +13296,40 @@ class $$ReminderSettingsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> userId = const Value.absent(),
+                Value<ReminderType> type = const Value.absent(),
                 Value<bool> isEnabled = const Value.absent(),
                 Value<int> hour = const Value.absent(),
                 Value<int> minute = const Value.absent(),
+                Value<bool> isPermissionDenied = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReminderSettingsCompanion(
                 userId: userId,
+                type: type,
                 isEnabled: isEnabled,
                 hour: hour,
                 minute: minute,
+                isPermissionDenied: isPermissionDenied,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String userId,
+                Value<ReminderType> type = const Value.absent(),
                 Value<bool> isEnabled = const Value.absent(),
                 Value<int> hour = const Value.absent(),
                 Value<int> minute = const Value.absent(),
+                Value<bool> isPermissionDenied = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReminderSettingsCompanion.insert(
                 userId: userId,
+                type: type,
                 isEnabled: isEnabled,
                 hour: hour,
                 minute: minute,
+                isPermissionDenied: isPermissionDenied,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

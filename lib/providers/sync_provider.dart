@@ -15,11 +15,13 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final db = ref.watch(databaseProvider);
   final connectivity = ConnectivityService();
   const storage = FlutterSecureStorage();
+  final localReminderService = ref.watch(localReminderServiceProvider);
 
   final service = SyncService(
     db: db,
     connectivity: connectivity,
     storage: storage,
+    localReminderService: localReminderService,
   );
   service.init();
 

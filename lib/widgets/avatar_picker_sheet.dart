@@ -97,11 +97,20 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoading
-                  ? _buildLoadingGrid()
-                  : TabBarView(
-                      children: [_buildGrid(characters), _buildGrid(emojis)],
+              child: Stack(
+                children: [
+                  TabBarView(
+                    children: [_buildGrid(characters), _buildGrid(emojis)],
+                  ),
+                  if (_isLoading)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        child: _buildLoadingGrid(),
+                      ),
                     ),
+                ],
+              ),
             ),
           ],
         ),

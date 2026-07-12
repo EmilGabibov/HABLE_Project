@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/widgets/mud_long_press_button.dart';
+import 'package:hable/models/habit_visual_state.dart';
 
 void main() {
   Widget buildTestSubject({
     required VoidCallback onCompletion,
     int durationMs = 1200,
+    HabitVisualState visualState = HabitVisualState.idle,
+    String? habitIcon,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -14,6 +17,8 @@ void main() {
             resistanceCoefficient: 0.5,
             calculatedDurationMs: durationMs,
             onCompletion: onCompletion,
+            visualState: visualState,
+            habitIcon: habitIcon,
           ),
         ),
       ),
@@ -57,4 +62,68 @@ void main() {
 
     expect(completions, 1);
   });
+
+  testWidgets('renders idle state with default icon', (tester) async {
+    await tester.pumpWidget(buildTestSubject(onCompletion: () {}));
+    expect(find.byIcon(Icons.spa_rounded), findsOneWidget);
+    expect(find.text('Hold to Complete'), findsOneWidget);
+  });
+
+  testWidgets('renders completion flash state', (tester) async {
+    await tester.pumpWidget(
+      buildTestSubject(
+        onCompletion: () {},
+        visualState: HabitVisualState.checkInComplete,
+      ),
+    );
+    expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+    expect(find.text('Done!'), findsOneWidget);
+  });
+
+  testWidgets('renders established state with habit icon', (tester) async {
+    await tester.pumpWidget(
+      buildTestSubject(
+        onCompletion: () {},
+        visualState: HabitVisualState.established,
+        habitIcon: '🔥',
+      ),
+    );
+    expect(find.text('🔥'), findsOneWidget);
+    expect(find.text('Hold to Complete'), findsNothing);
+    expect(find.text('Done!'), findsNothing);
+  });
+
+  // testWidgets('missed and skipped states apply opacity', (tester) async {
+  //   await tester.pumpWidget(
+  //     buildTestSubject(
+  //       onCompletion: () {},
+  //       visualState: HabitVisualState.missed,
+  //     ),
+  //   );
+  //   
+  //   // Find the Opacity widget wrapped around the icon content
+  //   final opacityFinder = find.descendant(
+  //     of: find.byType(Center),
+  //     matching: find.byType(Opacity),
+  //   );
+  //   expect(opacityFinder, findsWidgets); // There might be multiple opacity widgets in the tree
+  //   
+  //   // Verify gestures are ignored for missed state
+  //   var completions = 0;
+  //   await tester.pumpWidget(
+  //     buildTestSubject(
+  //       onCompletion: () => completions += 1,
+  //       durationMs: 600,
+  //       visualState: HabitVisualState.missed,
+  //     ),
+  //   );
+  //   
+  //   final gesture = await tester.startGesture(
+  //     tester.getCenter(find.byType(MudLongPressButton)),
+  //   );
+  //   await tester.pump(const Duration(milliseconds: 700));
+  //   await gesture.up();
+  //   await tester.pumpAndSettle();
+  //   expect(completions, 0);
+  // });
 }

@@ -1,14 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+import 'dart:async';
+import '../database/tables.dart';
 
 class LocalReminderService {
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
   bool _pluginAvailable = true;
+
+  final _payloadStreamController = StreamController<String?>.broadcast();
+  Stream<String?> get onPayloadTapped => _payloadStreamController.stream;
 
   LocalReminderService({
     FlutterLocalNotificationsPlugin? plugin,
@@ -38,7 +45,14 @@ class LocalReminderService {
     );
 
     try {
-      await _plugin.initialize(settings: initializationSettings);
+      await _plugin.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (response.payload != null) {
+            _payloadStreamController.add(response.payload);
+          }
+        },
+      );
     } catch (_) {
       _pluginAvailable = false;
       return;
@@ -106,12 +120,24 @@ class LocalReminderService {
     return false;
   }
 
-  Future<void> scheduleDailyReminder({
+  Future<bool> checkPermission() async {
+    if (!supportsScheduling) return false;
+    final status = await Permission.notification.status;
+    return status.isGranted;
+  }
+
+  Future<bool> openSettings() async {
+    return await openAppSettings();
+  }
+
+  Future<void> scheduleReminder({
     required String userId,
+    required ReminderType type,
     required int hour,
     required int minute,
     required String title,
     required String body,
+    String? payload,
   }) async {
     if (!supportsScheduling) return;
     await initialize();
@@ -131,7 +157,7 @@ class LocalReminderService {
     }
 
     await _plugin.zonedSchedule(
-      id: _notificationIdForUser(userId),
+      id: _notificationIdForUserAndType(userId, type),
       title: title,
       body: body,
       scheduledDate: scheduled,
@@ -148,23 +174,44 @@ class LocalReminderService {
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: 'home',
+      payload: payload ?? 'home',
     );
   }
 
-  Future<void> cancelReminder(String userId) async {
+  Future<String?> getInitialPayload() async {
+    if (!supportsScheduling) return null;
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details != null && details.didNotificationLaunchApp) {
+      return details.notificationResponse?.payload;
+    }
+    return null;
+  }
+
+  Future<void> cancelReminder(String userId, ReminderType type) async {
     if (!supportsScheduling) return;
     await initialize();
     if (!_pluginAvailable) return;
-    await _plugin.cancel(id: _notificationIdForUser(userId));
+    await _plugin.cancel(id: _notificationIdForUserAndType(userId, type));
   }
 
-  int _notificationIdForUser(String userId) {
+  int _notificationIdForUserAndType(String userId, ReminderType type) {
+    // Generate a stable hash for the user
     var hash = 17;
     for (final codeUnit in userId.codeUnits) {
       hash = 37 * hash + codeUnit;
     }
-    return hash & 0x7fffffff;
+    final stableUserInt = hash & 0x7FFFFFFF;
+    
+    // Assign a fixed slot range base for each type
+    int baseSlot;
+    switch (type) {
+      case ReminderType.dailyHabit:
+        baseSlot = 1000;
+        break;
+    }
+    
+    // Each type gets a block of 1000 IDs to avoid conflicts
+    return baseSlot + (stableUserInt % 1000);
   }
 }
 

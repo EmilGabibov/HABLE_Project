@@ -23,6 +23,7 @@ import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
+import 'completion_splash_screen.dart';
 import '../widgets/milestone_wish_carousel.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -296,11 +297,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           )
         else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) =>
-                  _HabitCard(habit: habits[index], userId: widget.userId),
-              childCount: habits.length,
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 400,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.85, // Adjust for tile proportions
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) =>
+                    _HabitCard(habit: habits[index], userId: widget.userId),
+                childCount: habits.length,
+              ),
             ),
           ),
       ],
@@ -462,6 +472,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     final habitColor = _hexToColor(habit.colorHex);
 
     // Calculate resistance
+    final isContinuous = habit.targetDuration <= 0;
     final challengeDay = _challengeDay(habit);
     final progressFraction = _progressFraction(habit);
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
@@ -501,6 +512,17 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
         ? _sentNudgeFeedback
         : null;
 
+    HabitVisualState visualState = HabitVisualState.idle;
+    if (_isShowingCompletionFeedback) {
+      visualState = HabitVisualState.checkInComplete;
+    } else if (isCompletedToday) {
+      visualState = HabitVisualState.established;
+    } else if (isSkippedToday) {
+      visualState = HabitVisualState.skipped;
+    } else if (recentNudge != null) {
+      visualState = HabitVisualState.nudged;
+    }
+
     return Semantics(
       label:
           '${habit.title}. Challenge day $challengeDay of $targetDays. ${isCompletedToday
@@ -509,168 +531,165 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
               ? "Skipped today."
               : "Not completed today."}${recentNudge == null ? "" : " ${recentNudge.username} nudged this habit."}',
       child: Card(
-        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        margin: EdgeInsets.zero, // Padding handled by SliverPadding/Grid spacing
         clipBehavior: Clip.antiAlias,
-        child: Column(
+        child: Stack(
           children: [
-            // ─── Ring-focused content area ───
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Main ring with habit icon inside
-                  Center(
-                    child: Opacity(
-                      opacity: canLogProgress ? 1 : 0.45,
-                      child: IgnorePointer(
-                        ignoring: !canLogProgress,
-                        child: _NudgedRingPulse(
-                          isActive: recentNudge != null && !isCompletedToday,
-                          color: habitColor,
-                          pulseKey:
-                              recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
-                          child: MudLongPressButton(
-                            resistanceCoefficient:
-                                resistance.resistanceCoefficient,
-                            calculatedDurationMs:
-                                resistance.calculatedDurationMs,
-                            isCompleted: _isShowingCompletionFeedback,
-                            isDisabled: isCompletedToday,
-                            habitColor: habitColor,
-                            habitIcon: habitMeta?.emoji,
-                            visualParameters: HabitVisualParameters.standard,
-                            onCompletion: () => _handleCompletion(
-                              context,
-                              ref,
-                              habit,
-                              challengeDay,
-                              viewerRole,
-                            ),
-                          ),
+            // ─── Top-left title ───
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 64, // Leave room for partner avatars
+              child: Text(
+                habit.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+
+            // ─── Top-right partners ───
+            Positioned(
+              top: 12,
+              right: 12,
+              child: partnersAsync.when(
+                data: (partners) => HabitPartnerRow(
+                  partners: partners,
+                  habitColor: habitColor,
+                  compactMode: true,
+                  maxVisible: 3,
+                  onProfileTap: (partner) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ProfileScreen(userId: partner.partnerUserId),
+                      ),
+                    );
+                  },
+                  onNudgeTap: (partner) async {
+                    final db = ref.read(databaseProvider);
+                    final queuedAt = DateTime.now();
+                    setState(() {
+                      _sentNudgeFeedback = _QueuedNudgeFeedback(
+                        partnerName: partner.username,
+                        queuedAt: queuedAt,
+                      );
+                    });
+                    _clearSentNudgeTimer?.cancel();
+                    _clearSentNudgeTimer = Timer(_sentNudgeFeedbackTtl, () {
+                      if (!mounted) return;
+                      setState(() {
+                        if (_sentNudgeFeedback?.queuedAt == queuedAt) {
+                          _sentNudgeFeedback = null;
+                        }
+                      });
+                    });
+                    await enqueueNudge(
+                      db: db,
+                      senderUserId: userId,
+                      targetUserId: partner.partnerUserId,
+                      habitId: habit.habitId,
+                    );
+                    unawaited(ref.read(syncServiceProvider).flushPending());
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Nudge queued for ${partner.username} on ${habit.title}.',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: habitColor.withValues(alpha: 0.92),
+                      ),
+                    );
+                  },
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+            ),
+
+            // ─── Center Ring ───
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 48), // offset for bottom bar
+                child: Opacity(
+                  opacity: canLogProgress ? 1 : 0.45,
+                  child: IgnorePointer(
+                    ignoring: !canLogProgress,
+                    child: _NudgedRingPulse(
+                      isActive: recentNudge != null && !isCompletedToday,
+                      color: habitColor,
+                      pulseKey: recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
+                      child: MudLongPressButton(
+                        resistanceCoefficient: resistance.resistanceCoefficient,
+                        calculatedDurationMs: resistance.calculatedDurationMs,
+                        visualState: visualState,
+                        habitColor: habitColor,
+                        habitIcon: habitMeta?.emoji,
+                        visualParameters: HabitVisualParameters.standard,
+                        onCompletion: () => _handleCompletion(
+                          context,
+                          ref,
+                          habit,
+                          challengeDay,
+                          viewerRole,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                ),
+              ),
+            ),
 
-                  // Partner avatars - now larger and more visible
-                  partnersAsync.when(
-                    data: (partners) => HabitPartnerRow(
-                      partners: partners,
-                      habitColor: habitColor,
-                      maxVisible: 4,
-                      onProfileTap: (partner) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProfileScreen(userId: partner.partnerUserId),
-                          ),
-                        );
-                      },
-                      onNudgeTap: (partner) async {
-                        final db = ref.read(databaseProvider);
-                        final queuedAt = DateTime.now();
-                        setState(() {
-                          _sentNudgeFeedback = _QueuedNudgeFeedback(
-                            partnerName: partner.username,
-                            queuedAt: queuedAt,
-                          );
-                        });
-                        _clearSentNudgeTimer?.cancel();
-                        _clearSentNudgeTimer = Timer(_sentNudgeFeedbackTtl, () {
-                          if (!mounted) return;
-                          setState(() {
-                            if (_sentNudgeFeedback?.queuedAt == queuedAt) {
-                              _sentNudgeFeedback = null;
-                            }
-                          });
-                        });
-                        await enqueueNudge(
-                          db: db,
-                          senderUserId: userId,
-                          targetUserId: partner.partnerUserId,
-                          habitId: habit.habitId,
-                        );
-                        unawaited(ref.read(syncServiceProvider).flushPending());
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Nudge queued for ${partner.username} on ${habit.title}.',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: habitColor.withValues(alpha: 0.92),
-                          ),
-                        );
-                      },
-                    ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
-                  ),
-
-                  const SizedBox(height: 12),
-
+            // ─── Nudge Feedbacks (Overlay above bottom bar) ───
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 40,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   if (recentNudge != null) ...[
                     _HabitNudgeChip(
                       label: 'Nudged by ${recentNudge.username}',
                       color: habitColor,
                       icon: Icons.notifications_active_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ],
-
                   if (visibleSentNudgeFeedback != null) ...[
                     _HabitNudgeChip(
-                      label:
-                          'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+                      label: 'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
                       color: habitColor,
                       icon: Icons.back_hand_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ],
-
-                  // Streak badge
-                  streakAsync.when(
-                    data: (streak) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: habitColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '🔥 $streak',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: habitColor,
-                        ),
-                      ),
-                    ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Skip button - only show if not completed
                   if (!canLogProgress)
-                    Text(
-                      'Supporters can follow progress and send nudges.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        'Following',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.warmGray,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     )
                   else if (!isCompletedToday)
-                    TextButton(
-                      onPressed: () => _handleSkip(context, ref, habit),
-                      child: Text(
-                        isSkippedToday ? 'Skipped today' : 'Skip today',
-                        style: TextStyle(
-                          color: AppTheme.warmGray,
-                          fontSize: 14,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: InkWell(
+                        onTap: () => _handleSkip(context, ref, habit),
+                        child: Text(
+                          isSkippedToday ? 'Skipped today' : 'Skip today',
+                          style: TextStyle(
+                            color: AppTheme.warmGray,
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     ),
@@ -678,18 +697,50 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
               ),
             ),
 
-            // ─── Bottom progress area with habit name and challenge info ───
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: habitColor.withValues(alpha: 0.08),
-              ),
+            // ─── Bottom Progress Area ───
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Progress bar
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: habitColor.withValues(alpha: 0.08),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isContinuous 
+                              ? 'Continuous' 
+                              : 'Day $challengeDay of $targetDays',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        streakAsync.when(
+                          data: (streak) => Text(
+                            '🔥 $streak',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: habitColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
                   Semantics(
-                    label:
-                        'Progress ${((progressFraction * 100).round())} percent.',
+                    label: 'Progress ${((progressFraction * 100).round())} percent.',
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
@@ -700,33 +751,6 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                         alignment: Alignment.centerLeft,
                         child: Container(color: habitColor),
                       ),
-                    ),
-                  ),
-
-                  // Habit name and challenge info
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          habit.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Challenge: Day $challengeDay of $targetDays',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppTheme.deepCharcoal.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                        ),
-                      ],
                     ),
                   ),
                 ],
@@ -782,16 +806,9 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     int currentDay,
     PartnershipRole viewerRole,
   ) async {
-    // Show transient completion feedback
+    // Show transient completion feedback on the ring
     if (mounted) {
       HapticFeedback.heavyImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Great job completing ${habit.title}!'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
       setState(() {
         _isShowingCompletionFeedback = true;
       });
@@ -803,6 +820,19 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
           });
         }
       });
+      
+      // Push the completion splash screen overlay
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          opaque: false,
+          pageBuilder: (BuildContext context, _, __) {
+            return CompletionSplashScreen(
+              habit: habit,
+              emoji: standardHabitForTitle(habit.title)?.emoji,
+            );
+          },
+        ),
+      );
     }
 
     final db = ref.read(databaseProvider);

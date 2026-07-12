@@ -9,6 +9,7 @@ class HabitPartnerRow extends StatelessWidget {
   final List<PartnerSnapshot> partners;
   final Color habitColor;
   final int maxVisible;
+  final bool compactMode;
   final void Function(PartnerSnapshot partner)? onProfileTap;
   final void Function(PartnerSnapshot partner)? onNudgeTap;
 
@@ -17,6 +18,7 @@ class HabitPartnerRow extends StatelessWidget {
     required this.partners,
     required this.habitColor,
     this.maxVisible = 4,
+    this.compactMode = false,
     this.onProfileTap,
     this.onNudgeTap,
   });
@@ -27,7 +29,7 @@ class HabitPartnerRow extends StatelessWidget {
       return Semantics(
         label: 'No partners on this habit yet.',
         child: Text(
-          'Solo today',
+          'No partners',
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -45,6 +47,7 @@ class HabitPartnerRow extends StatelessWidget {
       children: [
         Expanded(
           child: Wrap(
+            direction: compactMode ? Axis.vertical : Axis.horizontal,
             spacing: 8,
             runSpacing: 8,
             children: [
@@ -58,6 +61,7 @@ class HabitPartnerRow extends StatelessWidget {
                   onNudgeTap: onNudgeTap == null
                       ? null
                       : () => onNudgeTap!(partner),
+                  compactMode: compactMode,
                 ),
               if (overflowCount > 0)
                 Semantics(
@@ -94,12 +98,14 @@ class _PartnerChip extends StatelessWidget {
   final Color habitColor;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNudgeTap;
+  final bool compactMode;
 
   const _PartnerChip({
     required this.partner,
     required this.habitColor,
     this.onProfileTap,
     this.onNudgeTap,
+    this.compactMode = false,
   });
 
   @override
@@ -193,40 +199,42 @@ class _PartnerChip extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              partner.username,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: AppTheme.deepCharcoal,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            Text(
-                              wasNudgedRecently ? 'nudged' : roleLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: wasNudgedRecently
-                                        ? habitColor
-                                        : partner.role ==
-                                              PartnershipRole.supporter
-                                        ? AppTheme.mutedLavender
-                                        : borderColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ],
+                      if (!compactMode) ...[
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                partner.username,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: AppTheme.deepCharcoal,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              Text(
+                                wasNudgedRecently ? 'nudged' : roleLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: wasNudgedRecently
+                                          ? habitColor
+                                          : partner.role ==
+                                                PartnershipRole.supporter
+                                          ? AppTheme.mutedLavender
+                                          : borderColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

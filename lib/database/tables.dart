@@ -19,6 +19,11 @@ enum NotificationEventType {
   reminderSetting,
 }
 
+/// Reminder types for the local slot-based reminder system.
+enum ReminderType {
+  dailyHabit,
+}
+
 /// Sync queue action types for outbound mutations.
 enum SyncAction {
   createHabit,
@@ -257,16 +262,18 @@ class NotificationEvents extends Table {
   Set<Column> get primaryKey => {notificationId};
 }
 
-/// Per-user local reminder preference for one daily habit review reminder.
+/// Per-user local reminder preference for different types of reminders.
 class ReminderSettings extends Table {
   TextColumn get userId => text()();
+  TextColumn get type => textEnum<ReminderType>().withDefault(const Constant('dailyHabit'))();
   BoolColumn get isEnabled => boolean().withDefault(const Constant(false))();
   IntColumn get hour => integer().withDefault(const Constant(20))();
   IntColumn get minute => integer().withDefault(const Constant(0))();
+  BoolColumn get isPermissionDenied => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column> get primaryKey => {userId};
+  Set<Column> get primaryKey => {userId, type};
 }
 
 /// Coarse anonymous diagnostics buckets for development-only usage reporting.

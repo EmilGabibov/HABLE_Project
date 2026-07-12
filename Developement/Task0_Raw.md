@@ -2,48 +2,4 @@
 
 ## Raw Tasks Intake
 
-
-- [x] Transferred to [Repair Account And Social API Regression Across Auth Avatar Nudge Leaderboard And Search](Task2_Archived.md#repair-account-and-social-api-regression-across-auth-avatar-nudge-leaderboard-and-search) — 2026-07-11 20:07 CEST
-    
-
-- [x] Transferred to [Replace Core Loading Spinners With Consistent Skeleton Empty States](Task2_Archived.md#replace-core-loading-spinners-with-consistent-skeleton-empty-states) — 2026-07-11 20:15 CEST
-
-- [x] Transferred to [Inventory Project TODO Comments Into A Prioritized Backlog](Task1_Engineered.md#inventory-project-todo-comments-into-a-prioritized-backlog) — 2026-07-12 08:20 CEST
-
-- [x] Transferred to [Document Hable Authentication System Context](Task1_Engineered.md#document-hable-authentication-system-context) — 2026-07-12 08:25 CEST
-
-- [x] Transferred to [Replace Template Android Application ID With Stable Hable Package Names](Task1_Engineered.md#replace-template-android-application-id-with-stable-hable-package-names) — 2026-07-12 08:29 CEST
-
-
-- [x] Transferred to [Configure Android Release Signing For Production Builds](Task1_Engineered.md#configure-android-release-signing-for-production-builds) — 2026-07-12 08:31 CEST
-
-- [x] Transferred to [Reconcile Task_Idea Prompts Into The Active Hable Backlog](Task1_Engineered.md#reconcile-task-idea-prompts-into-the-active-hable-backlog) — 2026-07-12 10:10 CEST
-
-- look and find issue list in Task_Idea.md, for each:
-    - [x] Transferred to [Implement foreground daily-sync polling and lifecycle flush for social/habit updates](Task1_Engineered.md#implement-foreground-daily-sync-polling-and-lifecycle-flush) — 2026-07-12 10:16 CEST
-    - [x] Transferred to [Harden Self-Friend Request Guarding And Social Cache Cleanup](Task1_Engineered.md#harden-self-friend-request-guarding-and-social-cache-cleanup) — 2026-07-12 10:27 CEST
-    - [x] Transferred to [Top-Align Primary Content And Remove Wasted Vertical Space](Task1_Engineered.md#top-align-primary-content-and-remove-wasted-vertical-space) — 2026-07-12 10:30 CEST
-    - [x] Transferred to [Restore Inline Habit Card State After Completion Feedback](Task1_Engineered.md#restore-inline-habit-card-state-after-completion-feedback) — 2026-07-12 10:35 CEST
-    - [x] Transferred to [Make Avatar Updates Optimistic And Failure-Safe](Task1_Engineered.md#make-avatar-updates-optimistic-and-failure-safe) — 2026-07-12 10:40 CEST
-    - [x] Transferred to [Gate Authenticated Shell On Startup Sync Readiness](Task1_Engineered.md#gate-authenticated-shell-on-startup-sync-readiness) — 2026-07-12 10:45 CEST
-
-- [x] Transferred into platform build tasks — [Verify Web Build Integrity](Task1_Engineered.md#verify-web-build-integrity), [Verify iOS Build Integrity](Task1_Engineered.md#verify-ios-build-integrity), [Verify Android Build Integrity](Task1_Engineered.md#verify-android-build-integrity), [Verify MacOS Build Integrity](Task1_Engineered.md#verify-macos-build-integrity), [Verify Windows Build Integrity](Task1_Engineered.md#verify-windows-build-integrity) — 2026-07-12 10:45 CEST
-
-- [x] Transferred to [Document AI Agent Guideline For Cross-Platform Build Fix Workflow](Task1_Engineered.md#document-ai-agent-guideline-for-cross-platform-build-fix-workflow) — 2026-07-12 11:05 CEST
-
-- [x] Transferred to [Refine And Organize Development Documentation](Task1_Engineered.md#refine-and-organize-development-documentation) — 2026-07-12 11:00 CEST
-
-- [x] Transferred to [Design Web Multi-User Browser Test Plan For Core Social Habit And Leaderboard Flows](Task1_Engineered.md#design-web-multi-user-browser-test-plan-for-core-social-habit-and-leaderboard-flows) — 2026-07-12 11:31 CEST
-
-- [x] Transferred to [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task1_Engineered.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments) — 2026-07-12 11:56 CEST
-
-- [x] Transferred to [Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold](Task2_Archived.md#fix-shared-habit-hold-to-complete-cancellation-before-threshold) — 2026-07-12 14:07 CEST
-
-- [x] Transferred to [Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions](Task1_Engineered.md#add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions) — 2026-07-12 14:33 CEST
-
-- [ ] Task 1: Resolve Habit Completion Sync Loop - Modify SyncService.pullDailySync and the local habit watcher to distinguish between "Daily Check-In" and "Challenge Lifecycle Completion". Ensure partner-side check-ins do not trigger the archive or completed status for the shared metadata row.
-- [ ] Task 2: Implement "Mud" Resistance State Notifier - Extract the physics-driven resistance math into a dedicated Riverpod StateNotifier to isolate physics calculations from the UI thread.
-- [ ] Task 3: Engineering the Five Ring States - Implement the visual cycle for the habit ring (Empty, Completing, Completion, Complete, Missed) and move percentage labels to ARIA Semantics.
-- [ ] Task 4: Consolidated Card Information Architecture - Redesign the habit card to be narrower, adjust streak icon placement based on habit type, and replace Solo Today with Partners Remains.
-- [ ] Task 5: The "Completion Moment" Splash Screen - Create a dynamic typographic splash screen triggered upon final habit completion.
-- [ ] Task 6: Shareable Achievement Cards (MVP) - Implement a background service to render a shareable PNG card containing the habit name, duration, participant emojis, and the Hable logo.
+- [x] Transferred to [Diagnose And Reduce Post-Login Home Startup Latency On PWA And Supported Hosts](Task1_Engineered.md#diagnose-and-reduce-post-login-home-startup-latency-on-pwa-and-supported-hosts) — 2026-07-12 16:49 CEST

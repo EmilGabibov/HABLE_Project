@@ -1,0 +1,15 @@
+- generic [ref=f1e5] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic [ref=f1e34]:
+          - generic:
+            - generic [ref=f1e35]: Find Friends
+            - textbox "Search username..." [ref=f1e37]: qa_bob_712
+            - generic:
+              - group:
+                - group "qa_bob_712 Not connected":
+                  - button [active] [ref=f1e45]:
+                    - text: Send friend request
+                    - generic: Send friend request
+        - button "Scrim" [ref=f1e39]

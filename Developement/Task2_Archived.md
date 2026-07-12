@@ -2585,3 +2585,48 @@ Enable users to manage their own habits.
   - `ux_habit_states_and_scoring.md` [NEW] — Created document bridging backend scoring truth with frontend UX expectations.
   - `Task1_Engineered.md` — Marked task as completed.
 - **Behavior verified:** Detailed score calculation, triggers, and visibility. Gathered UX moments based on research and user additions (removing the Skip button, unifying Add Habit buttons, streak/progress UI). Listed all product gaps as future backlog candidates.
+
+<a id="fix-shared-habit-hold-to-complete-cancellation-before-threshold"></a>
+### [x] Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold
+
+**Raw source:** Fix shared-habit hold-to-complete so early release cancels completion instead of granting a check-in. Reproduced on deployed web with two isolated users: a short press/release on the center completion control still marked the habit completed and advanced shared progress.
+
+**Issue:** The deployed web flow for shared habits currently allows an early release on the mud completion control to still complete the habit and advance shared challenge progress. That breaks the core intentional-friction mechanic, creates false positive check-ins, and can corrupt partner-visible progression and score timing because the UI fires completion even when the hold gesture should have been canceled.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a core interaction bug on the primary check-in path.
+- *Smallest safe scope:* Fix the shared long-press control so completion only happens after the controller genuinely reaches the completion threshold while the gesture remains active, and early release always cancels back to idle.
+- *Skipped scope:* No redesign of the mud animation, no new gesture system, no scoring redesign, no partner-card visual overhaul, and no speculative desktop/mobile interaction rewrite beyond what is needed to make cancellation correct.
+- *Boundaries:* Preserve the existing resistance math, offline-first completion flow, shared-habit sync model, and backend-owned scoring. Fix the root cause in the shared completion control path rather than layering guards at each caller.
+
+**Action:** Audit the mud long-press widget and its Home-card wiring, then correct the gesture lifecycle so a partial hold never invokes completion. Keep the change minimal: ensure release before threshold resets progress without calling `onCompletion`, verify the completion callback cannot race after cancellation on web pointer events, and document the interaction expectation in the QA/test plan used for multi-user browser verification.
+
+**Hable perspective:** Hable intentionally makes completion slightly effortful. If the mud ring grants a check-in after a short press/release, the product loses the trustworthiness of its core mechanic and shared-habit participants can see incorrect completion state on each other's cards. The right fix belongs in the reusable completion control and its direct Home usage, not in backend compensation logic.
+
+**Implementation scope:**
+- `lib/widgets/mud_long_press_button.dart`: inspect the `GestureDetector` and `AnimationController` lifecycle, then make completion contingent on sustained hold state instead of relying on a callback path that can outlive cancellation.
+- `lib/screens/home_screen.dart`: keep `MudLongPressButton` usage unchanged except for any minimal state/parameter adjustment needed to support correct cancellation and semantics for disabled/completed cards.
+- Accessibility surface: preserve the existing "Hold to Complete" semantics while making sure assistive labels still match the real interaction.
+- Verification surface: add the smallest focused automated coverage for early-release cancellation versus full-hold completion, and keep a browser-smoke checklist for the shared-habit partner flow.
+
+**Scalability considerations:** Scalability impact: none expected. This is a local gesture-state fix on one reusable widget and should not introduce new persistence, provider, or sync load.
+
+**Future split guidance:** If Hable later needs platform-specific gesture tuning, advanced haptic choreography, or richer completion celebrations, split those into separate tasks after the cancellation bug is fixed. Do not expand this task into broad animation polish or scoring work.
+
+**Edge cases:** web pointer up firing after the controller nearly completes, mouse versus touch long-press behavior, completed-today cards, supporter-role cards that already suppress input, widget disposal during reverse animation, hot reload while the controller is active, and duplicate completion attempts caused by fast repeated press sequences.
+
+**Acceptance criteria:**
+- Releasing the mud completion control before the required hold duration does not log completion or advance shared challenge progress.
+- Holding through the full required duration still completes the habit normally.
+- Shared-habit cards continue to mirror true completion state between participants after a valid completion.
+- No score or flame progress is granted from a canceled early-release gesture.
+- The mud resistance timing and visual behavior remain otherwise intact.
+- Verification includes at least one automated check for early-release cancellation and one manual/shared-browser QA note covering the partner flow.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_web_multi_user_plan.md`, `Developement/Task0_Raw.md`, `Developement/Task1_Engineered.md`, `Developement/ai_agent_contract.md`
+
+**Completion notes:**
+- Files touched: `lib/widgets/mud_long_press_button.dart`, `test/mud_long_press_button_test.dart`, `Developement/ux_mud_and_animations.md`, `Developement/qa_web_multi_user_plan.md`
+- Behavior verified: Reworked the mud completion control to use explicit pointer hold/cancel timing instead of platform long-press recognition. Early release now reverses the ring without calling `onCompletion`, while a sustained hold completes exactly once. Verified with `flutter test test/mud_long_press_button_test.dart`.
+- Documentation updates: Updated `Developement/ux_mud_and_animations.md` with the cancellation rule and `Developement/qa_web_multi_user_plan.md` with the explicit short-press failure check for shared habits. `Developement/ux_habit_states_and_scoring.md` was reviewed and left unchanged because backend score ownership did not change.
+- Completed At: 2026-07-12 14:28 CEST

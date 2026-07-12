@@ -1,0 +1,25 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - group:
+                - generic [ref=f1e43]: Good afternoon
+                - generic [ref=f1e44]: qa_bob_712
+                - button "Open notifications 2" [ref=f1e45]
+                - generic [ref=f1e46]: 💬
+                - generic [ref=f1e47]: Progress, not perfection.
+                - group "QA Shared Water. Challenge day 1 of 2. Not completed today.":
+                  - 'group "Hold to Complete 🔥 0 Progress 50 percent. QA Shared Water Challenge: Day 1 of 2"':
+                    - button "qa_alice_712, partner, not completed today. Opens profile. qa_alice_712 partner" [ref=f1e63]
+                    - button "Nudge qa_alice_712 Nudge qa_alice_712 on this habit.":
+                      - button [ref=f1e64]
+                    - button "Skip today" [ref=f1e65]
+            - button "Create a new habit":
+              - button "Habit" [ref=f1e61]
+            - tablist:
+              - tab "Home" [active] [selected] [ref=f1e21]
+              - tab "Social" [ref=f1e22]
+              - tab "Profile" [ref=f1e23]

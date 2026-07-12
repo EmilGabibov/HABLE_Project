@@ -59,3 +59,10 @@ flutter run --release --flavor friend -t lib/main.dart
 ```
 
 *(Note: For iOS, `flutter run --release` is the most reliable way to compile and transfer the app to your device over USB in one step. If you only want to install an already-built iOS app without running it, you can simply use `flutter install`.)*
+
+## Clean Build Cache
+Empty/clean Flutter build outputs and caches (deletes the `build/` directory):
+```bash
+flutter clean
+```
+

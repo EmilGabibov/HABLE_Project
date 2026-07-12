@@ -1,0 +1,25 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic [ref=f1e24]: Social
+            - button "Sync now" [ref=f1e37]
+            - button "Find friends":
+              - button "Find friends" [ref=f1e26]
+            - tablist:
+              - tab "Friends" [selected] [ref=f1e27]
+              - tab "Activity" [ref=f1e28]
+              - tab "Leaderboard" [ref=f1e29]
+            - generic:
+              - generic:
+                - tabpanel:
+                  - generic:
+                    - group:
+                      - button "qa_alice_712 Long-press for actions" [ref=f1e39]
+            - generic [ref=f1e40]: You are now friends with qa_alice_712!
+            - tablist:
+              - tab "Home" [ref=f1e21]
+              - tab "Social" [active] [selected] [ref=f1e22]
+              - tab "Profile" [ref=f1e23]

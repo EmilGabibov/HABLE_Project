@@ -168,4 +168,72 @@ void main() {
 
     expect(find.text('nudged'), findsOneWidget);
   });
+
+  testWidgets('HabitPartnerRow shows empty state when no partners', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+        ),
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HabitPartnerRow(
+              partners: const [],
+              habitColor: AppTheme.sageGreen,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('No partners'), findsOneWidget);
+  });
+
+  testWidgets('HabitPartnerRow hides names and changes layout in compactMode', (
+    tester,
+  ) async {
+    final partners = [
+      _partner(
+        id: 'p1',
+        name: 'CompactAlex',
+        role: PartnershipRole.owner,
+        completed: true,
+      ),
+      _partner(
+        id: 'p2',
+        name: 'CompactBlair',
+        role: PartnershipRole.partner,
+        completed: false,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+        ),
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HabitPartnerRow(
+              partners: partners,
+              habitColor: AppTheme.sageGreen,
+              compactMode: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Names should be hidden in compactMode
+    expect(find.text('CompactAlex'), findsNothing);
+    expect(find.text('CompactBlair'), findsNothing);
+    
+    // The avatars should still be there (verifiable by profile tap semantic key)
+    expect(find.byKey(const Key('partner-profile-p1')), findsOneWidget);
+    expect(find.byKey(const Key('partner-profile-p2')), findsOneWidget);
+  });
 }

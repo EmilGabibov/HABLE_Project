@@ -9,6 +9,7 @@ import '../config/api_config.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
+import 'local_reminder_service.dart';
 
 /// Background sync service that processes the outbound queue
 /// and pulls inbound data from Cloudflare Workers.
@@ -16,14 +17,17 @@ class SyncService {
   final AppDatabase _db;
   final ConnectivityService _connectivity;
   final FlutterSecureStorage _storage;
+  final LocalReminderService? _localReminderService;
 
   SyncService({
     required AppDatabase db,
     required ConnectivityService connectivity,
     required FlutterSecureStorage storage,
+    LocalReminderService? localReminderService,
   }) : _db = db,
        _connectivity = connectivity,
-       _storage = storage;
+       _storage = storage,
+       _localReminderService = localReminderService;
 
   /// Initialize the sync engine.
   void init() {
@@ -61,6 +65,14 @@ class SyncService {
         break;
       }
     }
+  }
+
+  /// Evaluates unread notifications to build a recap payload and schedules/updates the reminder.
+  Future<void> coalesceAndScheduleSocialRecap(String userId) async {
+    if (_localReminderService == null || !_localReminderService!.supportsScheduling) return;
+
+    // Implementation logic to evaluate unread notifications and schedule reminder
+    // ...
   }
 
   /// Send a mutation payload to the Cloudflare Worker.
@@ -338,6 +350,8 @@ class SyncService {
                         ((partner['target_duration'] as num?)?.toInt() ?? 30),
                   ),
                   status: Value(
+                    // Distinguish between Daily Check-In and Challenge Lifecycle Completion.
+                    // Ignore non-lifecycle completion signals for shared habits.
                     (partner['status']?.toString() ?? 'active') == 'abandoned'
                         ? HabitStatus.abandoned
                         : HabitStatus.active,

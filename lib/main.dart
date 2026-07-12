@@ -10,9 +10,17 @@ import 'screens/auth_screen.dart';
 import 'screens/main_navigation_shell.dart';
 import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'providers/local_reminder_provider.dart';
+import 'services/background_sync_service.dart';
+import 'services/local_reminder_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await BackgroundSyncService().initialize();
+
   runApp(const ProviderScope(child: HableApp()));
 }
 
@@ -41,8 +49,9 @@ class _AppGate extends ConsumerStatefulWidget {
 }
 
 class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver {
-  bool _initialSyncCompleted = false;
   String? _lastSyncedUserId;
+  final GlobalKey<MainNavigationShellState> _shellKey = GlobalKey<MainNavigationShellState>();
+  StreamSubscription<String?>? _payloadSub;
 
   @override
   void initState() {
@@ -51,11 +60,44 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
     // On first load, wait for build to finish then trigger sync if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndStartSync();
+      _setupNotificationTapHandling();
     });
+  }
+
+  Future<void> _setupNotificationTapHandling() async {
+    final localReminder = ref.read(localReminderServiceProvider);
+    
+    // Handle initial payload from a cold start
+    final initialPayload = await localReminder.getInitialPayload();
+    if (initialPayload != null) {
+      _handlePayload(initialPayload);
+    }
+
+    // Listen to foreground/background taps
+    _payloadSub = localReminder.onPayloadTapped.listen((payload) {
+      if (payload != null) _handlePayload(payload);
+    });
+  }
+
+  void _handlePayload(String payloadStr) {
+    if (payloadStr == 'home') {
+      _shellKey.currentState?.switchToTab(0);
+      return;
+    }
+    
+    try {
+      final payload = jsonDecode(payloadStr) as Map<String, dynamic>;
+      if (payload['route'] == 'social') {
+        _shellKey.currentState?.switchToTab(1, socialSubTab: 1);
+      }
+    } catch (_) {
+      // Ignore parsing errors for simple payloads
+    }
   }
 
   @override
   void dispose() {
+    _payloadSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -64,19 +106,13 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated && authState.userId != null) {
       if (_lastSyncedUserId != authState.userId) {
-        if (mounted) {
-          setState(() {
-            _initialSyncCompleted = false;
-          });
-        }
+        ref.read(databaseProvider).removeSelfFromSocialCaches(authState.userId!);
       }
-      ref.read(databaseProvider).removeSelfFromSocialCaches(authState.userId!);
       ref.read(foregroundSyncControllerProvider.notifier).startPolling(authState.userId!);
-      await ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
+      ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
       
       if (mounted) {
         setState(() {
-          _initialSyncCompleted = true;
           _lastSyncedUserId = authState.userId;
         });
       }
@@ -109,23 +145,18 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
       if ((previous == null || !previous.isAuthenticated) && next.isAuthenticated && next.userId != null) {
          _checkAndStartSync();
       } else if ((previous != null && previous.isAuthenticated) && !next.isAuthenticated) {
-         ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
-         if (mounted) {
-           setState(() {
-             _initialSyncCompleted = false;
-             _lastSyncedUserId = null;
-           });
-         }
-      }
-    });
-
-    if (!_initialSyncCompleted) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+          ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
+          if (mounted) {
+            setState(() {
+              _lastSyncedUserId = null;
+            });
+          }
+       }
+     });
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
-      data: (_) => MainNavigationShell(userId: authState.userId!),
+      data: (_) => MainNavigationShell(key: _shellKey, userId: authState.userId!),
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),

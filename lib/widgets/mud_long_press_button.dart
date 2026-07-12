@@ -14,8 +14,7 @@ class MudLongPressButton extends StatefulWidget {
   final double resistanceCoefficient;
   final int calculatedDurationMs;
   final VoidCallback onCompletion;
-  final bool isCompleted;
-  final bool isDisabled;
+  final HabitVisualState visualState;
 
   /// Per-habit accent color for the ring arc. Defaults to sage green.
   final Color habitColor;
@@ -31,8 +30,7 @@ class MudLongPressButton extends StatefulWidget {
     required this.resistanceCoefficient,
     required this.calculatedDurationMs,
     required this.onCompletion,
-    this.isCompleted = false,
-    this.isDisabled = false,
+    this.visualState = HabitVisualState.idle,
     this.habitColor = AppTheme.sageGreen,
     this.habitIcon,
     this.visualParameters = HabitVisualParameters.standard,
@@ -131,15 +129,27 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isCompleted) {
-      return _buildCompletedState();
+    if (widget.visualState == HabitVisualState.checkInComplete) {
+      return _buildCompletionFlashState();
     }
+
+    if (widget.visualState == HabitVisualState.established) {
+      return _buildEstablishedState();
+    }
+
+    final isDisabled = widget.visualState == HabitVisualState.established ||
+        widget.visualState == HabitVisualState.missed ||
+        widget.visualState == HabitVisualState.skipped ||
+        widget.visualState == HabitVisualState.checkInComplete;
+
+    final isDimmed = widget.visualState == HabitVisualState.missed ||
+        widget.visualState == HabitVisualState.skipped;
 
     return Listener(
       behavior: HitTestBehavior.opaque,
-      onPointerDown: widget.isDisabled ? null : (_) => _startHold(),
-      onPointerUp: widget.isDisabled ? null : (_) => _cancelHold(),
-      onPointerCancel: widget.isDisabled ? null : (_) => _cancelHold(),
+      onPointerDown: isDisabled ? null : (_) => _startHold(),
+      onPointerUp: isDisabled ? null : (_) => _cancelHold(),
+      onPointerCancel: isDisabled ? null : (_) => _cancelHold(),
       child: AnimatedBuilder(
         animation: _curveAnimation,
         builder: (context, child) {
@@ -152,6 +162,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                 begin: widget.visualParameters.idleRingThickness,
                 end: widget.visualParameters.progressingRingThickness,
               ).evaluate(_curveAnimation),
+              isDimmed: isDimmed,
             ),
             child: child,
           );
@@ -159,7 +170,11 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         child: SizedBox(
           width: 180,
           height: 180,
-          child: Center(child: _buildIconContent()),
+          child: Center(
+            child: isDimmed
+                ? Opacity(opacity: 0.5, child: _buildIconContent())
+                : _buildIconContent(),
+          ),
         ),
       ),
     );
@@ -188,7 +203,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     );
   }
 
-  Widget _buildCompletedState() {
+  Widget _buildCompletionFlashState() {
     return SizedBox(
       width: 180,
       height: 180,
@@ -219,6 +234,39 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEstablishedState() {
+    return SizedBox(
+      width: 180,
+      height: 180,
+      child: CustomPaint(
+        painter: _MudButtonPainter(
+          progress: 1.0, // Solid colored ring
+          resistance: 0.0,
+          habitColor: widget.habitColor,
+          ringThickness: widget.visualParameters.idleRingThickness,
+        ),
+        child: Center(
+          child: widget.habitIcon != null && widget.habitIcon!.isNotEmpty
+              ? Opacity(
+                  opacity: widget.visualParameters.completedIconOpacity,
+                  child: Transform.scale(
+                    scale: widget.visualParameters.completedIconScale,
+                    child: Text(
+                      widget.habitIcon!,
+                      style: const TextStyle(fontSize: 56),
+                    ),
+                  ),
+                )
+              : Icon(
+                  Icons.spa_rounded,
+                  size: 40,
+                  color: widget.habitColor,
+                ),
         ),
       ),
     );
@@ -284,12 +332,14 @@ class _MudButtonPainter extends CustomPainter {
   final double resistance;
   final Color habitColor;
   final double ringThickness;
+  final bool isDimmed;
 
   _MudButtonPainter({
     required this.progress,
     required this.resistance,
     this.habitColor = AppTheme.sageGreen,
     this.ringThickness = 6.0,
+    this.isDimmed = false,
   });
 
   @override
@@ -298,11 +348,13 @@ class _MudButtonPainter extends CustomPainter {
     final radius = size.width / 2;
 
     // ── Background track (thin, muted) ──────────────────────────────────────
+    final baseColor = isDimmed ? AppTheme.deepCharcoal.withValues(alpha: 0.2) : habitColor;
+    
     final bgPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = ringThickness * 0.6
       ..strokeCap = StrokeCap.round
-      ..color = habitColor.withValues(alpha: 0.12);
+      ..color = baseColor.withValues(alpha: 0.12);
     canvas.drawCircle(center, radius - 10, bgPaint);
 
     if (progress <= 0) return;
@@ -312,9 +364,10 @@ class _MudButtonPainter extends CustomPainter {
     final arcThickness = ringThickness + (resistance * 6.0 * (1.0 - progress));
 
     // Color: lerps from habit pastel → vivid completion green at 100%
+    final targetColor = isDimmed ? AppTheme.deepCharcoal.withValues(alpha: 0.4) : AppTheme.completionGreen;
     final progressColor = Color.lerp(
-      habitColor,
-      AppTheme.completionGreen,
+      baseColor,
+      targetColor,
       progress,
     )!;
 
@@ -344,6 +397,7 @@ class _MudButtonPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.resistance != resistance ||
         oldDelegate.habitColor != habitColor ||
-        oldDelegate.ringThickness != ringThickness;
+        oldDelegate.ringThickness != ringThickness ||
+        oldDelegate.isDimmed != isDimmed;
   }
 }

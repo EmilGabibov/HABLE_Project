@@ -1,0 +1,33 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic [ref=f1e76]:
+          - generic:
+            - group:
+              - generic [ref=f1e77]: New Habit
+              - button [ref=f1e78]
+              - generic [ref=f1e79]: Quick Select
+              - group:
+                - checkbox "💧 Hydration" [ref=f1e80]
+                - checkbox "📖 Reading" [ref=f1e81]
+                - checkbox "🧘 Meditation" [ref=f1e82]
+                - checkbox "🏃 Exercise" [ref=f1e83]
+                - checkbox "😴 Sleep Routine" [ref=f1e84]
+                - checkbox "📝 Journaling" [ref=f1e85]
+              - textbox "Habit Title" [ref=f1e87]: QA Shared Water
+              - textbox "Challenge Duration (days)" [active] [ref=f1e89]: "212"
+              - generic [ref=f1e90]: Color
+              - button [ref=f1e91]
+              - button [ref=f1e92]
+              - button [ref=f1e93]
+              - button [ref=f1e94]
+              - button [ref=f1e95]
+              - button [ref=f1e96]
+              - button [ref=f1e97]
+              - button [ref=f1e98]
+              - button [ref=f1e99]
+              - generic [ref=f1e100]: Invite Partners
+              - checkbox "qa_bob_712" [checked] [ref=f1e101]
+              - button "Save" [ref=f1e102]
+        - button "Scrim" [ref=f1e103]

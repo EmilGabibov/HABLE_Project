@@ -18,17 +18,17 @@ class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key, required this.userId});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
+  State<MainNavigationShell> createState() => MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class MainNavigationShellState extends State<MainNavigationShell> {
   int _selectedIndex = 0;
   late final List<Widget?> _destinations = List<Widget?>.filled(3, null);
 
   /// Key for the Social tab so the shell can request an internal tab switch.
   final _socialKey = GlobalKey<SocialHubScreenState>();
 
-  void _switchToTab(int index, {int? socialSubTab}) {
+  void switchToTab(int index, {int? socialSubTab}) {
     setState(() => _selectedIndex = index);
     if (index == 1 && socialSubTab != null) {
       // Post-frame to ensure the Social tab is built before switching.
@@ -42,7 +42,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     return _destinations[index] ??= switch (index) {
       0 => HomeScreen(
           userId: widget.userId,
-          onOpenActivity: () => _switchToTab(1, socialSubTab: 1),
+          onOpenActivity: () => switchToTab(1, socialSubTab: 1),
         ),
       1 => SocialHubScreen(key: _socialKey),
       2 => ProfileScreen(userId: widget.userId),

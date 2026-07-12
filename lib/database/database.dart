@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +78,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.createTable(friendRelationships);
+      }
+      if (from < 13) {
+        await m.addColumn(reminderSettings, reminderSettings.isPermissionDenied);
       }
     },
   );
@@ -176,10 +179,15 @@ class AppDatabase extends _$AppDatabase {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
+    final hasPartners = await (select(partnerships)..where((p) => p.habitId.equals(habitId))).get().then((list) => list.isNotEmpty);
+
     final remainingDays = habit.currentDuration > 0
         ? habit.currentDuration - 1
         : 0;
-    final nextStatus = remainingDays == 0 && !keepActiveWhenDurationEnds
+    
+    // Distinguish between Daily Check-In and Challenge Lifecycle Completion.
+    // Shared habits never automatically complete their lifecycle just because duration hits 0.
+    final nextStatus = remainingDays == 0 && !keepActiveWhenDurationEnds && !hasPartners
         ? HabitStatus.completed
         : HabitStatus.active;
 
@@ -882,6 +890,14 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
           .watch();
 
+  Future<List<NotificationEvent>> getUnreadNotificationsForUser(
+    String userId,
+  ) =>
+      (select(notificationEvents)
+            ..where((n) => n.userId.equals(userId) & n.readAt.isNull())
+            ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
+          .get();
+
   Future<void> markNotificationRead(String notificationId) =>
       (update(
         notificationEvents,
@@ -916,13 +932,13 @@ class AppDatabase extends _$AppDatabase {
   Future<void> saveReminderSetting(ReminderSettingsCompanion setting) =>
       into(reminderSettings).insertOnConflictUpdate(setting);
 
-  Future<ReminderSetting?> getReminderSetting(String userId) => (select(
+  Future<ReminderSetting?> getReminderSetting(String userId, ReminderType type) => (select(
     reminderSettings,
-  )..where((r) => r.userId.equals(userId))).getSingleOrNull();
+  )..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))).getSingleOrNull();
 
-  Stream<ReminderSetting?> watchReminderSetting(String userId) => (select(
+  Stream<ReminderSetting?> watchReminderSetting(String userId, ReminderType type) => (select(
     reminderSettings,
-  )..where((r) => r.userId.equals(userId))).watchSingleOrNull();
+  )..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))).watchSingleOrNull();
 
   // ---------------------------------------------------------------------------
   // Habit color palette assignment

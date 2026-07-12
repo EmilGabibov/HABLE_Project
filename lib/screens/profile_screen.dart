@@ -4,14 +4,18 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show HabitStatus, PartnershipRole;
 import '../data/standard_habits.dart';
 import '../providers/habit_providers.dart';
+import '../providers/sync_provider.dart';
+import '../services/local_reminder_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/habit_partner_row.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/achievement_share_card.dart';
 import '../widgets/avatar_picker_sheet.dart';
 import '../widgets/skeletons.dart';
 import '../providers/habit_actions_provider.dart';
@@ -372,9 +376,40 @@ class ProfileScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Achievements',
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Achievements',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                userAsync.when(
+                                  data: (user) => achievementsAsync.when(
+                                    data: (achievements) => IconButton(
+                                      icon: const Icon(
+                                        Icons.ios_share_rounded,
+                                        size: 20,
+                                      ),
+                                      color: AppTheme.sageGreen,
+                                      onPressed: () {
+                                        if (user == null) return;
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => AchievementSharePreview(
+                                              user: user,
+                                              achievements: achievements,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    loading: () => const SizedBox.shrink(),
+                                    error: (_, _) => const SizedBox.shrink(),
+                                  ),
+                                  loading: () => const SizedBox.shrink(),
+                                  error: (_, _) => const SizedBox.shrink(),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                             achievementsAsync.when(
@@ -1081,10 +1116,12 @@ class _DailyReminderCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reminderAsync = ref.watch(reminderSettingForUserProvider(userId));
     final actions = ref.read(notificationActionsProvider);
+    final reminders = ref.read(localReminderServiceProvider);
 
     return reminderAsync.when(
       data: (setting) {
         final enabled = setting?.isEnabled ?? false;
+        final isDenied = setting?.isPermissionDenied ?? false;
         final hour = setting?.hour ?? 20;
         final minute = setting?.minute ?? 0;
         final timeLabel = _formatReminderTime(hour, minute);
@@ -1111,22 +1148,40 @@ class _DailyReminderCard extends ConsumerWidget {
                     Switch(
                       value: enabled,
                       onChanged: (value) async {
-                        final success = await actions.updateDailyReminder(
+                        if (value) {
+                          final hasPerm = await reminders.checkPermission();
+                          if (!hasPerm) {
+                            if (!context.mounted) return;
+                            final proceed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Allow Reminders'),
+                                content: const Text(
+                                  'Hable needs notification permissions to send you daily reminders. You can turn this off at any time.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text('Continue'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (proceed != true) return;
+                          }
+                        }
+
+                        if (!context.mounted) return;
+                        await actions.updateDailyReminder(
                           userId: userId,
                           enabled: value,
                           hour: hour,
                           minute: minute,
                         );
-                        if (!context.mounted) return;
-                        if (!success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Reminder permission was denied on this device.',
-                              ),
-                            ),
-                          );
-                        }
                       },
                     ),
                   ],
@@ -1135,11 +1190,26 @@ class _DailyReminderCard extends ConsumerWidget {
                 Text(
                   enabled
                       ? 'A local reminder is scheduled for $timeLabel on this device.'
-                      : 'Enable one daily reminder to return to today\'s habits.',
+                      : (isDenied 
+                          ? 'Notifications are blocked. Enable them to receive reminders.'
+                          : 'Enable one daily reminder to return to today\'s habits.'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.warmGray.withValues(alpha: 0.9),
                   ),
                 ),
+                if (isDenied)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: OutlinedButton.icon(
+                      onPressed: () => reminders.openSettings(),
+                      icon: const Icon(Icons.settings),
+                      label: const Text('Enable in System Settings'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 10,
@@ -1161,22 +1231,38 @@ class _DailyReminderCard extends ConsumerWidget {
                             minute: picked.minute,
                           );
                         } else {
-                          final success = await actions.updateDailyReminder(
+                          final hasPerm = await reminders.checkPermission();
+                          if (!hasPerm) {
+                            if (!context.mounted) return;
+                            final proceed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Allow Reminders'),
+                                content: const Text(
+                                  'Hable needs notification permissions to send you daily reminders. You can turn this off at any time.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text('Continue'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (proceed != true) return;
+                          }
+
+                          if (!context.mounted) return;
+                          await actions.updateDailyReminder(
                             userId: userId,
                             enabled: true,
                             hour: picked.hour,
                             minute: picked.minute,
                           );
-                          if (!context.mounted) return;
-                          if (!success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Reminder permission was denied on this device.',
-                                ),
-                              ),
-                            );
-                          }
                         }
                       },
                       icon: const Icon(Icons.schedule_rounded),

@@ -44,6 +44,8 @@ This coefficient linearly maps to the animation controller configuration:
 
 **Important:** This math must be executed within a Riverpod `StateNotifier`, NOT within the UI widget's `build` method. The widget only receives the final `resistanceCoefficient` and `calculatedDurationMs`.
 
+**Cancellation rule:** The hold duration starts when the user presses the mud control itself, and completion is valid only while that press remains active through the full required duration. Releasing early must cancel the attempt, reverse the ring back to idle, and must not grant completion, shared progress, or score.
+
 > [!NOTE]
 > This section is the canonical mathematical specification for the Mud check-in. Any divergence in the Flutter implementation must be documented and justified here before the implementation is merged.
 

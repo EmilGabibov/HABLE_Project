@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/database.dart';
 import '../database/tables.dart';
+import '../services/background_sync_service.dart';
 import '../services/local_reminder_service.dart';
+import '../data/mascot_reminder_copy.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
 
@@ -39,8 +41,14 @@ final unreadNotificationCountProvider = StreamProvider<int>((ref) async* {
 final reminderSettingForUserProvider =
     StreamProvider.family<ReminderSetting?, String>((ref, userId) {
       final db = ref.watch(databaseProvider);
-      return db.watchReminderSetting(userId);
+      return db.watchReminderSetting(userId, ReminderType.dailyHabit);
     });
+
+enum ReminderUpdateResult {
+  success,
+  denied,
+  unsupported,
+}
 
 class NotificationActions {
   final Ref ref;
@@ -58,37 +66,55 @@ class NotificationActions {
     await _db.markAllNotificationsRead(userId);
   }
 
-  Future<bool> updateDailyReminder({
+  Future<ReminderUpdateResult> updateDailyReminder({
     required String userId,
     required bool enabled,
     required int hour,
     required int minute,
   }) async {
-    if (enabled) {
-      final granted = await _reminders.requestPermission();
-      if (!granted) return false;
+    bool permissionDenied = false;
 
-      await _reminders.scheduleDailyReminder(
-        userId: userId,
-        hour: hour,
-        minute: minute,
-        title: 'Hable reminder',
-        body: 'Open Hable and check today\'s habits.',
-      );
+    if (enabled) {
+      if (!_reminders.supportsScheduling) {
+        return ReminderUpdateResult.unsupported;
+      }
+      final granted = await _reminders.requestPermission();
+      if (!granted) {
+        permissionDenied = true;
+        enabled = false;
+      } else {
+        final copy = MascotReminderCopyHelper.getCopyForType(ReminderType.dailyHabit);
+        await _reminders.scheduleReminder(
+          userId: userId,
+          type: ReminderType.dailyHabit,
+          hour: hour,
+          minute: minute,
+          title: copy.title,
+          body: copy.body,
+        );
+        await BackgroundSyncService().scheduleReminderPrefetch(userId, hour, minute);
+      }
     } else {
-      await _reminders.cancelReminder(userId);
+      await _reminders.cancelReminder(userId, ReminderType.dailyHabit);
+      await BackgroundSyncService().cancelReminderPrefetch(userId);
     }
 
     final now = DateTime.now();
     await _db.saveReminderSetting(
       ReminderSettingsCompanion(
         userId: Value(userId),
+        type: const Value(ReminderType.dailyHabit),
         isEnabled: Value(enabled),
+        isPermissionDenied: Value(permissionDenied),
         hour: Value(hour),
         minute: Value(minute),
         updatedAt: Value(now),
       ),
     );
+
+    if (permissionDenied) {
+      return ReminderUpdateResult.denied;
+    }
 
     final timeLabel = _formatTime(hour, minute);
     final title = enabled ? 'Daily reminder enabled' : 'Daily reminder turned off';
@@ -115,7 +141,7 @@ class NotificationActions {
       ),
     );
 
-    return true;
+    return ReminderUpdateResult.success;
   }
 
   Future<void> updateReminderPreferenceTime({
@@ -127,6 +153,7 @@ class NotificationActions {
     await _db.saveReminderSetting(
       ReminderSettingsCompanion(
         userId: Value(userId),
+        type: const Value(ReminderType.dailyHabit),
         isEnabled: Value(enabled),
         hour: Value(hour),
         minute: Value(minute),
@@ -136,16 +163,18 @@ class NotificationActions {
   }
 
   Future<void> restoreReminderForUser(String userId) async {
-    final setting = await _db.getReminderSetting(userId);
+    final setting = await _db.getReminderSetting(userId, ReminderType.dailyHabit);
     if (setting == null || !setting.isEnabled) return;
     try {
-      await _reminders.scheduleDailyReminder(
+      await _reminders.scheduleReminder(
         userId: userId,
+        type: ReminderType.dailyHabit,
         hour: setting.hour,
         minute: setting.minute,
         title: 'Hable reminder',
         body: 'Open Hable and check today\'s habits.',
       );
+      await BackgroundSyncService().scheduleReminderPrefetch(userId, setting.hour, setting.minute);
     } catch (error) {
       debugPrint('Failed to restore reminder schedule: $error');
     }
@@ -153,7 +182,8 @@ class NotificationActions {
 
   Future<void> cancelReminderForUser(String userId) async {
     try {
-      await _reminders.cancelReminder(userId);
+      await _reminders.cancelReminder(userId, ReminderType.dailyHabit);
+      await BackgroundSyncService().cancelReminderPrefetch(userId);
     } catch (error) {
       debugPrint('Failed to cancel reminder schedule: $error');
     }
