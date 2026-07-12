@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/auth_provider.dart';
+import 'providers/database_provider.dart';
 import 'providers/habit_providers.dart';
 import 'providers/usage_diagnostics_provider.dart';
+import 'providers/sync_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/main_navigation_shell.dart';
 import 'theme/app_theme.dart';
@@ -31,11 +33,50 @@ class HableApp extends ConsumerWidget {
 }
 
 /// Routes to AuthScreen if no user exists, otherwise to the three-tab app shell.
-class _AppGate extends ConsumerWidget {
+class _AppGate extends ConsumerStatefulWidget {
   const _AppGate();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AppGate> createState() => _AppGateState();
+}
+
+class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // On first load, wait for build to finish then trigger sync if logged in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndStartSync();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _checkAndStartSync() {
+    final authState = ref.read(authProvider);
+    if (authState.isAuthenticated && authState.userId != null) {
+      ref.read(databaseProvider).removeSelfFromSocialCaches(authState.userId!);
+      ref.read(foregroundSyncControllerProvider.notifier).startPolling(authState.userId!);
+      ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndStartSync();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     if (!authState.isInitialized) {
@@ -45,6 +86,16 @@ class _AppGate extends ConsumerWidget {
     if (!authState.isAuthenticated || authState.userId == null) {
       return const AuthScreen();
     }
+
+    // Ensure polling is active when authState updates from unauthenticated to authenticated
+    ref.listen(authProvider, (previous, next) {
+      if ((previous == null || !previous.isAuthenticated) && next.isAuthenticated && next.userId != null) {
+         ref.read(foregroundSyncControllerProvider.notifier).startPolling(next.userId!);
+         ref.read(foregroundSyncControllerProvider.notifier).syncNow(next.userId!);
+      } else if ((previous != null && previous.isAuthenticated) && !next.isAuthenticated) {
+         ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
+      }
+    });
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(

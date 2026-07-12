@@ -11,7 +11,9 @@ import '../../providers/auth_provider.dart';
 import '../../providers/database_provider.dart';
 import '../../providers/notification_providers.dart';
 import '../../providers/social_providers.dart';
+import '../../providers/sync_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/narrow_layout.dart';
 import '../../widgets/3d/habit_environment_visualizer.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/leaderboard_card.dart';
@@ -178,6 +180,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   }) async {
     final auth = ref.read(authProvider);
     if (auth.token == null) return;
+    if (auth.userId == targetUserId) return; // Defensive self-guard
 
     try {
       final response = await http
@@ -217,13 +220,25 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           ).showSnackBar(SnackBar(content: Text(message)));
         }
       } else {
-        throw Exception(response.body);
+        String errorMsg = 'Unknown error';
+        try {
+          final errData = jsonDecode(response.body);
+          if (errData['error'] != null) {
+            errorMsg = errData['error'].toString();
+          } else {
+            errorMsg = response.body;
+          }
+        } catch (_) {
+          errorMsg = response.body;
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
       if (mounted) {
+        final errText = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
+        ).showSnackBar(SnackBar(content: Text(errText)));
       }
     }
   }
@@ -340,6 +355,9 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isSyncing = ref.watch(foregroundSyncControllerProvider);
+    final userId = ref.watch(authProvider).userId ?? '';
+
     return UsageTrackedScreen(
       screenName: 'social_hub',
       child: Scaffold(
@@ -356,6 +374,23 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const Spacer(),
+                    if (isSyncing)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    else
+                      IconButton(
+                        icon: const Icon(Icons.sync_rounded),
+                        tooltip: 'Sync now',
+                        onPressed: () {
+                          ref.read(foregroundSyncControllerProvider.notifier).syncNow(userId);
+                        },
+                      ),
                     Semantics(
                       label: 'Find friends',
                       button: true,
@@ -387,13 +422,15 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               ),
               const HabitEnvironmentVisualizer(height: 250),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildFriendsTab(),
-                    _buildActivityTab(),
-                    _buildLeaderboardTab(),
-                  ],
+                child: NarrowLayout(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildFriendsTab(),
+                      _buildActivityTab(),
+                      _buildLeaderboardTab(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -486,8 +523,11 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           loading: () => const SliverFillRemaining(
             child: HableSkeletonList(itemCount: 4),
           ),
-          error: (e, _) => SliverFillRemaining(
-            child: Center(child: Text('Error: $e')),
+          error: (e, _) => SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 32.0),
+              child: Text('Error: $e', textAlign: TextAlign.center),
+            ),
           ),
         ),
       ],
@@ -501,7 +541,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   Widget _buildActivityTab() {
     final userId = ref.watch(authProvider.select((a) => a.userId));
     if (userId == null) {
-      return const Center(child: Text('Not signed in'));
+      return const Padding(
+        padding: EdgeInsets.only(top: 32.0),
+        child: Text('Not signed in', textAlign: TextAlign.center),
+      );
     }
 
     final notificationsAsync = ref.watch(notificationsForUserProvider(userId));
@@ -557,7 +600,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
         );
       },
       loading: () => const HableSkeletonList(itemCount: 4),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.only(top: 32.0),
+        child: Text('Error: $e', textAlign: TextAlign.center),
+      ),
     );
   }
 
@@ -577,8 +623,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: const [
-                SizedBox(height: 120),
-                Center(child: Text('No leaderboard scores yet.')),
+                Padding(
+                  padding: EdgeInsets.only(top: 32.0),
+                  child: Text('No leaderboard scores yet.', textAlign: TextAlign.center),
+                ),
               ],
             ),
           );
@@ -602,8 +650,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: const [
-                SizedBox(height: 120),
-                Center(child: Text('No valid leaderboard scores found.')),
+                Padding(
+                  padding: EdgeInsets.only(top: 32.0),
+                  child: Text('No valid leaderboard scores found.', textAlign: TextAlign.center),
+                ),
               ],
             ),
           );
@@ -957,8 +1007,9 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
               const SizedBox(height: 16),
               Expanded(
                 child: _searchQuery.length < 2
-                    ? const Center(
-                        child: Text('Type at least 2 characters to search.'),
+                    ? const Padding(
+                        padding: EdgeInsets.only(top: 32.0),
+                        child: Text('Type at least 2 characters to search.', textAlign: TextAlign.center),
                       )
                     : Consumer(
                         builder: (context, ref, _) {
@@ -968,8 +1019,9 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                           return searchAsync.when(
                             data: (results) {
                               if (results.isEmpty) {
-                                return const Center(
-                                  child: Text('No matches found.'),
+                                return const Padding(
+                                  padding: EdgeInsets.only(top: 32.0),
+                                  child: Text('No matches found.', textAlign: TextAlign.center),
                                 );
                               }
                               return ListView.builder(
@@ -988,8 +1040,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                               itemCount: 4,
                               padding: EdgeInsets.zero,
                             ),
-                            error: (e, _) =>
-                                Center(child: Text('Error: $e')),
+                            error: (e, _) => Padding(
+                              padding: const EdgeInsets.only(top: 32.0),
+                              child: Text('Error: $e', textAlign: TextAlign.center),
+                            ),
                           );
                         },
                       ),
@@ -1003,7 +1057,7 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
 }
 
 /// A single search result tile in the Find Friends sheet.
-class _SearchResultTile extends StatelessWidget {
+class _SearchResultTile extends ConsumerWidget {
   final dynamic user;
   final Future<void> Function(String userId, String username, {String? avatarUrl})
       onSendRequest;
@@ -1011,11 +1065,13 @@ class _SearchResultTile extends StatelessWidget {
   const _SearchResultTile({required this.user, required this.onSendRequest});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId = ref.watch(authProvider).userId;
     final userId = (user['user_id'] ?? user['id'])?.toString() ?? '';
     final username = user['username']?.toString() ?? 'Friend';
     final avatarUrl = user['avatar_url']?.toString();
     final state = user['relationship_state']?.toString() ?? 'none';
+    final isSelf = userId == currentUserId;
 
     return ListTile(
       leading: UserAvatar(
@@ -1025,31 +1081,35 @@ class _SearchResultTile extends StatelessWidget {
       ),
       title: Text(username),
       subtitle: Text(
-        switch (state) {
-          'accepted' => 'Accepted friend',
-          'pending_outgoing' => 'Request sent',
-          'pending_incoming' => 'Waiting for your response',
-          _ => 'Not connected',
-        },
+        isSelf 
+          ? 'You'
+          : switch (state) {
+              'accepted' => 'Accepted friend',
+              'pending_outgoing' => 'Request sent',
+              'pending_incoming' => 'Waiting for your response',
+              _ => 'Not connected',
+            },
       ),
-      trailing: switch (state) {
-        'accepted' => const Chip(
-            avatar: Icon(Icons.check_rounded, size: 16),
-            label: Text('Friends'),
-          ),
-        'pending_outgoing' => const Chip(label: Text('Requested')),
-        'pending_incoming' => const Chip(label: Text('Respond in Friends')),
-        _ => IconButton(
-            tooltip: 'Send friend request',
-            icon: const Icon(
-              Icons.person_add_rounded,
-              color: AppTheme.sageGreen,
-            ),
-            onPressed: userId.isEmpty
-                ? null
-                : () => onSendRequest(userId, username, avatarUrl: avatarUrl),
-          ),
-      },
+      trailing: isSelf 
+          ? const Chip(label: Text('You'))
+          : switch (state) {
+              'accepted' => const Chip(
+                  avatar: Icon(Icons.check_rounded, size: 16),
+                  label: Text('Friends'),
+                ),
+              'pending_outgoing' => const Chip(label: Text('Requested')),
+              'pending_incoming' => const Chip(label: Text('Respond in Friends')),
+              _ => IconButton(
+                  tooltip: 'Send friend request',
+                  icon: const Icon(
+                    Icons.person_add_rounded,
+                    color: AppTheme.sageGreen,
+                  ),
+                  onPressed: userId.isEmpty
+                      ? null
+                      : () => onSendRequest(userId, username, avatarUrl: avatarUrl),
+                ),
+            },
     );
   }
 }

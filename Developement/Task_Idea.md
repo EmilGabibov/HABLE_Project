@@ -787,3 +787,17 @@ AVOID:
   - Silent error swallowing in SyncService (upgrade debugPrint to error logging
     for startup-critical paths)
   - Treating "no active habits" and "habits exist but are completed" the same way
+
+
+_______________________________
+Future tasks after refining the CORE finctionality:
+
+- Easy on code , hard on UI: Make the accessibility features work properly, look into campusweb and grasp the idea, this will be a great feature to have, and it will make the app more unique and user-friendl
+    - expansion point
+    - hidden for most users, but fancy enough to be a selling/presenting point
+
+- home screen widgets: it will be a great feature, something like duolingo's widget that shows your streak and progress, your current habits which needs to check-in and ones you have already check-in or skipped.
+
+
+
+

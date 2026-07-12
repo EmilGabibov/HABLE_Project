@@ -22,6 +22,7 @@ import '../providers/calendar_provider.dart';
 import '../providers/database_provider.dart';
 import '../providers/sync_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
+import '../widgets/narrow_layout.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
@@ -54,9 +55,10 @@ class ProfileScreen extends ConsumerWidget {
       screenName: 'profile',
       child: Scaffold(
         body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              // Header
+          child: NarrowLayout(
+            child: CustomScrollView(
+              slivers: [
+                // Header
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -517,6 +519,7 @@ class ProfileScreen extends ConsumerWidget {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -526,9 +529,10 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // Header
+        child: NarrowLayout(
+          child: CustomScrollView(
+            slivers: [
+              // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -636,14 +640,15 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              error: (err, _) => SliverToBoxAdapter(
+              error: (err, _) => const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(child: Text('Failed to load friend profile.')),
+                  padding: EdgeInsets.only(top: 32.0),
+                  child: Text('Failed to load friend profile.', textAlign: TextAlign.center),
                 ),
               ),
             ),
           ],
+        ),
         ),
       ),
     );

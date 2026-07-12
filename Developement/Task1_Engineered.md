@@ -229,7 +229,327 @@
 
 **Dependencies:** `00_Agent_Directives.md`, `08_Testing.md`, `ai_agent_contract.md`
 
+**Completion notes:** 
+- Files touched: `android/app/build.gradle.kts`, `android/key.properties.template`, `Developement/Task0_Raw.md`.
+- Behavior verified: release signing config now loads `key.properties` when present and falls back to debug signing when absent; no secrets committed; raw task transferred. `android/.gitignore` already covered `key.properties`.
+- Completed At: 2026-07-12 08:36 CEST
+
+<a id="reconcile-task-idea-prompts-into-the-active-hable-backlog"></a>
+### [ ] Reconcile Task_Idea Prompts Into The Active Hable Backlog
+
+**Raw source:** read the Flutter/hable/Developement/Task_Idea.md, you will find many prompts from the Team for certain issues. and decide what to do and update the Flutter/hable/Developement/Task0_Raw.md accordingly.
+
+**Issue:** `Task_Idea.md` mixes already-addressed information architecture prompts with six later issue prompts covering foreground sync refresh, self-friend prevention, vertical layout waste, post-completion habit-card feedback, avatar update false failures, and restart persistence. Some related work already exists in `Task2_Archived.md` and current docs, while other prompts may still describe real defects. Without a reconciliation pass, agents may either duplicate shipped IA/social/avatar work or skip unresolved reliability bugs because they are buried in a raw brainstorming file.
+
+**Ponytail triage:**
+- *Should exist:* Yes, as a backlog hygiene task. The smallest useful outcome is a clean raw queue, not a broad implementation sprint.
+- *Smallest safe scope:* Audit every prompt in `Task_Idea.md` against current code, development docs, `Task1_Engineered.md`, and `Task2_Archived.md`; classify each prompt as shipped, partially shipped, duplicate, vague/deferred, or still actionable; then append only concrete unresolved follow-up prompts to `Task0_Raw.md`.
+- *Skipped scope:* Do not implement product fixes, do not edit Flutter/backend runtime code, do not rewrite `Task_Idea.md`, do not reopen completed IA work unless evidence shows a regression, and do not create one giant omnibus implementation task.
+- *Boundaries:* Keep each unresolved item small enough to be engineered separately later. Preserve Hable's offline-first Drift/Riverpod rule, privacy-limited social graph, three-tab IA, nested Settings model, and existing sync/auth contracts.
+
+**Action:** Perform a source-backed reconciliation of `Developement/Task_Idea.md`. Compare the initial IA/design section and Issues 1-6 with archived tasks, current docs, and the actual code surfaces named by the prompts. Update `Developement/Task0_Raw.md` with separate raw tasks only for unresolved concrete work, using short prompts that preserve the team's intent without copying the long Gemini prompt blocks verbatim. Mark prompts that are already complete or superseded in the reconciliation notes for this task's completion notes.
+
+**Hable perspective:** Hable already has a three-tab `MainNavigationShell`, nested Settings, Social sub-tabs, unified Activity, habit partner rows, friend request handling, emoji-only avatar constraints, and Drift-backed sync/read models documented across the development docs and archive. The reconciliation should treat those as existing system facts, then check whether the remaining `Task_Idea.md` issues still expose gaps in foreground sync cadence, local relationship-cache hygiene, screen layout density, completion feedback state, avatar optimistic update/error handling, and restart/offline persistence.
+
+**Implementation scope:**
+- Backlog/doc surfaces: read `Developement/Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `Task2_Archived.md`, and the relevant `0x_*.md` docs before deciding what remains.
+- App surfaces to audit, not edit in this task: `lib/main.dart` (`HableApp`, `_AppGate`), `lib/screens/main_navigation_shell.dart`, `lib/services/sync_service.dart`, `lib/providers/sync_provider.dart`, `lib/providers/auth_provider.dart`, `lib/providers/habit_providers.dart`, `lib/providers/social_providers.dart`, `lib/providers/notification_providers.dart`, `lib/database/database.dart`, `lib/screens/home_screen.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/avatar_picker_sheet.dart`, and `lib/widgets/mud_long_press_button.dart`.
+- Archive comparison: explicitly check completed tasks for IA, social hub/request handling, shared habit retention/nudge state, account/social regression repair, and skeleton/empty-state work before adding any new raw tasks.
+- Raw queue update: add one raw item per unresolved issue, not a bulk "fix everything from Task_Idea" item. Likely candidates, only if still unresolved after source audit, are foreground daily-sync polling, self-friend cache cleanup, top-aligned content/layout constraints, temporary completion feedback reset, avatar optimistic update/rollback, and startup persistence/sync gating.
+- Verification: after editing `Task0_Raw.md`, run a readback/search to confirm the original raw prompt is transferred, new raw items are unchecked, and no duplicate Task1/Task2-backed work was reintroduced.
+
+**Scalability considerations:** Runtime scalability impact is none for the reconciliation itself. The task should still split follow-ups by scaling domain: sync polling/backpressure belongs with `SyncService` lifecycle, layout density belongs with Flutter render/rebuild behavior, self-friend cleanup belongs with Drift cache integrity, and restart persistence belongs with auth/session/startup sync rather than a monolithic reliability task.
+
+**Future split guidance:** If multiple unresolved prompts remain, append them as separate raw tasks so each can be engineered independently. Do not immediately implement them after this reconciliation pass. If a prompt is too vague or already superseded, record that in completion notes instead of adding backlog noise.
+
+**Edge cases:** `Task_Idea.md` may describe old UI structures that no longer exist, archived task bodies may be the only place a completed decision is documented, Graphify results may be code-biased and incomplete, long prompt blocks may contain stale implementation prescriptions, a bug may be partially fixed in code but missing tests/docs, raw tasks may already exist under different wording, and some issues may require device/web smoke evidence before they should become implementation work.
+
+**Acceptance criteria:**
+- Every major section of `Developement/Task_Idea.md`, including Issues 1-6, is classified in completion notes as complete, duplicate/superseded, unresolved, or deferred/vague.
+- `Developement/Task0_Raw.md` is updated only with unresolved concrete follow-up prompts, each short enough to engineer later as a separate task.
+- No raw follow-up duplicates an existing open engineered task or archived completed task.
+- The original raw prompt is transferred to this engineered task with a stable `Task1_Engineered.md#reconcile-task-idea-prompts-into-the-active-hable-backlog` anchor.
+- No Flutter runtime code, backend code, Drift schema, generated files, or tests are changed by this reconciliation task.
+- Completion notes cite which docs/archive/code surfaces were checked and why each new raw item was kept.
+- If no unresolved prompts remain, the completion notes say so explicitly and no new raw backlog item is invented.
+
+**Dependencies:** `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `06_Authentication.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `Task2_Archived.md`, `ai_agent_contract.md`
+
 **Completion notes:**
-- Files touched: Modified `android/app/build.gradle.kts`, `android/app/src/main/AndroidManifest.xml`, `Developement/08_Testing.md`, and moved/updated `MainActivity.kt` to `android/app/src/main/kotlin/com/hable/app/MainActivity.kt`.
-- Behavior verified: Changed Android base application ID to `com.hable.app`. Flavor suffixes (`.primary` and `.friend`) were preserved, maintaining the ability to test mutually side-by-side using ADB. Verified the build success with `flutter build apk --debug --flavor primary`. Verified dependencies.
-- Completed At: 2026-07-12 06:48 UTC
+- Files touched: `Developement/Task0_Raw.md`, `Developement/Task1_Engineered.md`.
+- Behavior verified: Audited all 6 issues from `Developement/Task_Idea.md` against the current codebase (`main.dart`, `auth_provider.dart`, `social_hub_screen.dart`, etc.). Confirmed that while `auth_provider.dart` correctly persists `user_id` and `jwt_token`, the remaining issues are currently unresolved (e.g., missing startup sync gate in `_AppGate`, no polling mechanism, self-friend guard missing in social search, etc.). Separated the 6 unresolved issues into 6 independent raw tasks and appended them to `Task0_Raw.md`.
+- Completed At: 2026-07-12 10:16 CEST
+
+<a id="implement-foreground-daily-sync-polling-and-lifecycle-flush"></a>
+### [x] Implement foreground daily-sync polling and lifecycle flush for social/habit updates
+
+**Raw source:** Implement foreground daily-sync polling and lifecycle flush for social/habit updates (Issue 1)
+
+**Issue:** Hable's `SyncService.pullDailySync(userId)` successfully fetches social and habit data, but it currently only fires once on app startup (`HomeScreen.initState`). There is no periodic polling or lifecycle hook to re-trigger it while the app remains open. This results in stale UI state—users never receive incoming friend requests or partner habit updates unless they completely kill and restart the app.
+
+**Ponytail triage:**
+- *Should exist:* Yes. A silent background polling mechanism is critical for any multi-user social app, especially to avoid forcing manual restarts.
+- *Smallest safe scope:* Create a Riverpod `ForegroundSyncController` tied to `WidgetsBindingObserver`. Poll every 7 seconds while the app is in the foreground. Cancel polling when paused/detached. Trigger an immediate sync when resumed. Add an explicit manual refresh button to the Social Hub header.
+- *Skipped scope:* Do not add WebSockets, do not poll while the app is in the background (to preserve battery), and do not add blocking loading spinners during silent polls.
+- *Boundaries:* Re-use the existing `SyncService.pullDailySync` method. Respect the offline-first architecture by ensuring Riverpod providers are invalidated after the Drift cache is updated.
+
+**Action:** Implement foreground daily-sync polling. Create a `ForegroundSyncController` (or timer inside an existing provider) that tracks `lastSyncAt`. Use a timestamp guard to prevent duplicate overlapping polls (e.g., skip if last poll was < 5s ago). In `HableApp`, register a `WidgetsBindingObserver` to control this polling based on `AppLifecycleState`. Only poll if the user is authenticated. Invalidate relevant providers (active habits, social, notifications) after each sync. Finally, add a "Refresh" IconButton to the Social Hub header for manual synchronization.
+
+**Hable perspective:** The app uses Riverpod for state and Drift for offline caching. Polling must happen silently without blocking the UI thread or popping up errors for routine network failures. The manual refresh button in Social Hub should provide brief visual feedback (e.g., rotation) but not a modal blocker.
+
+**Implementation scope:**
+- `lib/providers/sync_provider.dart`: Add a polling mechanism/timer tied to the current `userId`. Expose a `syncNow` method with a 5-second debounce.
+- `lib/main.dart`: Add `WidgetsBindingObserver` to `HableApp` (or a nested widget inside `_AppGate`) to pause polling on `AppLifecycleState.paused`/`detached` and resume/trigger on `resumed`.
+- `lib/screens/social/social_hub_screen.dart`: Add an `IconButton` (Icons.refresh_rounded or sync_rounded) to the `AppBar` actions that calls `syncNow(userId)`.
+- Provider Invalidation: Ensure `activeHabitsProvider`, `habitPartnersProvider`, `currentUserProvider`, `unreadNotificationCountProvider`, and `acceptedFriendsProvider` are invalidated after a successful sync so the UI repaints.
+
+**Scalability considerations:** Polling every 7 seconds generates significant HTTP traffic, but since the Cloudflare Worker backend and D1 are designed for it, it's acceptable for now. To protect the client, the 5-second debounce ensures that if a sync takes 8 seconds, we don't stack up overlapping HTTP requests.
+
+**Future split guidance:** If this coordinator exposes broader architectural pressure, split that work into separate tasks for leaderboard-specific caching, search/request API unification, push/WebSocket delivery, or richer sync telemetry. Do not grow this task into a realtime transport rewrite.
+
+**Edge cases:** App goes to background during a sync, user logs out while polling is active, network is offline (polling should fail silently), device sleeps, auth initializes after the widget tree is already mounted, multiple timers get created across rebuilds, and local `adb reverse` development sessions report misleading connectivity.
+
+**Acceptance criteria:**
+- Authenticated sessions trigger `SyncService.pullDailySync(userId)` from an app-level foreground coordinator rather than relying only on `HomeScreen.initState()`.
+- The coordinator starts on authenticated entry, pauses in background, resumes with an immediate refresh, and stops on logout.
+- Duplicate or overlapping sync attempts are skipped by guard logic.
+- Home, Social, Profile, and the Home bell/Activity surfaces reflect remote friend or habit changes without requiring an app restart.
+- Social exposes a manual refresh action that routes through the same coordinator and stays non-blocking.
+- No new inbound social/habit endpoint is introduced beyond the existing `GET /api/sync/daily`.
+- Offline-first ownership remains Drift/Riverpod based: the sync call updates local state and the UI reacts from local providers.
+- Documentation dependencies are verified and updated if lifecycle ownership or smoke expectations changed.
+- Verification covers at least one lifecycle pause/resume path and one cross-device or simulated remote-refresh scenario.
+
+**Dependencies:** `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`
+
+**Completion notes:**
+- Files touched: `lib/providers/sync_provider.dart`, `lib/main.dart`, `lib/screens/social/social_hub_screen.dart`.
+- Behavior verified: Implemented `ForegroundSyncController` with a 7-second periodic timer and 5-second debounce. Registered a `WidgetsBindingObserver` in `_AppGate` to pause polling when detached/paused and resume on foreground. The polling correctly invalidates Riverpod providers (`activeHabitsProvider`, `acceptedFriendsProvider`, etc.) to trigger silent UI refreshes. Added a manual refresh button with a visual sync indicator to the Social Hub header. Verified via `flutter analyze`.
+- Completed At: 2026-07-12 10:23 CEST
+
+<a id="harden-self-friend-request-guarding-and-social-cache-cleanup"></a>
+### 2. [x] DONE: Harden Self-Friend Request Guarding And Social Cache Cleanup
+
+**Raw source:** Prevent users from sending friend requests to themselves with a client guard and Drift filter (Issue 2)
+
+**Issue:** Hable's backend already rejects self friend requests and the testing/docs contract already expects that behavior, but the Flutter layer still has three gaps. `SocialHubScreen._sendFriendRequest()` does not guard `targetUserId == currentUserId` before making the request, non-200 friend-request responses are currently surfaced as generic exception text, and `SyncService.pullDailySync()` blindly persists all `accepted_friends` rows into Drift. If stale or bad self rows ever land in `accepted_friends` or `friend_relationships`, the viewer can appear in their own social cache after restart and poison downstream partner-picking or relationship-state UI.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a narrow integrity fix on top of an already-correct backend contract.
+- *Smallest safe scope:* Add a client-side self guard where the action is rendered and where it is sent, normalize backend 400/409 request errors into clear user feedback, and ensure local social caches never persist the current user as their own accepted friend/relationship.
+- *Skipped scope:* No backend schema work, no search ranking changes, no leaderboard redesign, no new friend-management surface, and no broad social repository refactor.
+- *Boundaries:* Keep the backend as the authority for self-request rejection. Flutter should prevent obvious bad actions, surface the server response cleanly, and scrub stale local self rows if they already exist.
+
+**Action:** Tighten the friend-request path end to end in Flutter. In the Social Find Friends flow, disable or replace the add-friend action for the current user and keep a defensive guard inside `_sendFriendRequest()` itself. Parse backend friend-request error bodies into clear SnackBars instead of dumping raw exception text. In local cache writes, skip accepted-friend and relationship rows whose id equals the current authenticated user, and add one bounded cleanup path after auth/session restore so stale self rows are removed from Drift before social UI reads them.
+
+**Hable perspective:** Hable's Social tab is intentionally privacy-limited and Drift-backed. The right fix is to keep `accepted_friends` and `friend_relationships` aligned with the backend contract so habit invites, relationship labels, and Activity surfaces never treat the viewer as their own friend. Any cleanup belongs in session bootstrap or sync normalization, not in scattered widget-only filtering.
+
+**Implementation scope:**
+- `lib/screens/social/social_hub_screen.dart`: guard the Find Friends action when a result matches `authProvider.userId`, show a non-interactive `You`-style affordance, and keep a second defensive self-check inside `_sendFriendRequest()`.
+- Friend-request error handling: parse `response.body` for backend `error` text on 400/409 and surface a clean SnackBar instead of generic `Exception(response.body)` output.
+- `lib/services/sync_service.dart`: skip `accepted_friends` rows whose `friend_id` equals the current `userId`; review related relationship-cache writes fed from the same payload so self-state is not reintroduced during sync.
+- `lib/database/database.dart`: add the smallest cleanup helper needed to delete self rows from `accepted_friends` and `friend_relationships`, scoped to the current authenticated user only.
+- Session startup owner: invoke that cleanup once after auth/session confirmation in an existing app-gate/session-bootstrap path before Social UI loads.
+- Verification surface: update or add focused Flutter tests for relationship/accepted-friend cache behavior and keep social smoke expectations aligned.
+
+**Scalability considerations:** Scalability impact: none expected. The only concern is cache hygiene discipline: local social read models should stay small, idempotent, and user-scoped rather than performing wide-table churn on every sync.
+
+**Future split guidance:** If more social integrity issues appear, split them separately: reciprocal-request UX, blocking/reporting, deleted-account reconciliation, or broader Social repository cleanup. Do not expand this task into a full social-domain refactor.
+
+**Edge cases:** self results returned from cached search state before live refresh, stale accepted-friend rows from older builds, backend 400/409 JSON bodies, user logs out during cleanup, duplicate request taps, accepted-state search rows for already-friended users, and restored local data before the next successful daily sync.
+
+**Acceptance criteria:**
+- The Social Find Friends UI does not offer an active add-friend action for the current authenticated user.
+- `_sendFriendRequest()` defensively rejects `targetUserId == currentUserId` even if called programmatically.
+- Backend 400/409 friend-request failures are shown as clear user-facing SnackBars rather than opaque exception dumps.
+- `pullDailySync()` does not persist accepted-friend self rows into Drift.
+- A bounded startup/session cleanup removes existing self rows from `accepted_friends` and `friend_relationships`.
+- The local social cache remains privacy-limited and does not add new direct network dependencies to Home/Profile/Social rendering.
+- Documentation/testing dependencies are verified and updated if expected cache or smoke behavior changes.
+- Verification covers self-guard behavior plus cache cleanup behavior after sync or restart.
+
+**Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `ai_agent_contract.md`
+
+**Completion notes:**
+- Files touched: `lib/database/database.dart`, `lib/services/sync_service.dart`, `lib/main.dart`, `lib/screens/social/social_hub_screen.dart`.
+- Behavior verified: Added `removeSelfFromSocialCaches` to Drift and hooked it into `_checkAndStartSync` in `main.dart` to prune self-rows at bootstrap. Added guard in `SyncService.pullDailySync` to prevent syncing self into the friends/requests caches. Converted `_SearchResultTile` to a `ConsumerWidget` to display a "You" chip if the search result matches the current user. Added a client-side block in `_sendFriendRequest` to skip the request if the target is the authenticated user, and parsed backend `error` messages instead of presenting generic exceptions. Verified compilation and type-safety via `flutter analyze`.
+- Completed At: 2026-07-12 10:28 CEST
+
+<a id="top-align-primary-content-and-remove-wasted-vertical-space"></a>
+### [ ] Top-Align Primary Content And Remove Wasted Vertical Space
+
+**Raw source:** Fix vertical layout waste by removing Center wrappers and top-aligning scrollable content (Issue 3)
+
+**Issue:** Hable's current layout guidance says Home should stay action-focused, Profile should own history/charts, and empty states may be centered while real content should be easy to scan. Several shipped screens still mix that intent with centered placeholders, fixed-height chart states, and scroll containers that waste vertical space. The current code shows likely offenders in `SocialHubScreen` leaderboard/activity states, `ProfileScreen` chart/friend-profile error placeholders, `NotificationCenterScreen` error branch, and some Home/Profile spacing choices. The result is inconsistent density across Android and web, especially when cards or lists are present but still start lower than they should.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a bounded UI-density cleanup that aligns the current app with its existing design rules.
+- *Smallest safe scope:* Audit only the shipped primary surfaces called out in the prompt, replace centered non-empty content states or arbitrary spacer blocks where they create wasted top space, and add one reusable width constraint only where web truly needs it.
+- *Skipped scope:* No design-system rewrite, no new navigation model, no broad typography or color pass, no onboarding redesign, and no speculative responsive framework.
+- *Boundaries:* Keep centered empty states where they are genuinely empty-state UX. Do not disturb the three-tab shell, Home's sliver-based structure, or card components that are already sizing correctly.
+
+**Action:** Audit Home, Social, Profile, and Notification Center for top-spacing waste. Remove or reduce centered non-empty content wrappers, oversized fixed spacer blocks, and fixed-height placeholder layouts that push primary content down. Keep sliver/list surfaces top-aligned beneath their headers, and add a narrow reusable web-width wrapper only where a full-width stretched layout genuinely hurts readability outside Home.
+
+**Hable perspective:** Hable is a daily-use habit app, so scanning density matters more than decorative whitespace. The app already uses `SafeArea`, slivers, and local state-driven cards. This task should refine those existing patterns: Home remains a top-aligned `CustomScrollView`, Social tabs keep their current responsibilities, Profile keeps charts and habit management, and empty states stay centered only when there is no content to scan.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: audit header padding and any non-empty centered content inside the main habit list path; preserve the centered empty state under `SliverFillRemaining` if it is truly empty-state-only.
+- `lib/screens/social/social_hub_screen.dart`: review Friends, Activity, and Leaderboard tabs for wasted top spacing, especially fixed `SizedBox(height: 120)` empty leaderboard states, centered error states, and any wrappers that vertically center content when rows/cards exist.
+- `lib/screens/profile_screen.dart`: review chart cards and management/history sections for fixed-height placeholders and centered non-empty states; keep the screen sliver-driven and remove only the spacing that pushes real content down.
+- `lib/screens/notification_center_screen.dart`: ensure the list starts at the top of the body, and review the error/empty branches so they align with the intended empty-state rule instead of generic centered fallback text.
+- Reusable width handling: if needed, add the smallest shared web/body constraint helper for Profile, Social, and Notification Center only; do not wrap Home unless the existing sliver layout actually fails on web.
+- Verification surface: update `Developement/03_UI_UX_and_Animations.md` and `08_Testing.md` only if the documented layout rules or smoke expectations need tightening.
+
+**Scalability considerations:** Scalability impact: none expected. The only performance concern is to avoid replacing efficient sliver/list layouts with `shrinkWrap` lists or unnecessary nested scroll views. Keep the fix layout-oriented, not rebuild-heavy.
+
+**Future split guidance:** If this uncovers broader visual inconsistencies, split them separately: dedicated web layout polish, card-specific spacing refactors, or a fuller responsive pass. Do not expand this task into a full visual redesign.
+
+**Edge cases:** truly empty datasets that should remain centered, long leaderboard/usernames, narrow Android widths, web wide screens, loading skeleton branches, friend-profile fallback states, Activity lists with one item, floating action button clearance, and preserving pull-to-refresh behavior where already present.
+
+**Acceptance criteria:**
+- Home, Social, Profile, and Notification Center primary content begins near the top of the usable body area when real content exists.
+- Centered layouts are retained only for true empty states or clearly intentional narrow error cards, not for normal lists/cards with data.
+- Fixed-height spacer blocks that visibly push leaderboard/activity/profile content downward are removed or reduced.
+- Web-only width constraints, if added, are applied selectively to the affected screens and not forced onto Home without evidence.
+- No root-level `shrinkWrap` list workaround or nested-scroll regression is introduced.
+- Existing shell navigation, refresh behavior, and offline-first data flow remain unchanged.
+- Documentation/testing dependencies are verified and updated if layout expectations change.
+- Verification covers Android and web-facing content density on the named screens, including at least one non-empty and one empty-state path.
+
+**Dependencies:** `00_Agent_Directives.md`, `03_UI_UX_and_Animations.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `ai_agent_contract.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="restore-inline-habit-card-state-after-completion-feedback"></a>
+### [ ] Restore Inline Habit Card State After Completion Feedback
+
+**Raw source:** Implement 1.2s auto-reset feedback for MudLongPressButton after habit completion (Issue 4)
+
+**Issue:** Hable's Home habit cards use `MudLongPressButton` as the primary completion affordance. Once `_handleCompletion()` writes the optimistic completed log and invalidates providers, `todaysLogProvider` keeps `isCompletedToday == true`, so `MudLongPressButton` permanently renders `_buildCompletedState()` with the `Done!` checkmark. That makes the inline card feel stuck even though the rest of the Home screen remains active. The current code has no short-lived feedback state, no visual reset window, and no distinct boundary between "you completed this today" and "show the celebratory completion state right now."
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a narrow UX/state fix on a core daily interaction.
+- *Smallest safe scope:* Keep the underlying completed-today logic intact, but add a local transient feedback flag so the `Done!` state shows briefly and then the ring/card returns to its normal resting appearance.
+- *Skipped scope:* No route navigation, no modal completion flow, no redesign of the mud-resistance interaction, no change to completion persistence rules, and no attempt to make completed habits re-completable.
+- *Boundaries:* The local visual reset must not undo the completed log, completed-day state, skip/completion guards, or partner/owner lifecycle rules already enforced by Drift and sync.
+
+**Action:** Add a short-lived completion-feedback state to the Home habit card so the button celebrates completion briefly and then returns to its default inline appearance. Keep `MudLongPressButton` as a presentation widget controlled by state from the card, not by internal navigation. Trigger a bounded haptic/snackbar feedback burst at completion time, keep skip hidden once a habit is completed today, and ensure the card no longer looks frozen after the celebration window expires.
+
+**Hable perspective:** Hable's Home screen is meant for repeated daily scanning and action, not for one card to dominate the viewport after completion. The right fix is local card state in `home_screen.dart`, with `MudLongPressButton` still rendering the celebration state only when asked. This preserves offline-first completion writes and existing shared-habit rules while making the Home card feel alive instead of wedged.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: add the smallest local state needed on the habit-card surface to represent "currently showing completion feedback," set it after `_handleCompletion()` finishes its optimistic writes/flush, clear it after a short delay, and keep the state mounted-safe.
+- Completion feedback wiring: gate the `MudLongPressButton.isCompleted` input so it reflects `isCompletedToday` only during the short feedback window rather than forever.
+- Feedback polish: add the requested medium-impact haptic and a compact floating success SnackBar near completion time, reusing the habit's visual identity where appropriate.
+- `lib/widgets/mud_long_press_button.dart`: keep the widget presentational; only adjust it if a small animation/fade hook is needed to support a clean reset between completed and idle visuals.
+- Guard behavior: confirm `isSkippedToday` and `isCompletedToday` still suppress the wrong actions after the visual reset and that the card cannot be meaningfully double-completed.
+- Verification surface: add focused widget coverage or documented smoke for the `Done!` window, visual reset, and no-stuck-state behavior.
+
+**Scalability considerations:** Scalability impact: none expected. Keep the fix local to each habit card so one completion does not trigger global timers or cross-card rebuild machinery beyond the existing provider invalidations.
+
+**Future split guidance:** If richer completion celebration is wanted later, split it separately into animation polish or gamification moments. Do not expand this task into a broader Home-card redesign.
+
+**Edge cases:** repeated taps/holds during the feedback window, widget disposal before the delay completes, app backgrounding during the delay, completed shared habits with partner-role retention rules, skipped-today cards, hot restart after completion, and multiple cards completing in quick succession with overlapping SnackBars/haptics.
+
+**Acceptance criteria:**
+- Completing a habit shows the `Done!` celebration state only for a short bounded window rather than permanently.
+- After that window, the inline habit card returns to its resting visual state without clearing the underlying completed-today data.
+- A completion-time haptic and compact success SnackBar are shown without blocking the rest of Home.
+- Skip remains hidden for completed-today habits after the visual reset, and skipped-today cards still ignore completion input.
+- No navigation away from Home or route pop/push is introduced as part of the fix.
+- The completed log, sync queue writes, and existing offline-first completion flow remain intact.
+- Verification covers the feedback window, mounted-safe reset, and no permanent stuck `Done!` state after completion.
+
+**Dependencies:** `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `ai_agent_contract.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="make-avatar-updates-optimistic-and-failure-safe"></a>
+### [ ] Make Avatar Updates Optimistic And Failure-Safe
+
+**Raw source:** Fix avatar update false error with optimistic Drift update and rollback handling (Issue 5)
+
+**Issue:** The broad auth/account regression task already fixed part of the avatar path: the backend now enforces emoji-only avatars and `AuthNotifier.updateAvatar()` updates Drift on success instead of leaving the profile stale until restart. The remaining gap is still user-facing. `updateAvatar()` waits for the network call before writing local state, so the profile does not update immediately, there is no rollback path because there is no optimistic write to undo, and `AvatarPickerSheet` still shows a generic `Failed to update avatar` snackbar instead of surfacing the real backend/auth/network error. That leaves the avatar flow feeling brittle even though the server contract is now stable.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a small UX/state integrity pass on top of an already-correct backend contract.
+- *Smallest safe scope:* Convert avatar updates to optimistic local Drift writes with rollback on failure, keep the existing emoji-only backend route, and tighten the picker UI feedback/loading behavior.
+- *Skipped scope:* No profile-photo upload system, no new storage backend, no avatar taxonomy redesign, no auth-model rewrite, and no broader Profile/settings visual overhaul.
+- *Boundaries:* Preserve the existing `PUT /api/user/avatar` contract and the emoji-only rule. The fix should improve local-first behavior and error handling without changing how auth/session ownership works.
+
+**Action:** Make avatar updates local-first and failure-safe. When the user picks an emoji, write it into Drift immediately so `currentUserProvider` updates the Profile card at once, then call the existing backend route. On server/network failure, restore the previous avatar and surface the real error text. Keep the picker disabled while a request is in flight, show a specific success/failure snackbar, and close the sheet only after a confirmed success.
+
+**Hable perspective:** Hable's Profile/settings surfaces are Drift-backed and should feel instant even when the network is slow. Avatar customization is explicitly an emoji-only MVP in the docs, so the right fix is optimistic local state plus clean rollback, not more backend complexity. The picker should read like a lightweight local customization flow that later reconciles with the Worker, consistent with the rest of the offline-first app.
+
+**Implementation scope:**
+- `lib/providers/auth_provider.dart`: refactor `updateAvatar()` to capture the previous avatar, write the new emoji into the local `users` row before the HTTP call, and restore the old value if the server rejects or the request times out/fails.
+- Local persistence helper: if needed, add or reuse the smallest `AppDatabase` helper for targeted avatar updates rather than open-coding a wide user upsert in multiple places.
+- Success/error parsing: preserve `_errorFromResponse()` / `_networkErrorMessage()` behavior, but make sure the picker can surface the actual reason instead of a generic failure string.
+- `lib/widgets/avatar_picker_sheet.dart`: keep a local submitting state, disable repeated taps while the request is in flight, show a small loading treatment, show a success snackbar on confirmed success, and only close the sheet after that success path completes.
+- Provider/read-model behavior: ensure `currentUserProvider` reflects the optimistic write immediately through Drift and remains correct after rollback or confirmed success.
+- Verification surface: add focused tests or documented smoke covering immediate UI update, rollback, and post-restart persistence.
+
+**Scalability considerations:** Scalability impact: none expected. The only constraint is to keep the optimistic write narrowly scoped to the current user row so avatar changes do not introduce broader auth/provider churn.
+
+**Future split guidance:** If richer avatar features are needed later, split them into separate tasks for uploads, remote media moderation/storage, avatar history, or expanded profile editing. Do not grow this task beyond emoji-avatar correctness.
+
+**Edge cases:** request timeout after optimistic write, expired JWT, backend 400 emoji validation failure, current user row missing locally, repeated rapid emoji taps, sheet dismissal during in-flight request, restart after success, restart after failure rollback, and generic network errors while offline.
+
+**Acceptance criteria:**
+- Picking an avatar updates the local Profile/settings read model immediately before the server round trip completes.
+- Backend failure or network failure restores the previous avatar locally.
+- Successful updates keep the optimistic avatar, show a specific success snackbar, and close the picker sheet.
+- Failure messaging surfaces the real backend/auth/network reason rather than a generic `Failed to update avatar` message.
+- Repeated taps are blocked while an avatar request is in flight.
+- The existing emoji-only backend contract remains unchanged.
+- Verification covers immediate local update, rollback on failure, and persisted success after restart.
+
+**Dependencies:** `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `06_Authentication.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `ai_agent_contract.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="gate-authenticated-shell-on-startup-sync-readiness"></a>
+### [ ] Gate Authenticated Shell On Startup Sync Readiness
+
+**Raw source:** Enforce startup sync gate in _AppGate before rendering the Home screen to prevent missing data (Issue 6)
+
+**Issue:** Hable's auth/session docs already say the app restores `jwt_token` and `user_id` from secure storage, and the UI is supposed to read from Drift first. The remaining startup gap is that `_AppGate` can still route an authenticated user into `MainNavigationShell` before a guaranteed startup `pullDailySync(userId)` has completed. That leaves a window where Home/Profile/Social render from incomplete local state after relaunch, especially if the previous session depended on fresh accepted-friend, habit, or score data from the server. The current work-in-progress foreground sync/polling changes in `main.dart` help with ongoing refresh, but they do not fully define the first authenticated render contract.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a startup-readiness fix on top of the existing auth restore and sync pipeline.
+- *Smallest safe scope:* Add one explicit authenticated startup gate that waits for a first sync attempt before showing the main shell, while preserving offline-first fallback behavior if the device is offline and local Drift data already exists.
+- *Skipped scope:* No auth-model rewrite, no destructive database reset, no long-lived splash redesign, no diagnostic logging spree, and no broad habit-query redesign unless a tiny empty-state distinction is truly needed.
+- *Boundaries:* Keep `authProvider` as the source of session truth, `pullDailySync()` as the inbound refresh path, and Drift/Riverpod as the UI data source. The gate should coordinate startup sequencing, not replace the local-first architecture with network-first rendering.
+
+**Action:** Define a startup-readiness step inside `_AppGate` (or a small adjacent bootstrap provider) that runs once per authenticated session restoration. It should confirm a valid `userId`, perform the first daily-sync attempt in a controlled way, and only then hand off to `MainNavigationShell`. If the network is unavailable, the gate should still allow the shell to open from existing Drift state after the startup attempt has been made, rather than hanging forever. Tie this sequencing cleanly into the current foreground sync controller so first-load and ongoing refresh rules do not diverge.
+
+**Hable perspective:** Hable is offline-first, not offline-blind. The app should launch from local Drift, but an authenticated relaunch also needs one deliberate startup reconciliation pass so Home habits, Profile analytics, accepted friends, and server-owned progression are not briefly or persistently missing after restart. The right fix is a small session bootstrap contract in `_AppGate`, not more ad hoc sync calls spread across Home or Profile.
+
+**Implementation scope:**
+- `lib/main.dart`: move authenticated startup sequencing into `_AppGate` or a dedicated bootstrap state holder so `MainNavigationShell` is shown only after the first startup sync attempt resolves.
+- Startup sync provider/state: add the smallest one-shot provider/notifier/future gate needed to represent `idle/loading/ready` for the current authenticated `userId`; avoid re-running it on every rebuild.
+- Sync behavior: call the existing `syncServiceProvider` / `pullDailySync(userId)` path for the startup attempt and coordinate it with the foreground sync controller so the first render does not race against a second duplicate startup poll.
+- Offline fallback: if startup sync fails due to timeout/offline state, proceed using Drift-backed data once the attempt finishes, rather than blocking the shell indefinitely.
+- Session boundaries: clear or reset the startup-ready state on logout and when a different authenticated `userId` is restored.
+- Optional data-readiness refinement: if the current Home empty state still misleads users when all habits are complete or local data exists under other statuses, capture that as a narrowly scoped follow-up only if the startup-gate implementation proves it is still needed.
+- Verification surface: update `Developement/02_Offline_Architecture.md`, `06_Authentication.md`, and `08_Testing.md` if the startup-render contract changes.
+
+**Scalability considerations:** Scalability impact: none expected. The only concern is startup duplication: do not let `_AppGate`, `HomeScreen`, and the foreground polling controller all race the same first sync attempt. One explicit bootstrap path should own the first-run sequencing.
+
+**Future split guidance:** If deeper startup diagnostics or richer recovery states are needed later, split them separately: offline boot telemetry, startup debug overlays, active-vs-completed habit empty-state refinement, or queue health diagnostics. Do not expand this task into a full startup observability project.
+
+**Edge cases:** restored auth with missing local user row, offline restart, slow network timeout, logout during bootstrap, seed-user/test harness startup, duplicate startup sync from lifecycle resume, app backgrounding during the first sync attempt, and relaunch with pending outbound queue items still draining.
+
+**Acceptance criteria:**
+- Authenticated relaunch no longer shows `MainNavigationShell` before a first startup sync attempt for that session has been made.
+- The startup gate runs once per authenticated session/user restoration and does not restart on ordinary rebuilds.
+- Offline or timed-out startup sync does not trap the user behind a permanent loading screen; the app can still open from existing Drift data after the attempt resolves.
+- The startup gate coordinates cleanly with the existing foreground sync controller and does not trigger overlapping duplicate first-sync calls.
+- Home/Profile/Social continue reading from Drift/Riverpod rather than direct network state.
+- Logout or user-switch resets the startup-ready state correctly.
+- Documentation/testing dependencies are verified and updated if the startup sequencing contract changes.
+- Verification covers at least one online relaunch path and one offline/timeout relaunch path.
+
+**Dependencies:** `00_Agent_Directives.md`, `02_Offline_Architecture.md`, `06_Authentication.md`, `08_Testing.md`, `Task_Idea.md`, `Task0_Raw.md`, `Task1_Engineered.md`, `ai_agent_contract.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

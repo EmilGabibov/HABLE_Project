@@ -7,6 +7,7 @@ import '../providers/notification_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
+import '../widgets/narrow_layout.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
@@ -37,7 +38,8 @@ class NotificationCenterScreen extends ConsumerWidget {
             ),
           ],
         ),
-        body: notificationsAsync.when(
+        body: NarrowLayout(
+          child: notificationsAsync.when(
           data: (notifications) {
             if (notifications.isEmpty) {
               return const HableEmptyStateCard(
@@ -127,7 +129,11 @@ class NotificationCenterScreen extends ConsumerWidget {
             );
           },
           loading: () => const HableSkeletonList(itemCount: 5),
-          error: (error, _) => Center(child: Text('Error: $error')),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.only(top: 32.0),
+            child: Text('Error: $error', textAlign: TextAlign.center),
+          ),
+        ),
         ),
       ),
     );

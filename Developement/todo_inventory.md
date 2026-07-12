@@ -8,12 +8,7 @@ This document serves as a centralized inventory of all `TODO`, `FIXME`, `HACK`, 
 *None found in current app source (`lib/`)*
 
 ## 2. Release & Configuration Tasks
-These items represent pending configuration for production builds and have been appended as raw tasks for future engineering.
-
-| File | Context | Recommendation | Future Raw Task? |
-|---|---|---|---|
-| `android/app/build.gradle.kts` | Line 23: `// TODO: Specify your own unique Application ID` | Set a unique Android Application ID for production builds | Yes |
-| `android/app/build.gradle.kts` | Line 50: `// TODO: Add your own signing config for the release build.` | Configure release keystore and signing | Yes |
+*None found.*
 
 ## 3. Template & Vendor Comments
 These comments are part of generated Flutter templates or third-party vendored assets. They should be left alone unless they cause a verifiable app bug.

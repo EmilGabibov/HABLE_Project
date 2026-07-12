@@ -227,7 +227,7 @@ class SyncService {
         final List<dynamic> acceptedFriends = data['accepted_friends'] ?? [];
         for (final friend in acceptedFriends) {
           final friendId = friend['friend_id']?.toString() ?? '';
-          if (friendId.isEmpty) continue;
+          if (friendId.isEmpty || friendId == userId) continue;
           final existingFriend = await _db.getAcceptedFriend(friendId);
           await _db.upsertAcceptedFriend(
             AcceptedFriendsCompanion(
@@ -440,7 +440,7 @@ class SyncService {
         final List<dynamic> friendRequests = data['friend_requests'] ?? [];
         for (final request in friendRequests) {
           final requesterId = request['requester_id']?.toString() ?? '';
-          if (requesterId.isNotEmpty) {
+          if (requesterId.isNotEmpty && requesterId != userId) {
             await _db.cacheFriendRelationship(
               userId: requesterId,
               username: request['requester_username']?.toString() ?? 'Friend',

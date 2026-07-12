@@ -16,3 +16,13 @@
 
 
 - [x] Transferred to [Configure Android Release Signing For Production Builds](Task1_Engineered.md#configure-android-release-signing-for-production-builds) — 2026-07-12 08:31 CEST
+
+- [x] Transferred to [Reconcile Task_Idea Prompts Into The Active Hable Backlog](Task1_Engineered.md#reconcile-task-idea-prompts-into-the-active-hable-backlog) — 2026-07-12 10:10 CEST
+
+- look and find issue list in Task_Idea.md, for each:
+    - [x] Transferred to [Implement foreground daily-sync polling and lifecycle flush for social/habit updates](Task1_Engineered.md#implement-foreground-daily-sync-polling-and-lifecycle-flush) — 2026-07-12 10:16 CEST
+    - [x] Transferred to [Harden Self-Friend Request Guarding And Social Cache Cleanup](Task1_Engineered.md#harden-self-friend-request-guarding-and-social-cache-cleanup) — 2026-07-12 10:27 CEST
+    - [x] Transferred to [Top-Align Primary Content And Remove Wasted Vertical Space](Task1_Engineered.md#top-align-primary-content-and-remove-wasted-vertical-space) — 2026-07-12 10:30 CEST
+    - [x] Transferred to [Restore Inline Habit Card State After Completion Feedback](Task1_Engineered.md#restore-inline-habit-card-state-after-completion-feedback) — 2026-07-12 10:35 CEST
+    - [x] Transferred to [Make Avatar Updates Optimistic And Failure-Safe](Task1_Engineered.md#make-avatar-updates-optimistic-and-failure-safe) — 2026-07-12 10:40 CEST
+    - [x] Transferred to [Gate Authenticated Shell On Startup Sync Readiness](Task1_Engineered.md#gate-authenticated-shell-on-startup-sync-readiness) — 2026-07-12 10:45 CEST

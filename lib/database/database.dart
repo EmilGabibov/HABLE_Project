@@ -803,6 +803,11 @@ class AppDatabase extends _$AppDatabase {
             ]))
           .watch();
 
+  Future<void> removeSelfFromSocialCaches(String currentUserId) async {
+    await (delete(acceptedFriends)..where((f) => f.friendUserId.equals(currentUserId))).go();
+    await (delete(friendRelationships)..where((r) => r.userId.equals(currentUserId))).go();
+  }
+
   // ---------------------------------------------------------------------------
   // Achievement operations
   // ---------------------------------------------------------------------------
