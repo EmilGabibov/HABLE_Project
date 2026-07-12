@@ -2,6 +2,8 @@
 
 ## Completed Tasks
 
+- 2026-07-12 14:28 CEST: [x] Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold — **Completion notes:** 2026-07-12: Switched `GestureDetector` to `Listener` (`onPointerDown`/`Up`/`Cancel`) in `MudLongPressButton` to avoid 500ms delay and capture early releases reliably. Added `_isHolding` and `_completedDuringCurrentHold` flags to prevent completion callback from firing after cancellation. Implemented widget tests in `test/mud_long_press_button_test.dart` to verify early release cancellation and full hold completion. Tests pass.
+
 - 2026-07-11 21:19 CEST: Reorganize Social Hub From 5 Tabs To 3 (Friends + Inline Requests, Activity Feed, Leaderboard) — Merged Inbox and Notification Center into Activity tab, moved Find Friends to bottom sheet, Home bell switches to Social→Activity.
 
 - 2026-07-11 21:05 CEST: [Complete Cross-App Habit Lifecycle Sync And Twin-Harness Verification](Task2_Archived.md#complete-cross-app-habit-lifecycle-sync-and-twin-harness-verification)
@@ -66,4 +68,3 @@
 - 2026-07-12 10:37 UTC+2: [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task2_Archived.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments)
 
 ## Remaining Tasks
-

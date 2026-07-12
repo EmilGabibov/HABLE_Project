@@ -48,6 +48,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   late Animation<double> _curveAnimation;
   late Animation<double> _iconScaleAnimation;
   late Animation<double> _iconOpacityAnimation;
+  bool _isHolding = false;
+  bool _completedDuringCurrentHold = false;
 
   @override
   void initState() {
@@ -92,7 +94,10 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           ).animate(CurvedAnimation(parent: _controller, curve: dynamicCurve))
           ..addListener(_handleHapticFeedback)
           ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
+            if (status == AnimationStatus.completed &&
+                _isHolding &&
+                !_completedDuringCurrentHold) {
+              _completedDuringCurrentHold = true;
               HapticFeedback.lightImpact();
               widget.onCompletion();
             }
@@ -130,19 +135,11 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       return _buildCompletedState();
     }
 
-    return GestureDetector(
-      onLongPressStart: widget.isDisabled ? null : (_) => _controller.forward(),
-      onLongPressEnd: widget.isDisabled ? null : (_) {
-        if (!_controller.isCompleted) {
-          _controller.animateTo(
-            0.0,
-            duration: Duration(
-              milliseconds: (widget.calculatedDurationMs * 0.5).toInt(),
-            ),
-            curve: Curves.easeOutQuint,
-          );
-        }
-      },
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: widget.isDisabled ? null : (_) => _startHold(),
+      onPointerUp: widget.isDisabled ? null : (_) => _cancelHold(),
+      onPointerCancel: widget.isDisabled ? null : (_) => _cancelHold(),
       child: AnimatedBuilder(
         animation: _curveAnimation,
         builder: (context, child) {
@@ -165,6 +162,29 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           child: Center(child: _buildIconContent()),
         ),
       ),
+    );
+  }
+
+  void _startHold() {
+    _isHolding = true;
+    _completedDuringCurrentHold = false;
+    _controller.forward(from: 0.0);
+  }
+
+  void _cancelHold() {
+    _isHolding = false;
+    if (_completedDuringCurrentHold) {
+      return;
+    }
+    if (_controller.value <= 0.0) {
+      return;
+    }
+    _controller.animateTo(
+      0.0,
+      duration: Duration(
+        milliseconds: (widget.calculatedDurationMs * 0.5).toInt(),
+      ),
+      curve: Curves.easeOutQuint,
     );
   }
 
