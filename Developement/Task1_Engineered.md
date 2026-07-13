@@ -1100,7 +1100,7 @@
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added `lib/utils/habit_timeline.dart` to split visible challenge-timeline day from earned completion progress. Home and dashboard habit cards now derive `Day X of Y` from local calendar-day distance since `createdAt`, while the progress bar remains tied to completed check-ins and mud resistance continues to use a progress-stage day instead of the visible timeline label. Updated semantics copy to say `Completion progress` explicitly and refreshed the UX/QA docs in `Developement/ux_mud_and_animations.md` and `Developement/qa_testing.md` so same-day check-ins no longer imply a timeline-day increment. Verified with `flutter test test/habit_timeline_test.dart test/habit_dashboard_screen_test.dart`.
 
 <a id="extract-reusable-habit-card-surface-for-home-profile-and-friend-profile"></a>
 ### [x] Extract Reusable Habit Card Surface For Home Profile And Friend Profile

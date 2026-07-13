@@ -17,6 +17,7 @@ import '../providers/quote_provider.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
+import '../utils/habit_timeline.dart';
 import '../widgets/badge_reveal_dialog.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/skip_bottom_sheet.dart';
@@ -261,14 +262,15 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     final streakAsync = ref.watch(streakProvider(habit.habitId));
     final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
 
-    final challengeDay = _challengeDay(habit);
+    final challengeDay = challengeTimelineDay(habit);
+    final progressDay = challengeProgressDay(habit);
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
-    final progressFraction = (challengeDay / targetDays).clamp(0.0, 1.0);
+    final progressFraction = challengeProgressFraction(habit);
     final isContinuous = habit.targetDuration <= 0;
     final mudTuning = ref.watch(mudTuningProvider);
     final resistance = ref.watch(
       resistanceProvider((
-        currentDay: challengeDay.clamp(0, targetDays),
+        currentDay: progressDay.clamp(0, targetDays),
         totalDuration: targetDays,
       )),
     );
@@ -354,12 +356,6 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
       return PartnershipRole.partner;
     }
     return PartnershipRole.supporter;
-  }
-
-  int _challengeDay(Habit habit) {
-    final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
-    final raw = total - habit.currentDuration + 1;
-    return raw.clamp(1, total);
   }
 
   Future<void> _handleNudgeTap(PartnerSnapshot partner) async {

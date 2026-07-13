@@ -18,6 +18,7 @@ import '../providers/mud_tuning_provider.dart';
 import '../providers/celebration_provider.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
+import '../utils/habit_timeline.dart';
 import '../models/habit_visual_state.dart';
 import '../widgets/habit_partner_row.dart';
 import '../widgets/mud_long_press_button.dart';
@@ -592,12 +593,13 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
 
     // Calculate resistance
     final isContinuous = habit.targetDuration <= 0;
-    final challengeDay = _challengeDay(habit);
-    final progressFraction = _progressFraction(habit);
+    final challengeDay = challengeTimelineDay(habit);
+    final progressDay = challengeProgressDay(habit);
+    final progressFraction = challengeProgressFraction(habit);
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
     final resistance = ref.watch(
       resistanceProvider((
-        currentDay: challengeDay.clamp(0, targetDays),
+        currentDay: progressDay.clamp(0, targetDays),
         totalDuration: targetDays,
       )),
     );
@@ -882,7 +884,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                   ),
                   Semantics(
                     label:
-                        'Progress ${((progressFraction * 100).round())} percent.',
+                        'Completion progress ${((progressFraction * 100).round())} percent.',
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
@@ -919,18 +921,6 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
             return right.compareTo(left);
           });
     return nudgedPartners.isEmpty ? null : nudgedPartners.first;
-  }
-
-  int _challengeDay(Habit habit) {
-    final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
-    final raw = total - habit.currentDuration + 1;
-    return raw.clamp(1, total);
-  }
-
-  double _progressFraction(Habit habit) {
-    final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
-    final day = _challengeDay(habit);
-    return (day / total).clamp(0.0, 1.0);
   }
 
   PartnershipRole _viewerRoleForPartners(List<PartnerSnapshot> partners) {
