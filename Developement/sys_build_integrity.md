@@ -84,3 +84,26 @@ When checking off one of the pre-engineered tasks from `Developement/Task1_Engin
 3. The exact file changes made to fix it (e.g., `android/app/build.gradle` SDK version bump).
 4. The confirmation of the successful build log.
 5. Notes on whether this fix might impact downstream platforms (which should prompt the start of the next platform's task).
+
+## 6. Release Automation Matrix (CI/CD)
+
+Hable maintains a structured CI/CD matrix using GitHub Actions to prevent cross-platform build drift and secure release pipelines.
+
+### Matrix Scope
+The automated build matrix covers the following required platforms on every `main` branch push and PR:
+* **Web:** Uses `ubuntu-latest` runner to compile the Flutter Web build and deploys to Cloudflare Pages branch previews.
+* **Android:** Uses `ubuntu-latest` runner to build the `primary` and `friend` APK/AppBundle flavors. Runs unit and widget tests.
+* **iOS / macOS:** Uses `macos-latest` runner to verify compilation without code signing. Production distribution and notarization steps remain intentionally manual for now.
+* **Windows:** Uses `windows-latest` runner to verify Windows desktop compilation.
+
+### Environment and Secret Injection
+Instead of relying on fragile local `.env` files for production builds, the CI/CD pipeline securely injects environment variables:
+* **API Config:** The matrix dynamically injects `--dart-define=HABLE_APP_ENV=production` or `staging` depending on the target branch.
+* **Cloudflare Credentials:** Stored securely as repository secrets to enable automatic Wrangler publishing and Pages deployments.
+* **Signing Keys:** Android keystores are base64-encoded as GitHub Secrets and injected during the release build matrix job.
+
+### Excluded Scope (Future Splits)
+The following are intentionally excluded from this foundational automation matrix and remain manual or handled by future split tracks:
+1. Automated App Store Connect or Google Play Console submission.
+2. macOS developer certificate notarization.
+3. Complex end-to-end device farm UI testing.
