@@ -946,7 +946,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Refactored `lib/widgets/habit_partner_row.dart` from the old wrapped-chip default into a compact overlapping avatar stack that stays bounded in the collapsed state and expands on long-press/tap into per-partner rows. The expanded view now reveals every partner, keeps profile-open and nudge actions separate, and exposes completed/pending/nudged/supporter state through status rings plus explicit semantics labels. Added focused widget verification in `test/habit_partner_row_test.dart` for collapsed overflow, long-press expansion, profile-vs-nudge action separation, compact-mode expansion, and distinct completed/pending/nudged state output. Verified with `flutter test test/habit_partner_row_test.dart`.
 
 <a id="bootstrap-localization-for-core-surfaces-and-complete-ring-progress-semantics"></a>
 ### [x] Bootstrap Localization For Core Surfaces And Complete Ring/Progress Semantics
@@ -1949,3 +1949,86 @@
 **Dependencies:** Windows build/package configuration, existing build/distribution docs in `Developement/`
 
 **Completion notes:** Completed on 2026-07-13. Replaced the default Windows desktop metadata with Hable-specific values in `windows/CMakeLists.txt`, `windows/runner/main.cpp`, and `windows/runner/Runner.rc` so release artifacts resolve to `Hable.exe` with matching product/version strings. Added `windows/installer/Hable.iss` as the installer template and documented the supported installer + portable bundle workflows in `Developement/windows_distribution.md`. A native Windows smoke build was not possible from the current macOS host, so the documented release path explicitly requires a Windows build/signing machine for `flutter build windows --release`, installer compilation, and final code-signing validation.
+
+<a id="serialize-achievement-and-habit-completion-splashes-with-user-driven-dismiss-and-habit-colored-background-animation"></a>
+### [ ] Serialize Achievement And Habit Completion Splashes With User-Driven Dismiss And Habit-Colored Background Animation
+
+**Raw source:** Crash report: when the habit splash screen appears concurrently with the achievement splash screen, they clash and the green background of the habit splash remains on screen. They need proper queuing/synchronization because multiple habits and/or achievements may complete at the same time. The habit splash background should use the habit’s color, animate in sync with the text, and auto-skipping should be removed in favor of an explicit continue action.
+
+**Issue:** Hable already has two adjacent celebration systems that are not coordinated as one overlay contract. `CompletionSplashScreen` is currently pushed directly from Home/dashboard and auto-dismisses after 4 seconds, while achievement unlock handling is driven separately through `celebrationProvider` and a badge-reveal dialog path. Because those surfaces can be triggered by the same completion event stream, they can overlap or race, leaving behind visual residue from the habit splash background and creating an unreliable dismissal sequence. The current completion splash also hardcodes `AppTheme.sageGreen`, animates content separately from the full background feeling requested by the raw note, and uses tap/timeout dismissal rather than a clear explicit continue affordance.
+
+**Triage:**
+- *Should exist:* Yes. This is a real celebration-state coordination bug, not just cosmetic polish.
+- *Smallest safe scope:* Unify celebration sequencing for habit completion and achievement unlock overlays, fix the background/animation contract of the habit splash, and remove auto-dismiss.
+- *Skipped scope:* Do not redesign all milestone feedback, audio, or particle systems in this task.
+- *Boundaries:* Keep this focused on overlay orchestration, dismissal rules, and the habit splash visual contract. Do not turn it into a full reward engine rewrite.
+
+**Action:** Introduce a single celebration queue/orchestrator so habit completion splashes and achievement unlock surfaces never overlap unpredictably. Ensure the habit completion splash owns a habit-colored animated background that moves in lockstep with the text/content transition, and replace the current auto-dismiss timer with an explicit continue control so the user advances the sequence intentionally. Preserve multiple-completion and multiple-achievement handling by serializing celebrations rather than dropping or stacking them unsafely.
+
+**Hable perspective:** Celebration moments should feel deliberate and premium, not like competing overlays fighting for the same screen. If Hable asks users to care about achievements and habit completions, it must present them as one coherent queue.
+
+**Implementation scope:**
+- `lib/screens/completion_splash_screen.dart`: remove auto-dismiss, use habit-color background treatment, and synchronize background/content animation.
+- Celebration orchestration surfaces such as `celebrationProvider`, Home/dashboard listeners, and any achievement-reveal entry point so overlays queue rather than overlap.
+- Tests or focused widget/state verification for sequential celebration handling and explicit dismissal behavior.
+- Documentation/QA updates for the new celebration queue and dismissal contract.
+
+**Scalability considerations:** The orchestrator should remain lightweight and event-driven. It must handle bursts of several completion/achievement events without leaking routes, timers, or stale overlay state.
+
+**Future split guidance:** Rich milestone-only visual variants, audio systems, or a generalized reward presentation framework can remain separate tasks. This task is only for making the existing habit/achievement overlays serialize correctly and feel coherent.
+
+**Edge cases:** Several habits completed quickly in one session, multiple badge unlocks on one sync, app backgrounding while a celebration is queued, missing habit color, widget disposal during queue drain, and ensuring explicit continue cannot accidentally skip multiple queued celebrations at once.
+
+**Acceptance criteria:**
+- Habit completion and achievement celebration surfaces no longer visually overlap or leave residual background state behind.
+- Celebration events are serialized through a predictable queue/orchestrator.
+- `CompletionSplashScreen` uses the completed habit’s color for the animated background.
+- Background and text/content animations feel synchronized rather than independent.
+- Habit completion splash no longer auto-dismisses; the user advances with an explicit continue action.
+- Focused verification covers at least one overlapping-completion/achievement scenario and one multi-item queue scenario.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="add-first-run-quote-splash-and-promote-quote-first-typography-across-quote-bearing-celebration-surfaces"></a>
+### [ ] Add First-Run Quote Splash And Promote Quote-First Typography Across Quote-Bearing Celebration Surfaces
+
+**Raw source:** Work on an initialization splash screen showing the quote of the day with a lovely design when the user starts the app for the first time. Also, on habit splash screens that have quotes, make the quote always display as the first element, large and in a quote style.
+
+**Issue:** Hable currently has no dedicated first-run quote splash surface. The existing startup flow goes through auth/onboarding/app gate screens, and quotes are shown later inside Home or the completion splash. Even in the current `CompletionSplashScreen`, the quote appears as a lower secondary block after emoji/headline/body text, not as the primary typographic focal point requested by the raw note. The app therefore lacks both a first-impression quote moment and a consistent "quote-first" visual hierarchy on celebration surfaces that already consume `quoteProvider`.
+
+**Triage:**
+- *Should exist:* Yes, as a design/experience task layered on top of the current quote pipeline.
+- *Smallest safe scope:* Add one first-run quote splash and update quote-bearing celebration surfaces to use a quote-first composition.
+- *Skipped scope:* Do not redesign all onboarding, Home, or global splash behavior in one pass, and do not invent a new quote backend.
+- *Boundaries:* Reuse the existing cached-quote/fallback pipeline and keep first-run gating local and deterministic.
+
+**Action:** Create a dedicated first-run initialization splash that uses the existing daily-quote pipeline as the emotional opening of the app, with a more intentional quote-led visual composition than the current generic celebratory layout. Then refactor any habit completion/celebration surfaces that already show quotes so the quote becomes the first and largest reader-facing element rather than a footer after generic congratulatory copy. Keep the design bounded and elegant, and gate the first-run splash so it appears only when appropriate.
+
+**Hable perspective:** Hable’s tone is a product feature. A first-run quote moment can frame the app emotionally before habits or scores appear, and quote-bearing celebration screens should feel like beautiful reading moments rather than generic success modals with a quote tacked on at the bottom.
+
+**Implementation scope:**
+- First-run splash/initialization entry point in the current startup/onboarding/auth gate flow.
+- `lib/screens/completion_splash_screen.dart` and any other quote-bearing celebration surface to adopt quote-first hierarchy where appropriate.
+- Local persistence/gating so the initialization quote splash shows only on first launch or first eligible entry, depending on the chosen contract.
+- Tests or focused verification for first-run gating and quote-first rendering behavior.
+- Documentation updates to onboarding/startup and quote UX expectations.
+
+**Scalability considerations:** Startup gating should be simple and local. The visual system for quote-first surfaces should be reusable enough that future quote-bearing moments do not each invent their own hierarchy.
+
+**Future split guidance:** Full onboarding redesign, seasonal quote themes, highly personalized quote generation, or animated storybook startup sequences should remain separate tasks. This task is only for a first-run quote splash and quote-first hierarchy on existing quote-bearing celebration surfaces.
+
+**Edge cases:** No cached quote on first launch, offline fallback quote usage, users who bypass onboarding with seed/dev paths, reduced-motion preferences, app relaunch after already seeing the first-run splash, and quote text long enough to wrap across smaller screens.
+
+**Acceptance criteria:**
+- The app can show a dedicated first-run initialization splash centered on the quote of the day.
+- The first-run quote splash is gated so it does not repeat every launch once acknowledged.
+- Quote-bearing habit celebration surfaces present the quote as the primary reader-facing element rather than a lower secondary block.
+- Existing quote fallback behavior still works when no synced quote is cached.
+- Focused verification covers first-run gating and at least one quote-first celebration surface.
+- Relevant docs are updated to reflect the startup and quote-hierarchy contract.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
