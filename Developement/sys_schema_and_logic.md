@@ -62,6 +62,13 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * `POST /api/social/friend-request`, `/accept`, `/decline`, and `GET /api/social/friend-request` - Friend request lifecycle with self-request guards, idempotent duplicate handling, recipient-scoped accept/decline, and privacy-safe relationship state.
 * `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit. Accepting an invite adds the recipient as `partner` and fans out directed partnership rows to existing participants.
 * `POST /api/social/nudge` - Habit-scoped or legacy shared-habit nudge. Authorization requires a directed shared-habit participation row and optional `habit_id` narrows the permission check to that habit.
+
+## 5. Shared-Habit Consistency & Conflict Resolution
+To handle multi-device concurrency and offline windows reliably, Hable enforces strict idempotency and ownership rules for shared habits:
+* **Log Idempotency:** Daily check-ins are uniquely keyed by `(habit_id, user_id, log_date)`. Concurrent completions by the same user resolve safely via `last_write_wins` on `updated_at`, preventing duplicate point awards or UI desync.
+* **Lifecycle Ownership:** The habit's `status` (e.g., `active`, `archived`, `completed`) is controlled exclusively by the `owner`. A `partner` checking in updates their log progress but cannot force the core habit metadata to transition or delete for other users.
+* **Batch Sync & Stale Updates:** `SyncService` pulls partner updates in batched `PartnerSnapshot` structures. If an incoming snapshot has an older `updated_at` than the local Drift cache, it is safely ignored to prevent older states from overwriting local optimistics.
+* **Resolution UI:** Hable intentionally avoids complex merge UIs for habits. Conflicts are resolved silently by the sync engine favoring the most recent valid state. If a partner is removed or a habit is archived by the owner, the local UI reflects the termination gracefully (e.g., locking interactions) without crashing.
 * `POST /api/dev/usage-aggregate` - Development-only anonymous aggregate upsert endpoint. Accepts only allowlisted screen labels plus rounded counts/duration totals and must reject any user-linked dimensions.
 * `GET /api/dev/usage-report` - Development-only HTML/JSON report for aggregate buckets. It must show only coarse totals and hide low-volume buckets rather than exposing a user-level event stream.
 

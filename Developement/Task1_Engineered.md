@@ -2542,7 +2542,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
 <a id="strengthen-shared-habit-consistency-for-multi-device-and-realtime-conflict-cases"></a>
-### [ ] Strengthen Shared-Habit Consistency For Multi-Device And Realtime Conflict Cases
+### [x] Strengthen Shared-Habit Consistency For Multi-Device And Realtime Conflict Cases
 
 **Raw source:** Realtime Shared-Habit Consistency: Batch sync, conflict-resolution UI, realtime shared updates, and broader lifecycle conflict handling should remain separate after the current bidirectional lifecycle path is proven.
 
@@ -2568,6 +2568,8 @@ The revision should explicitly describe why these surfaces may update at differe
 **Scalability considerations:** Concurrent shared actions can multiply sync edge cases. The task should favor deterministic idempotent reconciliation keyed by habit, actor, and day rather than broad history scans or ambiguous last-write-wins rules.
 
 **Future split guidance:** If later work needs true live collaborative habit editing, explicit merge UIs, or broader group-habit models, split those into separate tasks. This task is only for hardening the current shared-habit consistency model.
+
+**Completion notes:** Completed on 2026-07-13. Added Section 5 "Shared-Habit Consistency & Conflict Resolution" to `Developement/sys_schema_and_logic.md`. Specified log idempotency per `(habit_id, user_id, log_date)`, exclusive lifecycle ownership by the habit `owner`, batch sync rejections for stale updates, and explicit silent resolution (no merge UIs). Added the Flutter backend and Drift queue implementation of these hard consistency rules as a priority 1 task to `Developement/future_split_guidance.md`.
 
 **Edge cases:** Both partners complete offline, archive versus check-in races, duplicate sync replay, revoked partnerships mid-sync, stale lifecycle snapshots, and realtime-triggered refresh colliding with queued local mutations.
 

@@ -41,6 +41,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* `Split Realtime Or Push Delivery Architecture Beyond Foreground Polling`.
   - *User perspective:* Shared actions and nudges sync instantly when the app is open without battery-draining full-payload sockets.
 
+- **Shared-Habit Consistency Hardening Implementation:** Following the established design, add deeper sync-queue batched conflict-handling, explicit partner removal state, and timestamp-based stale snapshot rejections without turning habits into complex merge CRDTs.
+  - *Source tasks:* `Strengthen Shared-Habit Consistency For Multi-Device And Realtime Conflict Cases`.
+  - *User perspective:* Shared habit states never regress or appear confusing when offline devices reconnect simultaneously.
+
 ## Priority 2: Social Product Depth and Multi-User Scale
 *These items grow Hable beyond the current accepted-friend + shared-habit MVP.*
 
