@@ -1,129 +1,128 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hable/database/database.dart';
+import 'package:hable/database/tables.dart';
+import 'package:hable/providers/mud_tuning_provider.dart';
+import 'package:hable/theme/app_theme.dart';
+import 'package:hable/widgets/habit_card.dart';
+
+Habit _habit() {
+  final now = DateTime(2026, 7, 13, 9);
+  return Habit(
+    habitId: 'habit-1',
+    title: 'Hydration',
+    userId: 'user-1',
+    isCustom: false,
+    status: HabitStatus.active,
+    colorHex: 'FF9CAF88',
+    createdAt: now,
+    updatedAt: now,
+    isSynced: true,
+    targetDuration: 21,
+    currentDuration: 17,
+  );
+}
+
+PartnerSnapshot _partner({
+  required String id,
+  required String name,
+  required PartnershipRole role,
+  required bool completed,
+  DateTime? lastNudgeAt,
+}) {
+  return PartnerSnapshot(
+    habitId: 'habit-1',
+    partnerUserId: id,
+    username: name,
+    avatarUrl: '😀',
+    role: role,
+    currentDuration: 3,
+    hasCompletedToday: completed,
+    lastNudgeAt: lastNudgeAt,
+    updatedAt: DateTime(2026, 7, 13, 9),
+    isSynced: true,
+  );
+}
 
 void main() {
-  group('Refined Habit Card - Ring-First UI', () {
-    testWidgets('Habit card renders ring as primary focus', (
-      WidgetTester tester,
-    ) async {
-      // This test validates that the refactored habit card places the mud long-press
-      // button (ring) in the center as the primary UI element, with partners and info
-      // as supporting elements.
-
-      // Build a minimal test scaffold - actual testing would require full app setup
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text('Habit Card Ring-First UI test framework ready'),
+  testWidgets('HabitCardShell renders the shared surface contract', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: HabitCardShell(
+            semanticsLabel: 'Hydration shared shell',
+            title: 'Hydration',
+            topTrailing: const Text('21 days'),
+            centerChild: const Text('Center content'),
+            bottomChild: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(12),
+              child: const Text('Bottom summary'),
             ),
           ),
         ),
-      );
-
-      expect(
-        find.text('Habit Card Ring-First UI test framework ready'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets(
-      'Habit name and challenge info integrate into bottom progress area',
-      (WidgetTester tester) async {
-        // This test validates that habit title and "Challenge: Day X of Y" are moved
-        // from the top-left to the bottom, integrated with the progress bar container.
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: Text('Integration test: habit name at bottom'),
-              ),
-            ),
-          ),
-        );
-
-        expect(
-          find.text('Integration test: habit name at bottom'),
-          findsOneWidget,
-        );
-      },
+      ),
     );
 
-    testWidgets('Partner avatars are enlarged and more visible on cards', (
-      WidgetTester tester,
-    ) async {
-      // This test validates that partner avatar radius increased from 12 to 16,
-      // ring thickness increased from 2 to 2.5, and padding improved for better visibility.
+    expect(find.byType(HabitCardShell), findsOneWidget);
+    expect(find.text('Hydration'), findsOneWidget);
+    expect(find.text('21 days'), findsOneWidget);
+    expect(find.text('Center content'), findsOneWidget);
+    expect(find.text('Bottom summary'), findsOneWidget);
+  });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text('Partner avatar size and visibility test ready'),
+  testWidgets('HabitCard preserves shared feedback and read-only states', (
+    tester,
+  ) async {
+    final recentNudge = _partner(
+      id: 'partner-1',
+      name: 'Blair',
+      role: PartnershipRole.partner,
+      completed: false,
+      lastNudgeAt: DateTime(2026, 7, 13, 8, 30),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: HabitCard(
+            habit: _habit(),
+            userId: 'user-1',
+            challengeDay: 4,
+            targetDays: 21,
+            progressFraction: 0.25,
+            isContinuous: false,
+            isCompletedToday: false,
+            isSkippedToday: false,
+            viewerRole: PartnershipRole.supporter,
+            recentNudge: recentNudge,
+            streak: 5,
+            resistanceCoefficient: 0.4,
+            calculatedDurationMs: 600,
+            partners: [recentNudge],
+            hapticsEnabled: false,
+            hapticProfile: MudHapticProfile.standard,
+            onCompletion: () {},
+            onSkip: () {},
+            onNudgeTap: (_) async {},
+            sentNudgeFeedback: QueuedNudgeFeedback(
+              partnerName: 'Blair',
+              queuedAt: DateTime(2026, 7, 13, 8, 35),
             ),
           ),
         ),
-      );
-
-      expect(
-        find.text('Partner avatar size and visibility test ready'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets(
-      'Habit card layout is responsive and does not overflow on small screens',
-      (WidgetTester tester) async {
-        // This test validates that the card layout responds to screen size and
-        // does not overflow the bottom of the scroll view.
-
-        // Simulate narrow Android screen
-        tester.view.physicalSize = const Size(400, 800);
-        addTearDown(tester.view.resetPhysicalSize);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: Center(child: Text('Responsive layout test'))),
-          ),
-        );
-
-        expect(find.text('Responsive layout test'), findsOneWidget);
-      },
+      ),
     );
 
-    testWidgets('Habit visual state model provides reusable parameters', (
-      WidgetTester tester,
-    ) async {
-      // This test validates that the HabitVisualParameters model provides
-      // reusable constants for standard, highDifficulty, and lowDifficulty habits.
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: Text('Habit visual parameters model test')),
-          ),
-        ),
-      );
-
-      expect(find.text('Habit visual parameters model test'), findsOneWidget);
-    });
-
-    testWidgets('Habit icon animates inside ring during hold', (
-      WidgetTester tester,
-    ) async {
-      // This test validates that when a habit icon is provided to MudLongPressButton,
-      // it animates from larger/faded to smaller/fully visible during the hold progress.
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: Text('Icon animation inside ring test')),
-          ),
-        ),
-      );
-
-      expect(find.text('Icon animation inside ring test'), findsOneWidget);
-    });
+    expect(find.byType(HabitCardShell), findsOneWidget);
+    expect(find.text('Following'), findsOneWidget);
+    expect(find.text('Nudged by Blair'), findsOneWidget);
+    expect(find.text('Nudge queued for Blair'), findsOneWidget);
+    expect(find.text('Day 4 of 21'), findsOneWidget);
+    expect(find.text('🔥 5'), findsOneWidget);
   });
 }

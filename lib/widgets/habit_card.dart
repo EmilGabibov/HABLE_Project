@@ -16,6 +16,80 @@ class QueuedNudgeFeedback {
   QueuedNudgeFeedback({required this.partnerName, required this.queuedAt});
 }
 
+class HabitCardShell extends StatelessWidget {
+  final String semanticsLabel;
+  final String title;
+  final Widget centerChild;
+  final Widget? topTrailing;
+  final Widget? overlayChild;
+  final Widget? bottomChild;
+  final EdgeInsetsGeometry margin;
+  final double minHeight;
+  final double titleRightInset;
+  final EdgeInsetsGeometry centerPadding;
+
+  const HabitCardShell({
+    super.key,
+    required this.semanticsLabel,
+    required this.title,
+    required this.centerChild,
+    this.topTrailing,
+    this.overlayChild,
+    this.bottomChild,
+    this.margin = EdgeInsets.zero,
+    this.minHeight = 280,
+    this.titleRightInset = 64,
+    this.centerPadding = const EdgeInsets.only(top: 24, bottom: 48),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final overlayBottom = bottomChild == null ? 16.0 : 40.0;
+    return Semantics(
+      label: semanticsLabel,
+      child: Card(
+        margin: margin,
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: minHeight),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 16,
+                left: 16,
+                right: titleRightInset,
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              if (topTrailing != null)
+                Positioned(top: 12, right: 12, child: topTrailing!),
+              Align(
+                alignment: Alignment.center,
+                child: Padding(padding: centerPadding, child: centerChild),
+              ),
+              if (overlayChild != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: overlayBottom,
+                  child: overlayChild!,
+                ),
+              if (bottomChild != null)
+                Positioned(bottom: 0, left: 0, right: 0, child: bottomChild!),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HabitCard extends StatefulWidget {
   final Habit habit;
   final String userId;
@@ -99,210 +173,142 @@ class _HabitCardState extends State<HabitCard> {
       visualState = HabitVisualState.nudged;
     }
 
-    return Semantics(
-      label:
+    return HabitCardShell(
+      semanticsLabel:
           '${habit.title}. Challenge day ${widget.challengeDay} of ${widget.targetDays}. ${widget.isCompletedToday
               ? "Completed today."
               : widget.isSkippedToday
               ? "Skipped today."
               : "Not completed today."}${widget.recentNudge == null ? "" : " ${widget.recentNudge!.username} nudged this habit."}',
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // Title
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 64,
+      title: habit.title,
+      topTrailing: HabitPartnerRow(
+        partners: widget.partners,
+        habitColor: habitColor,
+        compactMode: true,
+        maxVisible: 3,
+        onProfileTap: (partner) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProfileScreen(userId: partner.partnerUserId),
+            ),
+          );
+        },
+        onNudgeTap: widget.onNudgeTap,
+      ),
+      centerChild: Opacity(
+        opacity: canLogProgress ? 1 : 0.45,
+        child: IgnorePointer(
+          ignoring: !canLogProgress,
+          child: _NudgedRingPulse(
+            isActive: widget.recentNudge != null && !widget.isCompletedToday,
+            color: habitColor,
+            pulseKey: widget.recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
+            child: MudLongPressButton(
+              resistanceCoefficient: widget.resistanceCoefficient,
+              calculatedDurationMs: widget.calculatedDurationMs,
+              visualState: visualState,
+              habitColor: habitColor,
+              habitIcon: habitMeta?.emoji,
+              visualParameters: HabitVisualParameters.standard,
+              hapticsEnabled: widget.hapticsEnabled,
+              hapticProfile: widget.hapticProfile,
+              onCompletion: widget.onCompletion,
+            ),
+          ),
+        ),
+      ),
+      overlayChild: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.recentNudge != null) ...[
+            _HabitNudgeChip(
+              label: 'Nudged by ${widget.recentNudge!.username}',
+              color: habitColor,
+              icon: Icons.notifications_active_rounded,
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (visibleSentNudgeFeedback != null) ...[
+            _HabitNudgeChip(
+              label: 'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+              color: habitColor,
+              icon: Icons.back_hand_rounded,
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (!canLogProgress)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
-                habit.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                'Following',
                 style: Theme.of(
                   context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
+                textAlign: TextAlign.center,
               ),
-            ),
-
-            // Partners
-            Positioned(
-              top: 12,
-              right: 12,
-              child: HabitPartnerRow(
-                partners: widget.partners,
-                habitColor: habitColor,
-                compactMode: true,
-                maxVisible: 3,
-                onProfileTap: (partner) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ProfileScreen(userId: partner.partnerUserId),
-                    ),
-                  );
-                },
-                onNudgeTap: widget.onNudgeTap,
-              ),
-            ),
-
-            // Center Ring
-            Align(
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24, bottom: 48),
-                child: Opacity(
-                  opacity: canLogProgress ? 1 : 0.45,
-                  child: IgnorePointer(
-                    ignoring: !canLogProgress,
-                    child: _NudgedRingPulse(
-                      isActive:
-                          widget.recentNudge != null &&
-                          !widget.isCompletedToday,
-                      color: habitColor,
-                      pulseKey: widget
-                          .recentNudge
-                          ?.lastNudgeAt
-                          ?.millisecondsSinceEpoch,
-                      child: MudLongPressButton(
-                        resistanceCoefficient: widget.resistanceCoefficient,
-                        calculatedDurationMs: widget.calculatedDurationMs,
-                        visualState: visualState,
-                        habitColor: habitColor,
-                        habitIcon: habitMeta?.emoji,
-                        visualParameters: HabitVisualParameters.standard,
-                        hapticsEnabled: widget.hapticsEnabled,
-                        hapticProfile: widget.hapticProfile,
-                        onCompletion: widget.onCompletion,
-                      ),
-                    ),
-                  ),
+            )
+          else if (!widget.isCompletedToday)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: InkWell(
+                onTap: widget.onSkip,
+                child: Text(
+                  widget.isSkippedToday ? 'Skipped today' : 'Skip today',
+                  style: TextStyle(color: AppTheme.warmGray, fontSize: 11),
                 ),
               ),
             ),
-
-            // Nudge Feedbacks
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 40,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.recentNudge != null) ...[
-                    _HabitNudgeChip(
-                      label: 'Nudged by ${widget.recentNudge!.username}',
-                      color: habitColor,
-                      icon: Icons.notifications_active_rounded,
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  if (visibleSentNudgeFeedback != null) ...[
-                    _HabitNudgeChip(
-                      label:
-                          'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
-                      color: habitColor,
-                      icon: Icons.back_hand_rounded,
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  if (!canLogProgress)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        'Following',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.warmGray,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  else if (!widget.isCompletedToday)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
-                      child: InkWell(
-                        onTap: widget.onSkip,
-                        child: Text(
-                          widget.isSkippedToday
-                              ? 'Skipped today'
-                              : 'Skip today',
-                          style: TextStyle(
-                            color: AppTheme.warmGray,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+        ],
+      ),
+      bottomChild: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: habitColor.withValues(alpha: 0.08),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.isContinuous
+                      ? 'Continuous'
+                      : 'Day ${widget.challengeDay} of ${widget.targetDays}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '🔥 ${widget.streak}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: habitColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Semantics(
+            label:
+                'Completion progress ${((widget.progressFraction * 100).round())} percent.',
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: habitColor.withValues(alpha: 0.12),
+              ),
+              child: FractionallySizedBox(
+                widthFactor: widget.progressFraction,
+                alignment: Alignment.centerLeft,
+                child: Container(color: habitColor),
               ),
             ),
-
-            // Bottom Progress
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: habitColor.withValues(alpha: 0.08),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          widget.isContinuous
-                              ? 'Continuous'
-                              : 'Day ${widget.challengeDay} of ${widget.targetDays}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppTheme.deepCharcoal.withValues(
-                                  alpha: 0.7,
-                                ),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        Text(
-                          '🔥 ${widget.streak}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: habitColor,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Semantics(
-                    label:
-                        'Progress ${((widget.progressFraction * 100).round())} percent.',
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: habitColor.withValues(alpha: 0.12),
-                      ),
-                      child: FractionallySizedBox(
-                        widthFactor: widget.progressFraction,
-                        alignment: Alignment.centerLeft,
-                        child: Container(color: habitColor),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

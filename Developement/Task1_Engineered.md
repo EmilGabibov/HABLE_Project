@@ -1142,7 +1142,7 @@
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Finished the extraction by introducing `HabitCardShell` in `lib/widgets/habit_card.dart` as the shared card chrome for title, trailing affordances, center content, overlays, and optional bottom bars. `lib/screens/home_screen.dart` now delegates its habit-tile rendering to the extracted `HabitCard` instead of keeping a second private copy of the card layout, while `lib/screens/profile_screen.dart` reuses the same shell for owner active-habit cards and friend-profile active-habit cards without exposing Home-only check-in controls. Replaced the placeholder card test with focused widget coverage in `test/habit_card_ring_refinement_test.dart` for both the shared shell contract and read-only shared-card feedback states, and updated `Developement/qa_testing.md` with a manual shared-card verification step. Verified with `flutter test test/habit_card_ring_refinement_test.dart test/habit_partner_row_test.dart test/habit_timeline_test.dart`.
 
 <a id="personalize-quote-and-reminder-copy-from-streak-miss-and-social-context"></a>
 ### [x] Personalize Quote And Reminder Copy From Streak Miss And Social Context

@@ -13,6 +13,7 @@ import '../services/local_reminder_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/habit_partner_row.dart';
+import '../widgets/habit_card.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/achievement_share_card.dart';
 import '../widgets/avatar_picker_sheet.dart';
@@ -1402,57 +1403,103 @@ class _FriendHabitListTile extends ConsumerWidget {
     final title = habitData['title'] as String? ?? 'Habit';
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
+    final habitColor = _tileColor(habitData['color_hex'] as String?);
+    final habitMeta = standardHabitForTitle(title);
     final viewerUserId = ref.watch(authProvider).userId;
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text('$duration days'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            onPressed: viewerUserId == null
-                ? null
-                : () async {
-                    final db = ref.read(databaseProvider);
-                    await enqueueNudge(
-                      db: db,
-                      senderUserId: viewerUserId,
-                      targetUserId: friendUserId,
-                      habitId: habitId,
-                    );
-                    unawaited(ref.read(syncServiceProvider).flushPending());
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Encouragement queued for $title.'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: AppTheme.sageGreen.withValues(
-                          alpha: 0.9,
-                        ),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-            tooltip: 'Encourage on $title',
-            icon: const Icon(Icons.back_hand_rounded, size: 16),
-            color: AppTheme.sageGreen,
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: () {
-              HabitFormSheet.show(context, prefilledTitle: title);
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text('Follow'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.sageGreen.withValues(alpha: 0.1),
-              foregroundColor: AppTheme.sageGreen,
-              elevation: 0,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: HabitCardShell(
+        semanticsLabel:
+            '$title. $duration day challenge on friend profile. Encourage or follow this habit.',
+        title: title,
+        minHeight: 220,
+        centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
+        topTrailing: _ProfileHabitPill(
+          label: '$duration days',
+          color: habitColor,
+        ),
+        centerChild: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: habitColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                habitMeta?.emoji ?? '•',
+                style: TextStyle(
+                  fontSize: 26,
+                  color: habitMeta == null ? habitColor : null,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              '$duration day challenge',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Encourage your friend or follow the same habit yourself.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: viewerUserId == null
+                      ? null
+                      : () async {
+                          final db = ref.read(databaseProvider);
+                          await enqueueNudge(
+                            db: db,
+                            senderUserId: viewerUserId,
+                            targetUserId: friendUserId,
+                            habitId: habitId,
+                          );
+                          unawaited(
+                            ref.read(syncServiceProvider).flushPending(),
+                          );
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Encouragement queued for $title.'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: habitColor.withValues(
+                                alpha: 0.9,
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.back_hand_rounded, size: 16),
+                  label: const Text('Encourage'),
+                  style: FilledButton.styleFrom(backgroundColor: habitColor),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    HabitFormSheet.show(context, prefilledTitle: title);
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: const Text('Follow'),
+                  style: OutlinedButton.styleFrom(foregroundColor: habitColor),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1564,6 +1611,99 @@ class _HabitListTile extends ConsumerWidget {
     );
     final canEdit = role == PartnershipRole.owner;
     final habitMeta = standardHabitForTitle(habit.title);
+    final habitColor = _tileColor(habit.colorHex);
+
+    if (isActive) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: HabitCardShell(
+          semanticsLabel:
+              '${habit.title}. ${habit.currentDuration} days left. ${_roleLabel(role)} habit on profile.',
+          title: habit.title,
+          minHeight: 236,
+          titleRightInset: canEdit ? 56 : 16,
+          centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 56),
+          topTrailing: canEdit
+              ? _buildActionsMenu(
+                  context: context,
+                  ref: ref,
+                  canEdit: canEdit,
+                  hasPartners: hasPartners,
+                )
+              : null,
+          centerChild: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: habitColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  habitMeta?.emoji ?? '•',
+                  style: TextStyle(
+                    fontSize: 26,
+                    color: habitMeta == null ? habitColor : null,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${habit.currentDuration} days left',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _roleLabel(role),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+              ),
+              if (hasPartners) ...[
+                const SizedBox(height: 14),
+                partnersAsync.when(
+                  data: (partners) => HabitPartnerRow(
+                    partners: partners,
+                    habitColor: habitColor,
+                    compactMode: true,
+                    maxVisible: 3,
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
+                ),
+              ],
+            ],
+          ),
+          bottomChild: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: habitColor.withValues(alpha: 0.08),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _ProfileHabitPill(
+                  label: hasPartners ? 'Shared habit' : 'Solo habit',
+                  color: habitColor,
+                ),
+                Text(
+                  'Active',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: habitColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -1693,6 +1833,92 @@ class _HabitListTile extends ConsumerWidget {
     );
   }
 
+  PopupMenuButton<String> _buildActionsMenu({
+    required BuildContext context,
+    required WidgetRef ref,
+    required bool canEdit,
+    required bool hasPartners,
+  }) {
+    return PopupMenuButton<String>(
+      tooltip: 'Open habit actions',
+      icon: const Icon(Icons.more_horiz_rounded),
+      onSelected: (value) async {
+        final actions = ref.read(habitActionsProvider);
+        switch (value) {
+          case 'edit':
+            HabitFormSheet.show(context, existingHabit: habit);
+            break;
+          case 'archive':
+            await actions.archiveHabit(habit.habitId);
+            break;
+          case 'restore':
+            await actions.restoreHabit(habit.habitId);
+            break;
+          case 'delete':
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('Delete habit?'),
+                content: Text(
+                  'This will permanently delete "${habit.title}" and remove it from synced devices.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed == true) {
+              await actions.deleteHabit(habit.habitId);
+            }
+            break;
+          case 'rerun':
+            await actions.rerunHabit(habit.habitId);
+            break;
+          case 'history':
+            await showModalBottomSheet<void>(
+              context: context,
+              builder: (_) => _HabitHistorySheet(habit: habit),
+            );
+            break;
+        }
+      },
+      itemBuilder: (context) => isActive
+          ? [
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              const PopupMenuItem(value: 'archive', child: Text('Archive')),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text(
+                  'Delete',
+                  style: TextStyle(color: AppTheme.overdueRose),
+                ),
+              ),
+            ]
+          : [
+              const PopupMenuItem(
+                value: 'history',
+                child: Text('View History'),
+              ),
+              if (!hasPartners)
+                const PopupMenuItem(value: 'rerun', child: Text('Rerun')),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text(
+                  'Delete',
+                  style: TextStyle(color: AppTheme.overdueRose),
+                ),
+              ),
+            ],
+    );
+  }
+
   PartnershipRole _viewerRoleForPartners(List<PartnerSnapshot> partners) {
     if (partners.isEmpty) return PartnershipRole.owner;
     if (partners.any((partner) => partner.role == PartnershipRole.owner)) {
@@ -1710,6 +1936,53 @@ class _HabitListTile extends ConsumerWidget {
     } catch (_) {
       return AppTheme.sageGreen;
     }
+  }
+}
+
+class _ProfileHabitPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ProfileHabitPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+String _roleLabel(PartnershipRole role) {
+  switch (role) {
+    case PartnershipRole.owner:
+      return 'Owner view';
+    case PartnershipRole.partner:
+      return 'Partner view';
+    case PartnershipRole.supporter:
+      return 'Supporter view';
+  }
+}
+
+Color _tileColor(String? hex) {
+  if (hex == null || hex.isEmpty) {
+    return AppTheme.sageGreen;
+  }
+  try {
+    return Color(int.parse(hex, radix: 16));
+  } catch (_) {
+    return AppTheme.sageGreen;
   }
 }
 
