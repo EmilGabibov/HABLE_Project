@@ -557,6 +557,7 @@ class SyncService {
                   habitId: Value(habitId),
                   userId: Value(userId),
                   title: Value(partner['title']?.toString() ?? 'Shared Habit'),
+                  description: Value(partner['description']?.toString()),
                   isCustom: const Value(false),
                   targetDuration: Value(
                     (partner['target_duration'] as num?)?.toInt() ?? 30,

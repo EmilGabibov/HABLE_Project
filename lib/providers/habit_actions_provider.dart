@@ -15,6 +15,7 @@ final habitActionsProvider = Provider<HabitActions>(
 abstract class HabitActions {
   Future<String?> createHabit(
     String title,
+    String? description,
     int targetDuration,
     bool isCustom,
     String colorHex, {
@@ -24,6 +25,7 @@ abstract class HabitActions {
   Future<void> updateHabit(
     String habitId,
     String title,
+    String? description,
     int targetDuration,
     String colorHex,
   );
@@ -44,6 +46,7 @@ class HabitActionsController implements HabitActions {
 
   Future<String?> createHabit(
     String title,
+    String? description,
     int targetDuration,
     bool isCustom,
     String colorHex, {
@@ -53,6 +56,7 @@ class HabitActionsController implements HabitActions {
     if (userId == null) return null;
     final habitId = await _db.createHabitWithSync(
       title,
+      description,
       targetDuration,
       isCustom,
       colorHex,
@@ -66,10 +70,17 @@ class HabitActionsController implements HabitActions {
   Future<void> updateHabit(
     String habitId,
     String title,
+    String? description,
     int targetDuration,
     String colorHex,
   ) async {
-    await _db.updateHabitDetails(habitId, title, targetDuration, colorHex);
+    await _db.updateHabitDetails(
+      habitId,
+      title,
+      description,
+      targetDuration,
+      colorHex,
+    );
     await _ref.read(syncServiceProvider).flushPending();
   }
 

@@ -2115,3 +2115,90 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
 **Completion notes:** Completed on 2026-07-13. Added `lib/services/first_run_quote_gate.dart` plus `lib/screens/first_run_quote_screen.dart` and wired `_AppGate` in `lib/main.dart` to show a one-time, per-user quote-first opening screen before the main shell. The gate persists via secure storage, so once dismissed it does not reappear for the same signed-in user. `lib/screens/completion_splash_screen.dart` was also reordered so the quote becomes the first and largest reader-facing element on quote-bearing completion surfaces rather than a footer after the celebration copy. Documentation was updated in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`, and focused verification covered the storage gate plus quote-first completion ordering with `flutter test test/completion_splash_screen_test.dart test/first_run_quote_gate_test.dart test/habit_form_sheet_test.dart`.
+
+<a id="finish-habit-form-information-architecture-with-description-science-based-duration-picks-and-partner-emoji-chips"></a>
+### [x] Finish Habit Form Information Architecture With Description, Science-Based Duration Picks, And Partner Emoji Chips
+
+**Raw source:** complete the habit creation form, the form is not complete yet. no custom emoji, no other suggestions for time deuration (e.g. 21, 33, 40, the science proven ones). no description for the habit card and its creation form.
+reorder correctly, the emoji at left (emoji picker appears by click), and at the right the name field, the template chips, the description field, and the duration field. and others... reorder and make it complete and elegant. don't forget to show friend emoji next to their name.
+
+**Issue:** Hable’s earlier habit-form pass improved the sheet, but the product contract is still not fully aligned with the intended creation surface. The current `HabitFormSheet` already exposes a fixed emoji picker and duration suggestions, yet it still diverges from the requested information architecture: the field ordering and composition need to feel more deliberate, the habit description contract is still missing from both creation and card presentation, the quick-duration guidance should be constrained to the curated science-based options instead of a broader set, and the partner row should consistently render friend emoji/avatar identity next to names as part of the primary selection UI. Because this is one of the app’s highest-frequency authoring flows, these remaining mismatches should be handled as a bounded follow-up rather than left as vague polish debt.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete follow-up on a primary creation surface whose current implementation still misses explicit UX requirements from the raw contract.
+- *Smallest safe scope:* Refine the existing shared `HabitFormSheet` and the corresponding habit-card presentation so the field order, description support, curated duration picks, and partner identity treatment match the intended UX without replacing the form architecture.
+- *Skipped scope:* Do not invent a free-form icon system beyond the bounded picker, redesign the full Home feed, add reminder scheduling, or broaden this into a full habit metadata overhaul.
+- *Boundaries:* Reuse the current modal sheet, standard habit preset data, existing create/edit providers, and the current avatar pipeline. Keep the work scoped to the habit authoring/presentation contract already implied by Hable.
+
+**Action:** Rework the habit creation/edit surface so the top of the form becomes an intentional identity row with the tappable emoji picker on the left and the text stack on the right, followed by a cleaner progression through name, template chips, description, duration, and the remaining fields. Add first-class habit description support where it is truly part of the product contract, remove any extra duration suggestion chips beyond the approved science-based set (`21`, `33`, `40`), and ensure partner/friend selection surfaces show each friend’s emoji/avatar next to their name instead of text-only chips. The resulting sheet should feel complete and elegant, not just technically functional.
+
+**Hable perspective:** In Hable, creating a habit is not back-office data entry. It is the moment where a lightweight personal ritual becomes explicit, so the form needs a clear hierarchy, emotionally legible identity cues, and only the options that reinforce commitment rather than create noise. Description and partner identity should feel intentional, while duration guidance should stay curated and confidence-building.
+
+**Implementation scope:**
+- `lib/widgets/habit_form_sheet.dart`: reorder and refine the form layout, keep the emoji picker as a tappable leading control, constrain curated duration suggestions to the approved set, and add description input and validation/persistence hooks if the product model already supports them or can safely be extended.
+- Habit-card rendering surfaces in Home and any other primary habit summary UI: show the new description only where the task contract requires it, while preserving compact card readability.
+- Related model/provider/database wiring only as needed to persist and read a habit description safely across create/edit flows.
+- Partner/friend selection widgets and avatar usage: ensure friend emoji/avatar identity appears inline next to names throughout the selection chips/list.
+- Focused widget/provider/database verification for create, edit, description persistence, duration suggestion rendering, and partner chip identity.
+- Documentation updates covering the finalized habit-creation and habit-card metadata contract.
+
+**Scalability considerations:** Description support slightly broadens the habit data contract, so the implementation should stay additive and lightweight. Keep provider rebuilds localized, avoid widening list-card layouts in ways that degrade scanability, and make the duration/emoji choices data-driven so future small adjustments do not require another form rewrite.
+
+**Future split guidance:** If later work needs richer notes, reminders, streak coaching copy, habit categories, or a larger icon library, split those into follow-up tasks. This task is only for the bounded form hierarchy, description support, curated duration picks, and partner identity treatment requested here.
+
+**Edge cases:** Editing older habits that have no stored description, preserving layout under text scaling and keyboard overlap, long descriptions that should not break compact habit cards, partner lists with missing avatars/emoji, offline create/edit persistence, and standard presets whose default copy should not overwrite an existing custom description unexpectedly.
+
+**Acceptance criteria:**
+- The habit form presents a clear identity row with the emoji picker on the left and the primary text fields ordered intentionally on the right/in sequence.
+- The sheet includes first-class description support where the user can add or edit it, and the corresponding habit card contract reflects that description only in the intended surfaces.
+- Curated duration suggestions are limited to the approved science-based set (`21`, `33`, `40`) without extra suggestion chips.
+- Friend/partner selection shows emoji/avatar identity next to each friend name.
+- Create and edit flows preserve existing behavior while adding the new metadata and layout polish without regression.
+- Focused verification covers description persistence/rendering, duration chip constraints, and partner identity presentation.
+- Relevant docs are updated to reflect the revised habit metadata and form-layout contract.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Refined `lib/widgets/habit_form_sheet.dart` so the identity row keeps the emoji picker on the left while the right-side flow now progresses through title, preset chips, a real editable description field, and the curated duration suggestions limited to `21`, `33`, and `40`. Added additive description persistence across Drift, sync payloads, and the Worker via `lib/database/tables.dart`, `lib/database/database.dart`, `lib/providers/habit_actions_provider.dart`, `lib/services/sync_service.dart`, `backend/schema.sql`, and `backend/src/index.ts`, with generated Drift updates in `lib/database/database.g.dart`. Habit summaries now surface the stored description on primary card surfaces through `lib/widgets/habit_card.dart`, `lib/screens/profile_screen.dart`, and preset fallback copy in `lib/data/standard_habits.dart`, while partner chips continue rendering inline avatar emoji next to names. Documentation was updated in `Developement/sys_schema_and_logic.md` and `Developement/qa_testing.md`, and focused verification passed with `flutter test test/habit_form_sheet_test.dart` and `flutter test test/completion_splash_screen_test.dart`.
+
+<a id="roll-out-the-latest-hable-app-icon-across-flutter-platforms-pwa-and-favicon-surfaces"></a>
+### [ ] Roll Out The Latest Hable App Icon Across Flutter Platforms, PWA, And Favicon Surfaces
+
+**Raw source:** use the newest icon Flutter/hable/Developement/Resources/AppIcon - Hable.png and don't forget to update all places, favicon, different builds (android, ios, web, desktop, etc.) icon, pwa icon, etc. use a propper version for favicon.
+
+**Issue:** Hable’s current icon pipeline is not aligned to the latest source asset. The repo already contains the requested replacement file, but the Flutter icon tooling in `pubspec.yaml` still points to the older `Developement/Resources/app_icon.jpeg`, while web uses its own `favicon.png` and `manifest.json` icon set, Windows ships a separate `.ico`, and Apple platforms rely on generated asset catalogs. That means updating a single source file is not enough: without an explicit rollout task, different builds will continue shipping stale or inconsistent branding across launcher icons, PWA surfaces, desktop resources, and the browser favicon.
+
+**Triage:**
+- *Should exist:* Yes. Asset and packaging consistency across platforms is a real product-quality requirement, not optional cleanup.
+- *Smallest safe scope:* Adopt `Developement/Resources/AppIcon - Hable.png` as the source of truth, regenerate or replace all platform icon derivatives, and verify no primary build surface still references the old icon asset.
+- *Skipped scope:* Do not redesign the brand, create alternate holiday icons, or broaden this into a full marketing/brand-system refresh.
+- *Boundaries:* Keep the work inside the existing Flutter platform packaging and web/PWA surfaces. Reuse the current launcher-icon tooling where practical instead of inventing a custom build pipeline.
+
+**Action:** Replace the old icon source with the new PNG as the canonical input for the app icon pipeline, then update every platform-specific derivative that Hable ships: Android launcher icons, iOS and macOS AppIcon catalogs, Windows desktop icon resources, Linux desktop icon surfaces if configured, and the web/PWA manifest assets. Produce a proper favicon-specific raster version rather than blindly reusing a large launcher asset, and verify that config files and generated assets no longer point at the old `app_icon.jpeg` source. The task should end with one coherent icon contract across mobile, desktop, and web.
+
+**Hable perspective:** Hable presents as one product across mobile, desktop, and browser entry points, so the icon is part of the product contract the same way typography and motion are. Inconsistent launcher and favicon assets make the app feel unfinished even if the feature set is correct.
+
+**Implementation scope:**
+- `pubspec.yaml` and any launcher-icon generation config: point the Flutter icon toolchain at `Developement/Resources/AppIcon - Hable.png` or a derived canonical copy if the tooling cannot safely consume the spaced filename.
+- Android/iOS/macOS generated icon assets: regenerate or replace the platform app-icon sets and keep Xcode/Gradle references intact.
+- `web/` assets: update `favicon.png`, `manifest.json` icon files, and any PWA icon derivatives to use the new artwork, with a favicon-specific export that reads cleanly at small sizes.
+- Windows/Linux desktop icon resources where present, including `.ico` and packaged desktop metadata surfaces.
+- Verification and documentation: confirm the old icon source is no longer authoritative, and update QA/platform packaging notes accordingly.
+
+**Scalability considerations:** Scalability impact: none expected. Keep the icon pipeline deterministic so future icon refreshes remain a single-source update followed by reproducible derivative generation rather than a manual hunt across platforms.
+
+**Future split guidance:** If later work needs adaptive Android monochrome icons, seasonal icon variants, or a formal asset-generation script/CI pipeline, split that into follow-up branding/build tasks. This task is only for adopting the newest Hable icon consistently everywhere the app ships today.
+
+**Edge cases:** Tooling that cannot read filenames with spaces, favicon legibility at 16x16 and 32x32 sizes, stale generated assets lingering in Apple/Windows bundles, PWA manifest caches, transparent-padding differences across platforms, and ensuring desktop installer resources stay aligned with the app binary icon.
+
+**Acceptance criteria:**
+- `Developement/Resources/AppIcon - Hable.png` becomes the effective source of truth for shipped app-icon assets.
+- Android, iOS, macOS, Windows, Linux (if configured), and web/PWA surfaces all receive updated icon derivatives or config references.
+- The web favicon is regenerated in a proper favicon-specific form rather than left as a stale or poorly downscaled launcher image.
+- No primary icon-generation config still points at the old `Developement/Resources/app_icon.jpeg` source unless a deliberate derived-copy step is documented.
+- Focused verification confirms the new icon is present across the major platform asset directories/configs.
+- Relevant docs are updated to reflect the icon rollout and verification expectations.
+
+**Dependencies:** `Developement/qa_testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

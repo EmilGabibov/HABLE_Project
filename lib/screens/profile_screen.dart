@@ -1439,6 +1439,7 @@ class _FriendHabitListTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final title = habitData['title'] as String? ?? 'Habit';
+    final description = habitData['description'] as String?;
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
     final habitColor = _tileColor(habitData['color_hex'] as String?);
@@ -1449,8 +1450,9 @@ class _FriendHabitListTile extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: HabitCardShell(
         semanticsLabel:
-            '$title. $duration day challenge on friend profile. Encourage or follow this habit.',
+            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} $duration day challenge on friend profile. Encourage or follow this habit.',
         title: title,
+        subtitle: description,
         minHeight: 220,
         centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
         topTrailing: _ProfileHabitPill(
@@ -1650,14 +1652,16 @@ class _HabitListTile extends ConsumerWidget {
     final canEdit = role == PartnershipRole.owner;
     final habitMeta = standardHabitForTitle(habit.title);
     final habitColor = _tileColor(habit.colorHex);
+    final description = habit.description;
 
     if (isActive) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: HabitCardShell(
           semanticsLabel:
-              '${habit.title}. ${habit.currentDuration} days left. ${_roleLabel(role)} habit on profile.',
+              '${habit.title}.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${habit.currentDuration} days left. ${_roleLabel(role)} habit on profile.',
           title: habit.title,
+          subtitle: description,
           minHeight: 236,
           titleRightInset: canEdit ? 56 : 16,
           centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 56),

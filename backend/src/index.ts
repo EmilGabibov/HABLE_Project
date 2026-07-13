@@ -276,6 +276,7 @@ let ensureCalendarFeedSchemaPromise: Promise<void> | null = null
 let ensureAuthSchemaPromise: Promise<void> | null = null
 let ensureUsageDiagnosticsSchemaPromise: Promise<void> | null = null
 let ensureFriendRequestSchemaPromise: Promise<void> | null = null
+let ensureHabitDescriptionSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
@@ -381,6 +382,24 @@ async function ensurePartnershipRoleSchema(env: Bindings): Promise<void> {
   }
 
   await ensurePartnershipSchemaPromise
+}
+
+async function ensureHabitDescriptionSchema(env: Bindings): Promise<void> {
+  if (!ensureHabitDescriptionSchemaPromise) {
+    ensureHabitDescriptionSchemaPromise = (async () => {
+      const pragma = await env.DB.prepare('PRAGMA table_info(habits)').all()
+      const columns = (pragma.results ?? []) as Array<{ name?: string }>
+      const hasDescriptionColumn = columns.some((column) => column.name === 'description')
+      if (!hasDescriptionColumn) {
+        await env.DB.prepare('ALTER TABLE habits ADD COLUMN description TEXT').run()
+      }
+    })().catch((error) => {
+      ensureHabitDescriptionSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensureHabitDescriptionSchemaPromise
 }
 
 function isDevUsageDiagnosticsAllowed(env: Bindings, requestUrl: string): boolean {
@@ -1304,6 +1323,7 @@ app.use('/api/sync/*', async (c, next) => {
 
 app.get('/api/social/user/:id/profile', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
+  await ensureHabitDescriptionSchema(c.env)
   const payload = c.get('jwtPayload')
   const viewerUserId = payload.id
   const targetUserId = c.req.param('id')
@@ -1314,7 +1334,7 @@ app.get('/api/social/user/:id/profile', async (c) => {
   let activeHabits: unknown[] = []
   if (viewerUserId === targetUserId) {
     const result = await c.env.DB.prepare(`
-      SELECT h.id, h.title, h.target_duration, h.color_hex, hp.current_duration, 'owner' as role
+      SELECT h.id, h.title, h.description, h.target_duration, h.color_hex, hp.current_duration, 'owner' as role
       FROM habits h
       LEFT JOIN habit_progress hp ON hp.habit_id = h.id AND hp.user_id = h.user_id
       WHERE h.user_id = ? AND h.status = 'active'
@@ -1330,6 +1350,7 @@ app.get('/api/social/user/:id/profile', async (c) => {
       SELECT DISTINCT
         h.id,
         h.title,
+        h.description,
         h.target_duration,
         h.color_hex,
         hp.current_duration,
@@ -1724,11 +1745,13 @@ app.post('/api/social/habit-invitation/decline', async (c) => {
 // Habit Sync
 app.post('/api/sync/habit', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
+  await ensureHabitDescriptionSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
   const {
     habit_id,
     title,
+    description,
     target_duration,
     color_hex,
     status,
@@ -1761,16 +1784,17 @@ app.post('/api/sync/habit', async (c) => {
   }
 
   await c.env.DB.prepare(`
-    INSERT INTO habits (id, user_id, title, target_duration, color_hex, status, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO habits (id, user_id, title, description, target_duration, color_hex, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       title = excluded.title,
+      description = excluded.description,
       target_duration = excluded.target_duration,
       color_hex = excluded.color_hex,
       status = excluded.status,
       updated_at = excluded.updated_at
   `).bind(
-    habit_id, userId, title, target_duration, color_hex || null, status || 'active',
+    habit_id, userId, title, description || null, target_duration, color_hex || null, status || 'active',
     created_at || new Date().toISOString(), updated_at || new Date().toISOString()
   ).run()
   await ensureOwnerMembership(c.env, habit_id, userId)
@@ -1873,6 +1897,7 @@ app.get('/api/sync/daily', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
   await ensureFriendRequestSchema(c.env)
   await ensureGamificationSchema(c.env)
+  await ensureHabitDescriptionSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
 
@@ -1891,6 +1916,7 @@ app.get('/api/sync/daily', async (c) => {
           AND hl.status = 'completed'
       ) as has_completed_today,
       h.title,
+      h.description,
       h.color_hex,
       h.target_duration,
       h.status,

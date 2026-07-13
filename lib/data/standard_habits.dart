@@ -77,3 +77,7 @@ String _normalizeHabitTitle(String title) {
       .trim()
       .toLowerCase();
 }
+
+String? standardHabitDescriptionForTitle(String title) {
+  return standardHabitForTitle(title)?.subtitle;
+}

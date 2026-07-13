@@ -22,7 +22,7 @@ const List<String> _pastelColors = [
   'FFE4D3A2',
 ];
 
-const List<int> _durationSuggestions = [21, 33, 40, 66, 90];
+const List<int> _durationSuggestions = [21, 33, 40];
 const List<String> _emojiChoices = [
   '✨',
   '🌱',
@@ -78,6 +78,7 @@ class HabitFormSheet extends ConsumerStatefulWidget {
 class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
   late final TextEditingController _durationController;
   late String _selectedColor;
   final Set<String> _selectedPartners = <String>{};
@@ -103,6 +104,10 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     _titleController = TextEditingController(
       text: _stripLeadingEmoji(startingTitle),
     );
+    _descriptionController = TextEditingController(
+      text:
+          widget.existingHabit?.description ?? _selectedPreset?.subtitle ?? '',
+    );
     _durationController = TextEditingController(
       text: widget.existingHabit != null
           ? widget.existingHabit!.targetDuration.toString()
@@ -117,6 +122,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     _durationController.dispose();
     super.dispose();
   }
@@ -190,10 +196,15 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   void _applyPreset(StandardHabit preset) {
+    final previousPresetSubtitle = _selectedPreset?.subtitle;
     setState(() {
       _selectedPreset = preset;
       _selectedEmoji = preset.emoji;
       _titleController.text = preset.title;
+      if (_descriptionController.text.trim().isEmpty ||
+          _descriptionController.text.trim() == previousPresetSubtitle) {
+        _descriptionController.text = preset.subtitle;
+      }
       _durationController.text = preset.defaultDurationDays.toString();
       if (preset.colorHex != null) {
         _selectedColor = preset.colorHex!;
@@ -210,9 +221,13 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final cleanTitle = _titleController.text.trim();
+    final cleanDescription = _descriptionController.text.trim();
     final normalizedTitle = _stripLeadingEmoji(cleanTitle);
     final matchedPreset = standardHabitForTitle(normalizedTitle);
     final durationDays = int.parse(_durationController.text.trim());
+    final persistedDescription = cleanDescription.isEmpty
+        ? null
+        : cleanDescription;
     final persistedTitle = matchedPreset == null && _shouldPersistCustomEmoji
         ? '${_selectedEmoji.trim()} $normalizedTitle'.trim()
         : normalizedTitle;
@@ -226,6 +241,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
       if (_isCreateFlow) {
         await actions.createHabit(
           persistedTitle,
+          persistedDescription,
           durationDays,
           matchedPreset == null,
           _selectedColor,
@@ -235,6 +251,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
         await actions.updateHabit(
           widget.existingHabit!.habitId,
           persistedTitle,
+          persistedDescription,
           durationDays,
           _selectedColor,
         );
@@ -288,7 +305,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
                   _buildPresetSection(context),
                 ],
                 const SizedBox(height: 20),
-                _buildDescriptionCard(context, presetDescription),
+                _buildDescriptionSection(context, presetDescription),
                 const SizedBox(height: 20),
                 _buildDurationSection(context),
                 const SizedBox(height: 20),
@@ -482,36 +499,43 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     );
   }
 
-  Widget _buildDescriptionCard(BuildContext context, String description) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Intent',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppTheme.warmGray,
-              fontWeight: FontWeight.w700,
-            ),
+  Widget _buildDescriptionSection(BuildContext context, String description) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Description',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Use one or two lines to make the habit specific enough to repeat on rough days.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          key: const Key('habit-form-description'),
+          controller: _descriptionController,
+          minLines: 2,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: description,
+            helperText: 'This can surface on the primary habit card.',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            key: const Key('habit-form-description'),
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.deepCharcoal,
-              fontWeight: FontWeight.w600,
-              height: 1.45,
-            ),
-          ),
-        ],
-      ),
+          validator: (value) {
+            final text = value?.trim() ?? '';
+            if (text.isNotEmpty && text.length > 160) {
+              return 'Keep the description under 160 characters.';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 

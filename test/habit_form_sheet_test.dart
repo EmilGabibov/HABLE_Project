@@ -12,6 +12,7 @@ import 'package:hable/widgets/habit_form_sheet.dart';
 
 class _FakeHabitActions implements HabitActions {
   String? createdTitle;
+  String? createdDescription;
   int? createdDuration;
   bool? createdIsCustom;
   String? createdColor;
@@ -19,6 +20,7 @@ class _FakeHabitActions implements HabitActions {
 
   String? updatedHabitId;
   String? updatedTitle;
+  String? updatedDescription;
   int? updatedDuration;
   String? updatedColor;
 
@@ -28,12 +30,14 @@ class _FakeHabitActions implements HabitActions {
   @override
   Future<String?> createHabit(
     String title,
+    String? description,
     int targetDuration,
     bool isCustom,
     String colorHex, {
     List<String> partnerIds = const [],
   }) async {
     createdTitle = title;
+    createdDescription = description;
     createdDuration = targetDuration;
     createdIsCustom = isCustom;
     createdColor = colorHex;
@@ -54,11 +58,13 @@ class _FakeHabitActions implements HabitActions {
   Future<void> updateHabit(
     String habitId,
     String title,
+    String? description,
     int targetDuration,
     String colorHex,
   ) async {
     updatedHabitId = habitId;
     updatedTitle = title;
+    updatedDescription = description;
     updatedDuration = targetDuration;
     updatedColor = colorHex;
   }
@@ -79,6 +85,7 @@ Habit _habit() {
     habitId: 'habit-1',
     userId: 'user-1',
     title: 'Reading',
+    description: 'Read for 20 minutes before bed.',
     isCustom: false,
     targetDuration: 33,
     currentDuration: 33,
@@ -152,7 +159,12 @@ void main() {
 
     expect(titleField.controller!.text, 'Hydration');
     expect(durationField.controller!.text, '21');
-    expect(find.text('Drink 8 glasses of water daily'), findsOneWidget);
+    final descriptionField = tester.widget<TextFormField>(
+      find.byKey(const Key('habit-form-description')),
+    );
+    expect(descriptionField.controller!.text, 'Drink 8 glasses of water daily');
+    expect(find.byKey(const Key('duration-66')), findsNothing);
+    expect(find.byKey(const Key('duration-90')), findsNothing);
 
     await tester.ensureVisible(find.byKey(const Key('duration-40')));
     await tester.tap(find.byKey(const Key('duration-40')));
@@ -180,6 +192,10 @@ void main() {
       find.byKey(const Key('habit-form-title')),
       'Evening Walk',
     );
+    await tester.enterText(
+      find.byKey(const Key('habit-form-description')),
+      'A calm walk after dinner.',
+    );
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('friend-friend-1')));
@@ -190,6 +206,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(actions.createdTitle, 'Evening Walk');
+    expect(actions.createdDescription, 'A calm walk after dinner.');
     expect(actions.createdDuration, 21);
     expect(actions.createdIsCustom, isTrue);
     expect(actions.createdPartnerIds, ['friend-1']);
@@ -207,10 +224,21 @@ void main() {
 
     expect(find.text('Save changes'), findsOneWidget);
     expect(find.text('Invite partners'), findsNothing);
+    final descriptionField = tester.widget<TextFormField>(
+      find.byKey(const Key('habit-form-description')),
+    );
+    expect(
+      descriptionField.controller!.text,
+      'Read for 20 minutes before bed.',
+    );
 
     await tester.enterText(
       find.byKey(const Key('habit-form-title')),
       'Deep Reading',
+    );
+    await tester.enterText(
+      find.byKey(const Key('habit-form-description')),
+      'Read without distractions before sleep.',
     );
     await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
     await tester.tap(find.byKey(const Key('habit-form-save')));
@@ -218,6 +246,10 @@ void main() {
 
     expect(actions.updatedHabitId, 'habit-1');
     expect(actions.updatedTitle, 'Deep Reading');
+    expect(
+      actions.updatedDescription,
+      'Read without distractions before sleep.',
+    );
     expect(actions.updatedDuration, 33);
   });
 }

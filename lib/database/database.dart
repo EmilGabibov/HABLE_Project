@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -90,6 +90,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 15) {
         await m.addColumn(logs, logs.pointsAwarded);
+      }
+      if (from < 16) {
+        await m.addColumn(habits, habits.description);
       }
     },
   );
@@ -269,6 +272,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<String> createHabitWithSync(
     String title,
+    String? description,
     int targetDuration,
     bool isCustom,
     String colorHex,
@@ -283,6 +287,7 @@ class AppDatabase extends _$AppDatabase {
           habitId: Value(habitId),
           userId: Value(userId),
           title: Value(title),
+          description: Value(description),
           targetDuration: Value(targetDuration),
           currentDuration: Value(targetDuration),
           isCustom: Value(isCustom),
@@ -298,6 +303,7 @@ class AppDatabase extends _$AppDatabase {
           payload: jsonEncode({
             'habit_id': habitId,
             'title': title,
+            'description': description,
             'target_duration': targetDuration,
             'color_hex': colorHex,
             'status': 'active',
@@ -324,6 +330,7 @@ class AppDatabase extends _$AppDatabase {
   Future<void> updateHabitDetails(
     String habitId,
     String title,
+    String? description,
     int targetDuration,
     String colorHex,
   ) async {
@@ -332,6 +339,7 @@ class AppDatabase extends _$AppDatabase {
       await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
         HabitsCompanion(
           title: Value(title),
+          description: Value(description),
           targetDuration: Value(targetDuration),
           colorHex: Value(colorHex),
           updatedAt: Value(now),
@@ -344,6 +352,7 @@ class AppDatabase extends _$AppDatabase {
           payload: jsonEncode({
             'habit_id': habitId,
             'title': title,
+            'description': description,
             'target_duration': targetDuration,
             'color_hex': colorHex,
             'status': 'active',

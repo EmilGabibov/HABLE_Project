@@ -29,7 +29,7 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 ### A. Core Tables (D1 & Drift)
 
 * **`users` table:** `user_id` (UUID, Primary Key), `username` (String), optional `email` (String), optional `email_verified_at` (Timestamp), `password_hash` (String), `avatar_url` (String), `total_score` (Int).
-* **`habits` table:** `id` (UUID, PK), `user_id` (FK), `title` (String), `target_duration` (Int), `color_hex` (String), `status` (Enum: active, abandoned), `created_at` (Timestamp), `updated_at` (Timestamp). On the Flutter side, any legacy local `completed` rows should be treated as archived-history rows until they are normalized.
+* **`habits` table:** `id` (UUID, PK), `user_id` (FK), `title` (String), optional `description` (String), `target_duration` (Int), `color_hex` (String), `status` (Enum: active, abandoned), `created_at` (Timestamp), `updated_at` (Timestamp). On the Flutter side, any legacy local `completed` rows should be treated as archived-history rows until they are normalized.
 * **`habit_logs` table:** `id` (UUID, PK), `user_id` (FK), `habit_id` (FK), `status` (Enum), `logged_at` (Timestamp).
 * **`habit_progress` table:** `user_id` (FK), `habit_id` (FK), `current_duration` (Int).
 * **`partnerships` table:** `user_id` (FK), `partner_id` (FK), `habit_id` (FK), `role` (Enum: `owner`, `partner`, `supporter`). This is a directed graph over one shared habit: self-rows (`user_id = partner_id`) represent the participant's own role, and non-self rows drive which other participants they can see in daily sync.
@@ -55,7 +55,7 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * `POST /api/user/email/request-pin` & `/verify-pin` - Authenticated Profile activation flow for users who want a verified email for recoverable cloud progress and password reset support.
 * `PUT /api/user/avatar` - Authenticated emoji-only avatar update. The Worker must reject URL/data-upload values; uploaded profile photos belong to a separate future storage task.
 * `POST /api/auth/request-pin` & `/reset-password` - Password recovery for accounts with an attached email. Local development logs the PIN; production must send email or return a clear delivery failure.
-* `POST /api/sync/habit` - Initializes or updates habit metadata and color. Only the habit owner may update/archive an existing habit; the route also ensures the owner self-row exists in `partnerships`. When the client sends `reset_progress: true`, the Worker must allow it only for solo habits and clear the owner's remote habit logs/progress before re-activating the challenge.
+* `POST /api/sync/habit` - Initializes or updates habit metadata, including the optional description and color. Only the habit owner may update/archive an existing habit; the route also ensures the owner self-row exists in `partnerships`. When the client sends `reset_progress: true`, the Worker must allow it only for solo habits and clear the owner's remote habit logs/progress before re-activating the challenge.
 * `POST /api/sync/log` - Submits a daily completion or a skip. Only `owner` and `partner` roles may create logs. New completed logs award backend-owned progression points and badges; duplicate `log_id` replays do not re-award.
 * `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, friend invitations, notification-event normalization inputs, and the authoritative `gamification` object.
 * `GET /api/social/search` & `GET /api/social/leaderboard` - Used by the Social Hub UI.

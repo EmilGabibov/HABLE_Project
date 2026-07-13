@@ -19,6 +19,7 @@ class QueuedNudgeFeedback {
 class HabitCardShell extends StatelessWidget {
   final String semanticsLabel;
   final String title;
+  final String? subtitle;
   final Widget centerChild;
   final Widget? topTrailing;
   final Widget? overlayChild;
@@ -32,6 +33,7 @@ class HabitCardShell extends StatelessWidget {
     super.key,
     required this.semanticsLabel,
     required this.title,
+    this.subtitle,
     required this.centerChild,
     this.topTrailing,
     this.overlayChild,
@@ -58,13 +60,31 @@ class HabitCardShell extends StatelessWidget {
                 top: 16,
                 left: 16,
                 right: titleRightInset,
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: subtitle == null ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.warmGray,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (topTrailing != null)
@@ -157,6 +177,9 @@ class _HabitCardState extends State<HabitCard> {
   Widget build(BuildContext context) {
     final habit = widget.habit;
     final habitMeta = standardHabitForTitle(habit.title);
+    final habitDescription = habit.description?.trim().isNotEmpty == true
+        ? habit.description!.trim()
+        : standardHabitDescriptionForTitle(habit.title);
     final habitColor = _hexToColor(habit.colorHex);
 
     final canLogProgress = widget.viewerRole != PartnershipRole.supporter;
@@ -175,12 +198,13 @@ class _HabitCardState extends State<HabitCard> {
 
     return HabitCardShell(
       semanticsLabel:
-          '${habit.title}. Challenge day ${widget.challengeDay} of ${widget.targetDays}. ${widget.isCompletedToday
+          '${habit.title}.${habitDescription == null ? '' : ' $habitDescription.'} Challenge day ${widget.challengeDay} of ${widget.targetDays}. ${widget.isCompletedToday
               ? "Completed today."
               : widget.isSkippedToday
               ? "Skipped today."
               : "Not completed today."}${widget.recentNudge == null ? "" : " ${widget.recentNudge!.username} nudged this habit."}',
       title: habit.title,
+      subtitle: habitDescription,
       topTrailing: HabitPartnerRow(
         partners: widget.partners,
         habitColor: habitColor,

@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS habits (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     title TEXT NOT NULL,
+    description TEXT,
     target_duration INTEGER NOT NULL,
     color_hex TEXT,
     status TEXT NOT NULL DEFAULT 'active',

@@ -662,6 +662,17 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isCustomMeta = const VerificationMeta(
     'isCustom',
   );
@@ -764,6 +775,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     habitId,
     userId,
     title,
+    description,
     isCustom,
     targetDuration,
     currentDuration,
@@ -808,6 +820,15 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
     }
     if (data.containsKey('is_custom')) {
       context.handle(
@@ -882,6 +903,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
       isCustom: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_custom'],
@@ -932,6 +957,7 @@ class Habit extends DataClass implements Insertable<Habit> {
   final String habitId;
   final String userId;
   final String title;
+  final String? description;
   final bool isCustom;
   final int targetDuration;
   final int currentDuration;
@@ -947,6 +973,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     required this.habitId,
     required this.userId,
     required this.title,
+    this.description,
     required this.isCustom,
     required this.targetDuration,
     required this.currentDuration,
@@ -962,6 +989,9 @@ class Habit extends DataClass implements Insertable<Habit> {
     map['habit_id'] = Variable<String>(habitId);
     map['user_id'] = Variable<String>(userId);
     map['title'] = Variable<String>(title);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
     map['is_custom'] = Variable<bool>(isCustom);
     map['target_duration'] = Variable<int>(targetDuration);
     map['current_duration'] = Variable<int>(currentDuration);
@@ -982,6 +1012,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       habitId: Value(habitId),
       userId: Value(userId),
       title: Value(title),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
       isCustom: Value(isCustom),
       targetDuration: Value(targetDuration),
       currentDuration: Value(currentDuration),
@@ -1002,6 +1035,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       habitId: serializer.fromJson<String>(json['habitId']),
       userId: serializer.fromJson<String>(json['userId']),
       title: serializer.fromJson<String>(json['title']),
+      description: serializer.fromJson<String?>(json['description']),
       isCustom: serializer.fromJson<bool>(json['isCustom']),
       targetDuration: serializer.fromJson<int>(json['targetDuration']),
       currentDuration: serializer.fromJson<int>(json['currentDuration']),
@@ -1021,6 +1055,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       'habitId': serializer.toJson<String>(habitId),
       'userId': serializer.toJson<String>(userId),
       'title': serializer.toJson<String>(title),
+      'description': serializer.toJson<String?>(description),
       'isCustom': serializer.toJson<bool>(isCustom),
       'targetDuration': serializer.toJson<int>(targetDuration),
       'currentDuration': serializer.toJson<int>(currentDuration),
@@ -1038,6 +1073,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     String? habitId,
     String? userId,
     String? title,
+    Value<String?> description = const Value.absent(),
     bool? isCustom,
     int? targetDuration,
     int? currentDuration,
@@ -1050,6 +1086,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     habitId: habitId ?? this.habitId,
     userId: userId ?? this.userId,
     title: title ?? this.title,
+    description: description.present ? description.value : this.description,
     isCustom: isCustom ?? this.isCustom,
     targetDuration: targetDuration ?? this.targetDuration,
     currentDuration: currentDuration ?? this.currentDuration,
@@ -1064,6 +1101,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       habitId: data.habitId.present ? data.habitId.value : this.habitId,
       userId: data.userId.present ? data.userId.value : this.userId,
       title: data.title.present ? data.title.value : this.title,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       isCustom: data.isCustom.present ? data.isCustom.value : this.isCustom,
       targetDuration: data.targetDuration.present
           ? data.targetDuration.value
@@ -1085,6 +1125,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('habitId: $habitId, ')
           ..write('userId: $userId, ')
           ..write('title: $title, ')
+          ..write('description: $description, ')
           ..write('isCustom: $isCustom, ')
           ..write('targetDuration: $targetDuration, ')
           ..write('currentDuration: $currentDuration, ')
@@ -1102,6 +1143,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     habitId,
     userId,
     title,
+    description,
     isCustom,
     targetDuration,
     currentDuration,
@@ -1118,6 +1160,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.habitId == this.habitId &&
           other.userId == this.userId &&
           other.title == this.title &&
+          other.description == this.description &&
           other.isCustom == this.isCustom &&
           other.targetDuration == this.targetDuration &&
           other.currentDuration == this.currentDuration &&
@@ -1132,6 +1175,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<String> habitId;
   final Value<String> userId;
   final Value<String> title;
+  final Value<String?> description;
   final Value<bool> isCustom;
   final Value<int> targetDuration;
   final Value<int> currentDuration;
@@ -1145,6 +1189,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.habitId = const Value.absent(),
     this.userId = const Value.absent(),
     this.title = const Value.absent(),
+    this.description = const Value.absent(),
     this.isCustom = const Value.absent(),
     this.targetDuration = const Value.absent(),
     this.currentDuration = const Value.absent(),
@@ -1159,6 +1204,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     required String habitId,
     required String userId,
     required String title,
+    this.description = const Value.absent(),
     this.isCustom = const Value.absent(),
     required int targetDuration,
     required int currentDuration,
@@ -1178,6 +1224,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<String>? habitId,
     Expression<String>? userId,
     Expression<String>? title,
+    Expression<String>? description,
     Expression<bool>? isCustom,
     Expression<int>? targetDuration,
     Expression<int>? currentDuration,
@@ -1192,6 +1239,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (habitId != null) 'habit_id': habitId,
       if (userId != null) 'user_id': userId,
       if (title != null) 'title': title,
+      if (description != null) 'description': description,
       if (isCustom != null) 'is_custom': isCustom,
       if (targetDuration != null) 'target_duration': targetDuration,
       if (currentDuration != null) 'current_duration': currentDuration,
@@ -1208,6 +1256,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<String>? habitId,
     Value<String>? userId,
     Value<String>? title,
+    Value<String?>? description,
     Value<bool>? isCustom,
     Value<int>? targetDuration,
     Value<int>? currentDuration,
@@ -1222,6 +1271,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       habitId: habitId ?? this.habitId,
       userId: userId ?? this.userId,
       title: title ?? this.title,
+      description: description ?? this.description,
       isCustom: isCustom ?? this.isCustom,
       targetDuration: targetDuration ?? this.targetDuration,
       currentDuration: currentDuration ?? this.currentDuration,
@@ -1245,6 +1295,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
     }
     if (isCustom.present) {
       map['is_custom'] = Variable<bool>(isCustom.value);
@@ -1284,6 +1337,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('habitId: $habitId, ')
           ..write('userId: $userId, ')
           ..write('title: $title, ')
+          ..write('description: $description, ')
           ..write('isCustom: $isCustom, ')
           ..write('targetDuration: $targetDuration, ')
           ..write('currentDuration: $currentDuration, ')
@@ -9178,6 +9232,7 @@ typedef $$HabitsTableCreateCompanionBuilder =
       required String habitId,
       required String userId,
       required String title,
+      Value<String?> description,
       Value<bool> isCustom,
       required int targetDuration,
       required int currentDuration,
@@ -9193,6 +9248,7 @@ typedef $$HabitsTableUpdateCompanionBuilder =
       Value<String> habitId,
       Value<String> userId,
       Value<String> title,
+      Value<String?> description,
       Value<bool> isCustom,
       Value<int> targetDuration,
       Value<int> currentDuration,
@@ -9278,6 +9334,11 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9415,6 +9476,11 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isCustom => $composableBuilder(
     column: $table.isCustom,
     builder: (column) => ColumnOrderings(column),
@@ -9493,6 +9559,11 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isCustom =>
       $composableBuilder(column: $table.isCustom, builder: (column) => column);
@@ -9631,6 +9702,7 @@ class $$HabitsTableTableManager
                 Value<String> habitId = const Value.absent(),
                 Value<String> userId = const Value.absent(),
                 Value<String> title = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 Value<int> targetDuration = const Value.absent(),
                 Value<int> currentDuration = const Value.absent(),
@@ -9644,6 +9716,7 @@ class $$HabitsTableTableManager
                 habitId: habitId,
                 userId: userId,
                 title: title,
+                description: description,
                 isCustom: isCustom,
                 targetDuration: targetDuration,
                 currentDuration: currentDuration,
@@ -9659,6 +9732,7 @@ class $$HabitsTableTableManager
                 required String habitId,
                 required String userId,
                 required String title,
+                Value<String?> description = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 required int targetDuration,
                 required int currentDuration,
@@ -9672,6 +9746,7 @@ class $$HabitsTableTableManager
                 habitId: habitId,
                 userId: userId,
                 title: title,
+                description: description,
                 isCustom: isCustom,
                 targetDuration: targetDuration,
                 currentDuration: currentDuration,
