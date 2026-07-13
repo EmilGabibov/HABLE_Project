@@ -24,6 +24,13 @@ type Variables = {
   }
 }
 
+type DailyQuotePayload = {
+  text: string
+  author?: string
+  source: 'quotable' | 'cache'
+  fetched_at: string
+}
+
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 const allowedCorsOrigins = new Set([
   'https://hable.pages.dev',
@@ -46,6 +53,7 @@ const levelTiers = [
   { id: 'anchor', name: 'Anchor', minPoints: 500 },
   { id: 'legend', name: 'Legend', minPoints: 1000 },
 ] as const
+const quotableDailyQuoteUrl = 'https://api.quotable.io/quotes/random?tags=inspirational'
 
 // --- Helpers ---
 async function hashPassword(password: string): Promise<string> {
@@ -97,6 +105,61 @@ function defaultAvatarForUsername(username: string): string {
 function normalizeOptionalString(value: unknown): string | null {
   const normalized = String(value ?? '').trim()
   return normalized.length === 0 ? null : normalized
+}
+
+function todayUtcKey(now = new Date()): string {
+  return now.toISOString().slice(0, 10)
+}
+
+function normalizeQuotableQuotePayload(value: unknown): DailyQuotePayload | null {
+  const candidate = Array.isArray(value) ? value[0] : value
+  if (!candidate || typeof candidate !== 'object') return null
+  const record = candidate as Record<string, unknown>
+  const text = normalizeOptionalString(record.content)
+  if (!text) return null
+  const author = normalizeOptionalString(record.author) ?? undefined
+  return {
+    text,
+    ...(author ? { author } : {}),
+    source: 'quotable',
+    fetched_at: new Date().toISOString(),
+  }
+}
+
+async function fetchQuotableDailyQuote(): Promise<DailyQuotePayload | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 2500)
+  try {
+    const response = await fetch(quotableDailyQuoteUrl, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' },
+    })
+    if (!response.ok) return null
+    return normalizeQuotableQuotePayload(await response.json())
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function getDailyQuote(env: Bindings): Promise<DailyQuotePayload | null> {
+  const cacheKey = `quote:daily:${todayUtcKey()}`
+  const cached = await env.NUDGES.get(cacheKey)
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as DailyQuotePayload
+      if (normalizeOptionalString(parsed.text)) {
+        return { ...parsed, source: 'cache' }
+      }
+    } catch {}
+  }
+
+  const quote = await fetchQuotableDailyQuote()
+  if (!quote) return null
+
+  await env.NUDGES.put(cacheKey, JSON.stringify(quote), { expirationTtl: 172800 })
+  return quote
 }
 
 function parseServiceWorkerVersion(scriptContents: string): string | null {
@@ -1982,6 +2045,7 @@ app.get('/api/sync/daily', async (c) => {
   `).bind(userId, userId).all()
 
   const gamification = await getGamificationPayload(c.env, userId)
+  const quote = await getDailyQuote(c.env)
 
   return c.json({
     partners: results,
@@ -1990,7 +2054,8 @@ app.get('/api/sync/daily', async (c) => {
     invitations: invitations,
     friend_requests: friendRequests,
     accepted_friends: acceptedFriends,
-    gamification: gamification
+    gamification: gamification,
+    ...(quote ? { quote } : {})
   })
 })
 

@@ -663,12 +663,23 @@ class AppDatabase extends _$AppDatabase {
   // Quote operations
   // ---------------------------------------------------------------------------
 
-  Future<void> cacheQuote(String text) => into(cachedQuotes).insert(
-    CachedQuotesCompanion(
-      quoteText: Value(text),
-      fetchedAt: Value(DateTime.now()),
-    ),
-  );
+  Future<void> cacheQuote(String text) async {
+    final normalized = text.trim();
+    if (normalized.isEmpty) return;
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    await transaction(() async {
+      await (delete(
+        cachedQuotes,
+      )..where((q) => q.fetchedAt.isBiggerOrEqualValue(startOfDay))).go();
+      await into(cachedQuotes).insert(
+        CachedQuotesCompanion(
+          quoteText: Value(normalized),
+          fetchedAt: Value(now),
+        ),
+      );
+    });
+  }
 
   Future<CachedQuote?> getTodaysQuote() {
     final startOfDay = DateTime(

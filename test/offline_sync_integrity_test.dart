@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
@@ -143,12 +142,69 @@ void main() {
       expect(await db.getPendingSyncItems(), isEmpty);
     },
   );
+
+  test(
+    'daily sync persists the synced quote into the local quote cache',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/sync/daily');
+          return http.Response(
+            jsonEncode(
+              _dailySyncPayload(
+                quote: {'text': 'A steady start is still a start.'},
+              ),
+            ),
+            200,
+          );
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync('user-1');
+
+      final quote = await db.getTodaysQuote();
+      expect(quote?.quoteText, 'A steady start is still a start.');
+    },
+  );
+
+  test(
+    'daily sync without a quote leaves the local quote cache empty',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/sync/daily');
+          return http.Response(jsonEncode(_dailySyncPayload()), 200);
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync('user-1');
+
+      expect(await db.getTodaysQuote(), isNull);
+    },
+  );
 }
 
 Map<String, dynamic> _dailySyncPayload({
   List<Map<String, dynamic>> invitations = const [],
   List<Map<String, dynamic>> friendRequests = const [],
   List<Map<String, dynamic>> nudges = const [],
+  Map<String, dynamic>? quote,
 }) {
   return {
     'accepted_friends': <Map<String, dynamic>>[],
@@ -162,5 +218,7 @@ Map<String, dynamic> _dailySyncPayload({
       'level': 'Newbie',
       'badges': <Map<String, dynamic>>[],
     },
+    // ignore: use_null_aware_elements
+    if (quote != null) 'quote': quote,
   };
 }

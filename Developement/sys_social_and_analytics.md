@@ -54,8 +54,9 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 
 ## 4. The Daily Quote Engine
 
-* **Online:** Worker fetches one quote per day from an external API, caches it in KV, and serves it in the daily sync.
-* **Offline:** Flutter app falls back to `fallback_quotes.dart` containing local curated strings if the network is unavailable.
+* **Online:** Worker fetches one inspirational quote per UTC day from Quotable (`/quotes/random?tags=inspirational`), normalizes it to `{ text, author?, source, fetched_at }`, caches it in KV, and serves it as `quote` in `GET /api/sync/daily`.
+* **Client Cache:** `SyncService.pullDailySync` persists the synced quote into Drift `cached_quotes`, replacing any same-day cached quote so repeated syncs do not create unbounded duplicates.
+* **Offline:** Quote surfaces read through `quoteProvider`, which checks Drift first and falls back to `fallback_quotes.dart` curated local strings if no synced quote is cached or the Worker omits a quote after an upstream failure.
 
 ## 5. Scoring & Leaderboard
 

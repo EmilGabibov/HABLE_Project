@@ -139,8 +139,9 @@ class SyncService {
       }
       if (names.isEmpty) return 'You have new ${actionVerb}s.';
       if (names.length == 1) return '${names[0]} $actionVerb you.';
-      if (names.length == 2)
+      if (names.length == 2) {
         return '${names[0]} and ${names[1]} $actionVerb you.';
+      }
       return '${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 > 1 ? 's' : ''} $actionVerb you.';
     }
 
@@ -230,8 +231,9 @@ class SyncService {
   /// Evaluates local social state to build a recap payload and schedules it.
   Future<void> coalesceAndScheduleSocialRecap(String userId) async {
     if (_localReminderService == null ||
-        !_localReminderService.supportsScheduling)
+        !_localReminderService.supportsScheduling) {
       return;
+    }
 
     final recapPlan = await buildSocialRecapPlan(userId);
     if (recapPlan == null) return;
@@ -432,6 +434,10 @@ class SyncService {
         debugPrint('[SyncService] GET /api/sync/daily successful');
 
         await _db.deleteExpiredNotificationEvents();
+        final syncedQuote = _syncedQuoteText(data['quote']);
+        if (syncedQuote != null) {
+          await _db.cacheQuote(syncedQuote);
+        }
 
         // Persist accepted friends first so later notification rows can resolve
         // usernames without waiting for another sync cycle.
@@ -845,6 +851,18 @@ class SyncService {
   void dispose() {
     _client.close();
     _connectivity.dispose();
+  }
+
+  String? _syncedQuoteText(Object? value) {
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is Map<String, dynamic>) {
+      final text = value['text']?.toString().trim();
+      return text == null || text.isEmpty ? null : text;
+    }
+    return null;
   }
 
   Future<void> _upsertNotificationEvent({
