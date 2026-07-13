@@ -15,7 +15,13 @@ class AppLocalizationsTa extends AppLocalizations {
   String get socialTabTitle => 'சமூகம்';
 
   @override
+  String get socialTabTooltip => 'சமூகம் — நண்பர்கள் & கூட்டாளர்கள்';
+
+  @override
   String get profileTabTitle => 'சுயவிவரம்';
+
+  @override
+  String get profileTabTooltip => 'சுயவிவரம் — வரலாறு & அமைப்புகள்';
 
   @override
   String get activityTabTitle => 'செயல்பாடு';

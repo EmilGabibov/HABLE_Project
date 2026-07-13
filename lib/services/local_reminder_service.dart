@@ -39,7 +39,10 @@ class LocalReminderService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const windowsSettings = WindowsInitializationSettings();
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'Hable',
+      appUserModelId: 'com.hable.app',
+    );
     const initializationSettings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,

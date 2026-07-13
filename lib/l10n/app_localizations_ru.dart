@@ -12,10 +12,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeTabTitle => 'Главная';
 
   @override
-  String get socialTabTitle => 'Социальное';
+  String get socialTabTitle => 'Сообщество';
+
+  @override
+  String get socialTabTooltip => 'Сообщество — друзья и партнеры';
 
   @override
   String get profileTabTitle => 'Профиль';
+
+  @override
+  String get profileTabTooltip => 'Профиль — история и настройки';
 
   @override
   String get activityTabTitle => 'Активность';

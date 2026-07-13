@@ -12,10 +12,16 @@ class AppLocalizationsFa extends AppLocalizations {
   String get homeTabTitle => 'خانه';
 
   @override
-  String get socialTabTitle => 'اجتماعی';
+  String get socialTabTitle => 'اجتماع';
+
+  @override
+  String get socialTabTooltip => 'اجتماع — دوستان و هم‌تیمی‌ها';
 
   @override
   String get profileTabTitle => 'نمایه';
+
+  @override
+  String get profileTabTooltip => 'نمایه — تاریخچه و تنظیمات';
 
   @override
   String get activityTabTitle => 'فعالیت';

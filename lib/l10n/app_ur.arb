@@ -1,8 +1,10 @@
 {
   "@@locale": "ur",
   "homeTabTitle": "ہوم",
-  "socialTabTitle": "سماجی",
+  "socialTabTitle": "سوشل",
+  "socialTabTooltip": "سوشل — دوست اور شراکت دار",
   "profileTabTitle": "پروفائل",
+  "profileTabTooltip": "پروفائل — تاریخ اور ترتیبات",
   "activityTabTitle": "سرگرمی",
   "friendsTabTitle": "دوست",
   "leaderboardTabTitle": "لیڈر بورڈ",

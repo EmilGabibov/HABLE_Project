@@ -1,8 +1,10 @@
 {
   "@@locale": "ru",
   "homeTabTitle": "Главная",
-  "socialTabTitle": "Социальное",
+  "socialTabTitle": "Сообщество",
+  "socialTabTooltip": "Сообщество — друзья и партнеры",
   "profileTabTitle": "Профиль",
+  "profileTabTooltip": "Профиль — история и настройки",
   "activityTabTitle": "Активность",
   "friendsTabTitle": "Друзья",
   "leaderboardTabTitle": "Таблица лидеров",

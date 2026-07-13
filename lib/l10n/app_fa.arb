@@ -1,8 +1,10 @@
 {
   "@@locale": "fa",
   "homeTabTitle": "خانه",
-  "socialTabTitle": "اجتماعی",
+  "socialTabTitle": "اجتماع",
+  "socialTabTooltip": "اجتماع — دوستان و هم‌تیمی‌ها",
   "profileTabTitle": "نمایه",
+  "profileTabTooltip": "نمایه — تاریخچه و تنظیمات",
   "activityTabTitle": "فعالیت",
   "friendsTabTitle": "دوستان",
   "leaderboardTabTitle": "جدول امتیازات",

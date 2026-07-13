@@ -118,11 +118,23 @@ abstract class AppLocalizations {
   /// **'Social'**
   String get socialTabTitle;
 
+  /// No description provided for @socialTabTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Social — friends & partners'**
+  String get socialTabTooltip;
+
   /// No description provided for @profileTabTitle.
   ///
   /// In en, this message translates to:
   /// **'Profile'**
   String get profileTabTitle;
+
+  /// No description provided for @profileTabTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile — history & settings'**
+  String get profileTabTooltip;
 
   /// No description provided for @activityTabTitle.
   ///

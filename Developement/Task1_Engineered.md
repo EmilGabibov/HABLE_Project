@@ -2874,7 +2874,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion notes:** Completed on 2026-07-13. Audited critical interaction surfaces including `MudLongPressButton` and `HabitCard`. Added explicit `Semantics` widget wrapping to `MudLongPressButton` to announce the hold-to-complete progress value and properly wire `onLongPress` for screen readers. Increased the tap target of the 'Skip' button in `HabitCard` to meet minimum accessibility guidelines, and added `MediaQuery.disableAnimationsOf(context)` checks to respect reduced-motion settings during celebratory ring pulses.
 
 <a id="expand-hable-localization-to-english-german-urdu-russian-tamil-and-persian"></a>
-### [ ] Expand Hable Localization To English German Urdu Russian Tamil And Persian
+### [x] Expand Hable Localization To English German Urdu Russian Tamil And Persian
 
 **Raw source:** multi language support (at least English, German, Urdu, Russian, Tamil and Persian/Farsi)
 

@@ -12,10 +12,16 @@ class AppLocalizationsUr extends AppLocalizations {
   String get homeTabTitle => 'ہوم';
 
   @override
-  String get socialTabTitle => 'سماجی';
+  String get socialTabTitle => 'سوشل';
+
+  @override
+  String get socialTabTooltip => 'سوشل — دوست اور شراکت دار';
 
   @override
   String get profileTabTitle => 'پروفائل';
+
+  @override
+  String get profileTabTooltip => 'پروفائل — تاریخ اور ترتیبات';
 
   @override
   String get activityTabTitle => 'سرگرمی';

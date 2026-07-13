@@ -15,7 +15,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get socialTabTitle => 'Social';
 
   @override
+  String get socialTabTooltip => 'Social — friends & partners';
+
+  @override
   String get profileTabTitle => 'Profile';
+
+  @override
+  String get profileTabTooltip => 'Profile — history & settings';
 
   @override
   String get activityTabTitle => 'Activity';
