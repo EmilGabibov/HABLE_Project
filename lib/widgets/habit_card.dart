@@ -276,9 +276,13 @@ class _HabitCardState extends State<HabitCard> {
               padding: const EdgeInsets.only(bottom: 4.0),
               child: InkWell(
                 onTap: widget.onSkip,
-                child: Text(
-                  widget.isSkippedToday ? 'Skipped today' : 'Skip today',
-                  style: TextStyle(color: AppTheme.warmGray, fontSize: 11),
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    widget.isSkippedToday ? 'Skipped today' : 'Skip today',
+                    style: TextStyle(color: AppTheme.warmGray, fontSize: 11),
+                  ),
                 ),
               ),
             ),
@@ -354,6 +358,8 @@ class _NudgedRingPulse extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isActive) return child;
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    if (disableAnimations) return child;
 
     return TweenAnimationBuilder<double>(
       key: ValueKey('nudge-pulse-$pulseKey'),

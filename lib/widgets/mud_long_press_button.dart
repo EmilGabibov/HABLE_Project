@@ -170,12 +170,18 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         widget.visualState == HabitVisualState.missed ||
         widget.visualState == HabitVisualState.skipped;
 
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: isDisabled ? null : (_) => _startHold(),
-      onPointerUp: isDisabled ? null : (_) => _cancelHold(),
-      onPointerCancel: isDisabled ? null : (_) => _cancelHold(),
-      child: AnimatedBuilder(
+    return Semantics(
+      button: true,
+      label: 'Complete Habit',
+      hint: 'Long press to complete',
+      value: '${(_curveAnimation.value * 100).toInt()}%',
+      onLongPress: isDisabled ? null : () => widget.onCompletion(),
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: isDisabled ? null : (_) => _startHold(),
+        onPointerUp: isDisabled ? null : (_) => _cancelHold(),
+        onPointerCancel: isDisabled ? null : (_) => _cancelHold(),
+        child: AnimatedBuilder(
         animation: _curveAnimation,
         builder: (context, child) {
           return CustomPaint(
@@ -201,6 +207,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                 : _buildIconContent(),
           ),
         ),
+      ),
       ),
     );
   }

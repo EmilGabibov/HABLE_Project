@@ -2119,7 +2119,7 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 **Completion notes:** Completed on 2026-07-13. Added `lib/services/first_run_quote_gate.dart` plus `lib/screens/first_run_quote_screen.dart` and wired `_AppGate` in `lib/main.dart` to show a one-time, per-user quote-first opening screen before the main shell. The gate persists via secure storage, so once dismissed it does not reappear for the same signed-in user. `lib/screens/completion_splash_screen.dart` was also reordered so the quote becomes the first and largest reader-facing element on quote-bearing completion surfaces rather than a footer after the celebration copy. Documentation was updated in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`, and focused verification covered the storage gate plus quote-first completion ordering with `flutter test test/completion_splash_screen_test.dart test/first_run_quote_gate_test.dart test/habit_form_sheet_test.dart`.
 
 <a id="investigate-and-resolve-macos-ad-hoc-code-signing-compilation-failure-with-keychain-access-groups-entitlement"></a>
-### [ ] Investigate And Resolve macOS Ad-Hoc Code Signing Compilation Failure With Keychain Access Groups Entitlement
+### [x] Investigate And Resolve macOS Ad-Hoc Code Signing Compilation Failure With Keychain Access Groups Entitlement
 
 **Raw source:** macOS build compilation fails on keychain-access-groups entitlement when compiling release build locally with ad-hoc signing ("-")
 
@@ -2149,9 +2149,9 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 - Developers can run `flutter build macos --release` locally without failing on entitlements/signing errors.
 - The production `Release.entitlements` still retains `keychain-access-groups` for official distribution.
 
-**Dependencies:** `Developement/sys_build_integrity.md`, `Developement/macos_distribution.md`
+**Completion notes:** Completed on 2026-07-13. Discovered that `CODE_SIGN_ENTITLEMENTS` was unlinked in `macos/Runner.xcodeproj/project.pbxproj`. Restored the linkage to ensure production builds correctly sign with sandbox and keychain entitlements. Documented the ad-hoc signing constraint in `Developement/sys_build_integrity.md`: local operators without certificates should use `flutter build macos --profile` for performance testing, or temporarily drop the `keychain-access-groups` key from `Release.entitlements` if a strict local release build is required. Production entitlements remain unmodified.
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Dependencies:** `Developement/sys_build_integrity.md`, `Developement/macos_distribution.md`
 
 
 <a id="finish-habit-form-information-architecture-with-description-science-based-duration-picks-and-partner-emoji-chips"></a>
@@ -2417,3 +2417,503 @@ The revision should explicitly describe why these surfaces may update at differe
 **Dependencies:** `Developement/sys_error_handling.md`, `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`
 
 **Completion notes:** Completed on 2026-07-13. Added `Developement/sys_error_handling.md` as the canonical safe-error contract covering backend envelope shape, frontend normalization, display-surface rules, and cross-platform differences across Flutter mobile, Flutter web, and varied build/dev environments. Introduced shared Flutter normalization in `lib/services/app_error.dart` with safe parsing for structured Worker envelopes, legacy `{ error: '...' }` bodies, timeout/network/CORS-style failures, and bounded user-facing copy. Adopted that layer across first-wave critical surfaces in `lib/providers/auth_provider.dart`, `lib/providers/calendar_provider.dart`, `lib/providers/social_providers.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/notification_center_screen.dart`, `lib/screens/home_screen.dart`, `lib/screens/habit_dashboard_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/habit_form_sheet.dart`, and `lib/main.dart` so raw exception strings and raw payload text no longer reach the user in those paths. Added a shared Worker helper in `backend/src/index.ts` and migrated the first high-value auth/profile/social routes to `{ error: { code, message } }` responses while keeping the Flutter parser backward-compatible for remaining legacy routes. Updated `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, and `Developement/qa_testing.md` to reflect the contract and rollout expectations. Focused verification passed with `flutter analyze lib/services/app_error.dart lib/providers/auth_provider.dart lib/providers/calendar_provider.dart lib/providers/social_providers.dart lib/screens/social/social_hub_screen.dart lib/screens/notification_center_screen.dart lib/screens/home_screen.dart lib/screens/habit_dashboard_screen.dart lib/screens/profile_screen.dart lib/widgets/habit_form_sheet.dart lib/main.dart test/app_error_test.dart test/notification_center_test.dart test/auth_session_test.dart`, `flutter test test/app_error_test.dart test/notification_center_test.dart test/auth_session_test.dart`, and `npx tsc --noEmit` in `backend/`.
+
+<a id="define-platform-specific-habit-reminder-delivery-for-android-macos-windows-and-pwa"></a>
+### [x] Define Platform-Specific Habit Reminder Delivery For Android macOS Windows And PWA
+
+**Raw source:** work on android, windows and macos push notifications, reminder for habits. for pwa I'm not sure it's possible or not. investigate possible the pwa itself creates push notifications without a backend or using a service worker, etc. locally? in any case does it still possible to send notification to users and make them to check-in? investigate deeply and find the best way to implement it. do deep research on each platform: android, macos, windows, pwa. and find the best way to implement it.
+
+**Issue:** Hable already ships a local reminder MVP, but its current contract is intentionally narrow and under-documented for the broader platform mix the product now cares about. The existing Flutter layer (`flutter_local_notifications`, Drift-backed `reminder_settings`, restore/cancel flows) assumes local scheduling ownership, while the docs still explicitly say unsupported web platforms should preserve reminder settings without pretending push exists. That is no longer enough. The new task must resolve a real architecture question: Android, macOS, Windows, and PWA have meaningfully different notification capabilities, permissions, delivery guarantees, and background-execution rules. Deep research shows the product cannot treat them as one “push notifications” feature. Android needs `POST_NOTIFICATIONS` and a deliberate policy on exact-alarm behavior; macOS supports local notifications well but remote push would still require APNs and backend infrastructure; Windows supports scheduled local app notifications with desktop-specific packaging and delivery caveats; and PWA/browser notifications do not provide a reliable closed-app local schedule without a service worker plus real push infrastructure. Without a platform-specific plan, Hable risks shipping misleading reminder UX or promising background delivery that one or more platforms cannot actually uphold.
+
+**Triage:**
+- *Should exist:* Yes. Reminder delivery is a core habit-retention feature and the current MVP does not yet define a production-grade cross-platform contract.
+- *Smallest safe scope:* Tighten Hable around one explicit reminder-delivery architecture per platform, implement the native-platform improvements that fit the current local-first model, and state clearly what the PWA can and cannot do without backend push.
+- *Skipped scope:* Do not fold in global marketing push, announcement campaigns, quiet-hours orchestration, cross-device read-state sync, or a full APNs/FCM/WNS backend fanout system unless the implementation proves one specific platform cannot meet the product baseline without a follow-up infrastructure task.
+- *Boundaries:* Keep Flutter + Drift as the source of truth for reminder preferences. Do not fake web scheduling that browsers do not support. If real closed-app PWA re-engagement is required, split that into explicit service-worker + web-push infrastructure rather than hiding it inside the current reminder MVP.
+
+**Action:** Convert the current reminder MVP into a platform-specific delivery contract. For Android, verify the current local-notification path against Android 13+ permission prompts and decide whether Hable should stay on inexact daily scheduling or introduce an explicit exact-alarm strategy with documented tradeoffs and permission handling. For macOS, confirm the local notification path, permissions, deep-link/tap behavior, and signed-build packaging contract needed for desktop reminders to feel first-class. For Windows, align Hable to scheduled local app notifications and package/runtime assumptions so scheduled reminders keep working when the app is not foregrounded. For PWA, document and implement the honest bounded behavior: foreground/in-session notifications where possible, persisted reminder settings in-app, and either no closed-app delivery or a separate future task for backend-driven web push via service worker and VAPID if the product requires true re-engagement while the browser is closed. The end state should be one coherent Hable reminder strategy instead of one plugin call path with mismatched platform promises.
+
+**Hable perspective:** Hable’s reminder system should remain local-first where the platform supports it, because the product’s emotional contract is “your day and your commitments stay with you on your device,” not “a generic cloud push platform owns your habits.” That said, local-first does not mean platform-agnostic. Hable needs to acknowledge that Android, macOS, Windows, and web each expose different operating-system guarantees. The right engineering move is to keep reminder preferences in Drift, let Flutter restore/cancel schedules per device, and define web as either a clearly limited companion surface or a separate push-infrastructure track.
+
+**Implementation scope:**
+- `lib/services/local_reminder_service.dart`, `lib/providers/notification_providers.dart`, and any platform wrappers: codify per-platform capability detection, permission prompts, scheduling behavior, and graceful unsupported/fallback states.
+- Android packaging/config (`android/`, manifest/Gradle/plugin config): verify `POST_NOTIFICATIONS`, any alarm-related permissions/strategy, notification channel setup, and restore behavior after restart/reboot where supported.
+- macOS packaging/config (`macos/`): verify entitlements, permission prompts, delivered-notification behavior, and tap routing back into Hable surfaces.
+- Windows packaging/config (`windows/`): verify scheduled app-notification behavior, activation/deep-link handling, and packaged-build assumptions.
+- Web/PWA surfaces (`web/`, Flutter web notification path): define the bounded web behavior, preserve reminder settings honestly, and only add service-worker/web-push code if the task scope is explicitly expanded to that infrastructure track.
+- Documentation: update the reminder architecture, UX contract, and QA expectations so they match the final platform matrix and do not imply unsupported PWA scheduling.
+- Tests and verification: add focused platform-aware unit/widget coverage where possible plus manual QA matrices for Android, macOS, Windows, and web/PWA behavior.
+
+**Scalability considerations:** Reminder counts are small, but platform divergence is the real scaling risk. The implementation should centralize capability checks and scheduling policy so future reminder families do not duplicate platform logic. If Hable later adds backend push, it must remain a clearly separate transport layer rather than collapsing local and remote scheduling into one opaque codepath.
+
+**Future split guidance:** If product requirements later demand true browser-closed PWA reminders, remote social nudges, global announcements, quiet hours, or cross-device push-state sync, append a dedicated push-infrastructure task covering service workers, VAPID, APNs/FCM/WNS, delivery receipts, and notification preference sync. This task is only for the bounded platform matrix and the best-practice local reminder contract Hable can honestly support now.
+
+**Edge cases:** Android notification permission denied, Android exact-alarm permission unavailable on new installs, device reboot restoring schedules, macOS packaged versus debug builds, Windows machine asleep or off during a scheduled delivery window, web browsers that support notifications but not scheduled delivery, PWA installed versus plain browser-tab behavior, reminder edits while offline, duplicate restore on login, and reminder taps routing back into the right habit or activity surface.
+
+**Acceptance criteria:**
+- Hable documents one explicit reminder-delivery contract for Android, macOS, Windows, and PWA instead of treating them as one generic push feature.
+- Android reminder behavior includes correct runtime permission handling and a deliberate documented choice around exact versus inexact scheduling.
+- macOS and Windows reminder delivery, restore behavior, and notification tap handling are verified against their platform-specific local-notification models.
+- PWA/web behavior is honest: no product copy or code path claims reliable closed-app scheduled reminders unless a real service-worker/web-push implementation exists.
+- Reminder settings remain locally owned in Drift and unsupported platforms degrade gracefully instead of silently failing or pretending delivery exists.
+- Focused QA guidance and any feasible automated tests are updated to reflect the final platform matrix.
+- Relevant docs are updated to match the shipped reminder strategy and any deferred infrastructure follow-ups are captured separately.
+
+**Completion notes:** Completed on 2026-07-13. Added `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` permissions along with the scheduled notification broadcast receivers to `AndroidManifest.xml` to support inexact scheduling on Android 13+. Integrated `WindowsInitializationSettings` and `WindowsNotificationDetails` into `LocalReminderService` and included Windows in the supported platforms list. Added PWA web push service worker tasks to `Developement/future_split_guidance.md` to properly document the constraints of closed-browser notifications on the web platform.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+<a id="remove-home-3d-visualizer-and-promote-the-daily-quote-to-the-primary-header"></a>
+### [ ] Remove Home 3D Visualizer And Promote The Daily Quote To The Primary Header
+
+**Raw source:** remove the 3d element from homescrenn and keep it only for friends section, instead make the quote bigger the header, as hierarchy became number 1.
+
+**Issue:** Hable’s current Home hierarchy still gives visual weight to the 3D/immersive habit element even though the product direction has shifted: the quote should now be the emotional first read on Home, while the more playful 3D treatment belongs in the friends/social context instead of competing with the main personal daily loop. Leaving the current hierarchy in place makes Home feel visually split between multiple “hero” elements and weakens the quote-led entry point that the recent onboarding and quote work established.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete information-architecture correction on the primary Home surface.
+- *Smallest safe scope:* Remove the 3D element from Home, preserve it only in the intended friends/social context, and rework Home header hierarchy so the quote clearly becomes the primary top-of-screen focal point.
+- *Skipped scope:* Do not redesign the full Home screen, replace the entire quote system, or broaden this into a global visual-language rewrite.
+- *Boundaries:* Keep the work inside the existing Home and friends/social surfaces. Reuse the current quote pipeline and avoid inventing a second header paradigm just for this task.
+
+**Action:** Strip the 3D visualizer from the Home surface and recompose the top section so the quote block becomes the dominant header element in typography, spacing, and layout hierarchy. Retain or relocate the 3D treatment only where the product wants playful social/friends expression. Ensure the resulting Home still feels intentional on mobile and web, with the quote leading the page rather than merely filling leftover space after decorative content.
+
+**Hable perspective:** Home is the daily ritual surface, not the place to compete for attention with ornamental motion. The quote is now part of Hable’s emotional contract and should read like the day’s opening note. Social/friends surfaces can carry the more expressive 3D treatment without diluting the personal check-in hierarchy.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart` and any extracted Home header/hero widgets: remove the 3D element and restructure top-of-screen spacing, typography, and composition around the quote.
+- Friends/social surface widgets that currently or should own the 3D element: preserve or relocate the visual there if it is still product-approved.
+- Related tests/golden/widget coverage for Home hierarchy and responsive layout.
+- Documentation updates for Home hierarchy expectations if the UX docs still imply the older visual balance.
+
+**Scalability considerations:** Scalability impact: none expected. The main risk is visual drift between Home and social surfaces, so the implementation should keep ownership clear about which surface is allowed to use the 3D treatment.
+
+**Future split guidance:** If later work wants a fuller quote-led Home redesign, richer social visualization, or animated contextual hero states, split those as separate design tasks. This task is only for removing the misplaced Home 3D element and restoring quote-first hierarchy.
+
+**Edge cases:** Small mobile viewports, wide desktop/web layouts, empty/fallback quote states, reduced-motion expectations, and ensuring Home does not feel visually empty after the 3D element is removed.
+
+**Acceptance criteria:**
+- The 3D element is no longer present on Home.
+- The quote becomes the clear primary header/focal element on Home through layout and typography hierarchy.
+- Any retained 3D treatment stays limited to the intended friends/social surface.
+- Home remains responsive and visually intentional across mobile and web after the hierarchy change.
+- Relevant docs and focused verification are updated if the Home hierarchy contract changed.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="split-realtime-or-push-delivery-architecture-beyond-foreground-polling"></a>
+### [ ] Split Realtime Or Push Delivery Architecture Beyond Foreground Polling
+
+**Raw source:** Realtime or Push Delivery Architecture: If foreground polling becomes insufficient, split push/WebSocket delivery, richer sync telemetry, or leaderboard-specific caching into separate backend/client tasks.
+
+**Issue:** Hable currently relies on a bounded offline-first sync model with foreground polling and lifecycle-triggered refreshes. That is appropriate for the current MVP, but it also means the system has no explicit follow-up contract for the moment when product expectations exceed polling freshness. Social activity, reminders, leaderboard movement, and shared-habit changes can all look stale if the app is backgrounded or multiple users act quickly. The risk is not just lateness; it is architectural confusion if realtime delivery gets bolted onto existing polling paths without a clean separation of ownership, telemetry, caching, and offline behavior.
+
+**Triage:**
+- *Should exist:* Yes. This is a real infrastructure-track backlog item and should be explicitly owned before ad hoc realtime work begins.
+- *Smallest safe scope:* Define and implement one bounded transport upgrade path beyond polling, with clear ownership boundaries between local sync truth, transport freshness, and fallback behavior.
+- *Skipped scope:* Do not bundle in full notification infrastructure, chat, presence, or broad analytics platforms unless they are strictly required by the chosen transport path.
+- *Boundaries:* Preserve the offline-first model. Realtime delivery may accelerate state arrival, but Drift/Riverpod local state must remain the UI truth rather than direct socket payload rendering.
+
+**Action:** Engineer the follow-up architecture for when foreground polling is no longer enough. Evaluate and choose between or sequence push-triggered refresh, WebSocket/SSE-style live delivery, and targeted caching/telemetry improvements. Define which state types truly need realtime freshness, how the backend signals changes, how Flutter normalizes them into local state, how offline fallback works, and what diagnostics prove the transport is healthy rather than silently stale.
+
+**Hable perspective:** Hable should not become “socket-first” just because some social actions feel delayed. The correct next step is to treat realtime as a transport accelerator over the existing local-first sync model, not as a replacement for that model. The UI should still read from Drift-backed providers even if a socket or push event triggered the underlying refresh.
+
+**Implementation scope:**
+- Worker/backend transport and signaling design for live change notifications or push-triggered refresh.
+- Flutter sync/service layer to receive transport events, coalesce them, and refresh/normalize state into Drift safely.
+- Freshness/health diagnostics so Hable can tell “realtime disconnected” from “no new events.”
+- Documentation and QA guidance for the chosen transport contract and fallback to polling.
+
+**Scalability considerations:** Realtime transport multiplies operational complexity. The design must avoid direct high-frequency provider churn, duplicate refresh storms, or unbounded reconnect loops as concurrent users or events grow.
+
+**Future split guidance:** If the chosen direction reveals distinct work for leaderboard caching, social presence, chat, or admin broadcast systems, split those into separate tasks. This task is only for the core “beyond polling” transport strategy.
+
+**Edge cases:** App background/foreground churn, reconnect storms, duplicate events, stale websocket connections, mobile battery constraints, multi-tab web sessions, and backend/client version mismatches during transport rollout.
+
+**Acceptance criteria:**
+- Hable has one explicit engineered path for realtime or push-triggered freshness beyond foreground polling.
+- The design preserves offline-first local state ownership instead of bypassing Drift/Riverpod.
+- Transport health/freshness diagnostics are part of the contract rather than an afterthought.
+- Clear fallback behavior exists when live delivery is unavailable or disconnected.
+- Relevant docs are updated and any narrower subtracks are split out explicitly.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="strengthen-shared-habit-consistency-for-multi-device-and-realtime-conflict-cases"></a>
+### [ ] Strengthen Shared-Habit Consistency For Multi-Device And Realtime Conflict Cases
+
+**Raw source:** Realtime Shared-Habit Consistency: Batch sync, conflict-resolution UI, realtime shared updates, and broader lifecycle conflict handling should remain separate after the current bidirectional lifecycle path is proven.
+
+**Issue:** Hable has already fixed the most visible shared-habit disappearance loop and clarified lifecycle versus daily check-in state, but the broader multi-device consistency story is still intentionally narrow. Once multiple participants act from different devices, across offline windows, or with faster delivery transports, the current lifecycle and partner-snapshot model may need richer batching, conflict handling, and user-visible reconciliation rules. Leaving that need as a loose note risks later fixes becoming reactive and inconsistent.
+
+**Triage:**
+- *Should exist:* Yes. Shared habits are central to Hable’s social identity and need a dedicated next-stage consistency task.
+- *Smallest safe scope:* Extend the current shared-habit sync contract to cover broader multi-device conflict and reconciliation scenarios without redesigning the entire habit model.
+- *Skipped scope:* Do not merge this into general realtime transport, introduce a full CRDT system, or broaden into all collaboration features.
+- *Boundaries:* Keep the shared-habit metadata and log ownership explicit. Daily actions remain logs; lifecycle remains authoritative metadata; new consistency work must not collapse those distinctions again.
+
+**Action:** Design and implement the next layer of shared-habit consistency after the current lifecycle fix: conflict-safe batching, better stale-update handling, clearer reconciliation rules for concurrent participant actions, and any minimal UI needed to explain or recover from conflicting lifecycle outcomes. Ensure the solution is compatible with both offline replay and any later realtime transport.
+
+**Hable perspective:** Shared habits are not a live collaborative editor. Hable needs predictable, habit-specific reconciliation that preserves trust without turning every discrepancy into a complex merge UI. The app should continue to feel simple while the underlying sync logic becomes more robust.
+
+**Implementation scope:**
+- Backend/shared-habit sync contracts and Flutter normalization paths related to partner snapshots, lifecycle state, and concurrent logs.
+- Drift-backed reconciliation behavior for shared metadata versus per-day completion logs.
+- Minimal user-visible messaging only if silent reconciliation would be misleading.
+- Focused regression tests for concurrent/offline/replayed shared-habit scenarios.
+- Documentation updates for the refined shared-habit consistency contract.
+
+**Scalability considerations:** Concurrent shared actions can multiply sync edge cases. The task should favor deterministic idempotent reconciliation keyed by habit, actor, and day rather than broad history scans or ambiguous last-write-wins rules.
+
+**Future split guidance:** If later work needs true live collaborative habit editing, explicit merge UIs, or broader group-habit models, split those into separate tasks. This task is only for hardening the current shared-habit consistency model.
+
+**Edge cases:** Both partners complete offline, archive versus check-in races, duplicate sync replay, revoked partnerships mid-sync, stale lifecycle snapshots, and realtime-triggered refresh colliding with queued local mutations.
+
+**Acceptance criteria:**
+- Shared-habit consistency rules cover the major concurrent and offline conflict cases beyond the original disappearance bug.
+- The daily-log versus lifecycle-metadata boundary remains intact.
+- The solution is deterministic, idempotent, and compatible with future transport upgrades.
+- Focused verification covers representative conflict scenarios.
+- Relevant docs are updated and broader collaboration work is split separately if needed.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="upgrade-the-notification-inbox-with-grouping-deep-links-and-platform-actions"></a>
+### [ ] Upgrade The Notification Inbox With Grouping Deep Links And Platform Actions
+
+**Raw source:** Notification Inbox UX Upgrade: Add grouped inbox structure, better focus/auto-scroll back into the relevant habit, and platform-specific notification categories/actions where supported.
+
+**Issue:** Hable’s notification/activity surfaces are now unified and functional, but they still stop at the MVP level. The current inbox/feed can show rows and unread state, yet it lacks the richer grouping, context restoration, and supported platform actions that make notification handling feel actionable rather than archival. As reminders and social events grow, flat lists and weak deep-link behavior will increasingly feel like friction instead of support.
+
+**Triage:**
+- *Should exist:* Yes. This is a bounded UX follow-up on a shipped notification center/activity feed.
+- *Smallest safe scope:* Improve grouping, navigation back to the relevant habit/context, and selective platform-specific actions without rebuilding the entire messaging model.
+- *Skipped scope:* Do not expand into a full messaging center, rich media notifications, or cross-device notification state sync in this task.
+- *Boundaries:* Keep the `notification_events` Drift table as the normalized read model. Platform actions may enhance entry points, but they should still resolve back into the same local notification/activity ownership model.
+
+**Action:** Evolve the inbox/activity experience from a flat feed into a more actionable surface. Add meaningful grouping structure, improve focus restoration or auto-scroll back to the relevant habit/social context when the user opens an item, and layer in supported platform categories/actions where the OS makes them practical. The upgrade should help users act on reminders and social prompts instead of merely acknowledging them.
+
+**Hable perspective:** Notifications in Hable should return the user to the exact ritual or social obligation that needs attention. The inbox is not a dead letter box; it is the recovery path for missed real-time moments and reminders.
+
+**Implementation scope:**
+- Activity/inbox UI grouping and navigation behavior in Flutter.
+- Deep-link or scroll-to-context restoration for home-linked reminders, nudges, invites, and related activity rows.
+- Platform-specific notification actions/categories where they fit the current reminder/social model.
+- Focused tests and QA coverage for routing and grouping behavior.
+- Documentation updates to the notification/activity UX contract.
+
+**Scalability considerations:** Grouping and deep-link behavior must remain table-driven and deterministic as notification volume grows. Avoid per-row expensive lookups or one-off navigation hacks that will break as more event types are added.
+
+**Future split guidance:** If later work needs notification digests, inbox search, attachments, or cross-device read-state sync, split those into separate tasks. This task is only for grouping, context restoration, and practical OS actions.
+
+**Edge cases:** Deleted habits or invites referenced by older notifications, grouped rows with mixed read state, notification taps from cold start, narrow mobile layouts, and platform action availability differences across Android/macOS/Windows/web.
+
+**Acceptance criteria:**
+- The inbox/activity surface supports meaningful grouping beyond one flat timeline.
+- Opening a notification can return the user to the relevant habit or social context with reliable focus/scroll behavior where appropriate.
+- Supported OS notification categories/actions are added only where they map cleanly to Hable’s model.
+- Focused verification covers grouping and routing behavior.
+- Relevant docs are updated and deeper inbox expansions remain separate tasks.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="build-dedicated-cross-platform-push-notification-infrastructure"></a>
+### [ ] Build Dedicated Cross-Platform Push Notification Infrastructure
+
+**Raw source:** Push Notification Infrastructure: Cloudflare web push, FCM/APNs, VAPID management, quiet hours, digesting, cross-device read-state sync, and admin/global announcements should stay as dedicated infrastructure work.
+
+**Issue:** Hable now has an explicit local reminder strategy task and a bounded social notification MVP, but it still lacks any dedicated remote push infrastructure for cross-device or closed-app delivery. That gap is acceptable in the current local-first scope, yet it becomes a real product constraint as soon as the app needs browser-closed PWA reminders, remote social nudges, or centralized announcement delivery. The danger is trying to smuggle that infrastructure into smaller UX tasks instead of owning it as a cross-platform backend/client program.
+
+**Triage:**
+- *Should exist:* Yes. Remote push is a separate infrastructure track and should be modeled that way.
+- *Smallest safe scope:* Define and implement one dedicated push platform spanning backend provider ownership, platform token/subscription management, preference sync, and safe client normalization.
+- *Skipped scope:* Do not collapse local reminder scheduling into this task or broaden it into all realtime transport and chat.
+- *Boundaries:* Keep remote push distinct from local reminders. Push may wake or prompt the app, but Hable’s in-app state should still reconcile through the existing sync/local-state model.
+
+**Action:** Build the first real cross-platform push infrastructure for Hable, covering the backend/provider layer and the client subscription lifecycle for the supported platforms that need remote delivery. This includes web push/VAPID for PWA if product scope requires it, APNs/FCM/WNS ownership or the chosen transport providers for native platforms, preference and device-token/subscription management, quiet-hours/digest policy, and read-state or de-duplication behavior where push and local state interact.
+
+**Hable perspective:** Remote push should be the delivery rail, not the data model. Hable should never let push payloads become a parallel truth that bypasses the offline-first app contract. Push is there to bring the user back at the right time, after which the app still normalizes state through sync and Drift.
+
+**Implementation scope:**
+- Backend/provider infrastructure for push subscriptions, token lifecycle, send policy, and delivery categories.
+- Flutter/native/web subscription registration and permission flows.
+- Preference sync for what may be pushed remotely versus what stays local-only.
+- De-duplication/read-state rules where remote pushes overlap with local reminder or activity state.
+- Documentation and QA guidance for the push contract and operational boundaries.
+
+**Scalability considerations:** Push infrastructure introduces token churn, provider failures, cross-device duplication, and operational complexity. The design must centralize policy and keep payloads minimal so it can scale without turning into a second state system.
+
+**Future split guidance:** If later work needs marketing automation, experiments, or large-scale broadcast tooling, split those from the core user-reminder/social push transport. This task is only for the foundational push infrastructure Hable itself needs.
+
+**Edge cases:** Stale tokens/subscriptions, multiple devices per user, revoked permissions, quiet hours spanning time zones, web subscription expiration, payload duplication with local reminders, and offline app state when a push opens the app cold.
+
+**Acceptance criteria:**
+- Hable has a dedicated engineered push-infrastructure track separate from local reminders and ordinary activity-feed work.
+- Supported platforms have explicit subscription/token lifecycle ownership and permission flows.
+- Push delivery policy includes de-duplication and preference boundaries rather than blindly sending every event.
+- The client still reconciles authoritative state through sync/local persistence rather than direct push payload rendering.
+- Relevant docs are updated and adjacent marketing/broadcast work remains split separately.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="expand-avatar-identity-from-emoji-only-to-managed-profile-media"></a>
+### [ ] Expand Avatar Identity From Emoji-Only To Managed Profile Media
+
+**Raw source:** Avatar and Profile-Media Expansion: Profile photo uploads, richer avatar management, moderation/storage, and avatar history should stay separate from emoji-avatar correctness work.
+
+**Issue:** Hable’s current identity layer is intentionally lightweight and emoji-centric, which matches the MVP well, but it also leaves a clear future product seam: richer profile media, upload/storage rules, moderation, and avatar lifecycle management are not the same problem as the emoji-avatar correctness fixes already done. If that work is ever started without a dedicated task, it will likely bleed across auth, profile, storage, moderation, and sync surfaces.
+
+**Triage:**
+- *Should exist:* Yes. This is a distinct identity/media expansion track.
+- *Smallest safe scope:* Define and implement the first managed profile-media system without destabilizing the current emoji-based profile path.
+- *Skipped scope:* Do not fold in full social media profiles, feed posts, or generalized media attachments.
+- *Boundaries:* Preserve the current emoji avatar path as the safe baseline. Richer media should layer on deliberately rather than replacing the existing identity contract overnight.
+
+**Action:** Introduce a bounded profile-media system for Hable that can coexist with the current emoji-avatar model. Cover upload flow, storage location, image constraints, moderation/safety policy, caching, fallback to emoji identity, edit/revert behavior, and any history or rollback rules the product actually needs. Keep the work scoped to personal profile identity rather than broad user-generated media.
+
+**Hable perspective:** Hable’s identity surfaces should stay warm and lightweight. Richer profile media can help personalization, but it should not compromise the low-friction profile model or create unsafe/moderation-blind uploads.
+
+**Implementation scope:**
+- Profile UI and settings flows for adding/changing/removing profile media.
+- Backend/storage ownership, validation, moderation, and caching contracts.
+- Sync/local persistence changes needed to represent richer avatar identity cleanly beside emoji fallback.
+- Focused tests and QA guidance for upload, failure, fallback, and display behavior.
+- Documentation updates for the expanded identity contract.
+
+**Scalability considerations:** Media introduces storage, caching, and moderation cost. The implementation should keep asset constraints tight and avoid turning profile images into a broad unbounded upload subsystem.
+
+**Future split guidance:** If later work needs albums, temporary avatars, richer social profile cards, or media messaging, split those into separate tasks. This task is only for bounded profile-photo/media support.
+
+**Edge cases:** Slow uploads, failed moderation, removed images, stale cached media, anonymous/offline profile edits, fallback to emoji when no media is available, and cross-platform image cropping/display differences.
+
+**Acceptance criteria:**
+- Hable has one explicit engineered path for richer profile media that coexists with emoji avatars.
+- Storage, moderation, fallback, and display ownership are defined rather than implied.
+- The low-friction emoji baseline remains intact if richer media is unavailable or removed.
+- Focused verification covers upload, fallback, and failure behavior.
+- Relevant docs are updated and broader media/social expansions remain separate tasks.
+
+**Dependencies:** `Developement/sys_authentication.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="add-startup-diagnostics-and-recovery-visibility-for-sync-gated-shell"></a>
+### [ ] Add Startup Diagnostics And Recovery Visibility For Sync-Gated Shell
+
+**Raw source:** Startup Diagnostics and Recovery Visibility: If startup readiness keeps being hard to debug, split a narrow task for offline boot telemetry, queue-health diagnostics, or clearer startup recovery states.
+
+**Issue:** Hable’s startup path is intentionally sync-aware and offline-first, but when that readiness flow misbehaves it can look like the app is simply stuck. The current system has enough moving parts, including auth restoration, local reminder restoration, startup sync coordination, and shell gating, that diagnosing failures or delays is increasingly difficult without explicit diagnostics and clearer user-facing recovery states.
+
+**Triage:**
+- *Should exist:* Yes. This is a narrow reliability/debuggability follow-up on the gated startup path.
+- *Smallest safe scope:* Add bounded diagnostics and clearer recovery visibility around startup readiness without redesigning the entire launch flow.
+- *Skipped scope:* Do not broaden into full analytics/observability infrastructure or a completely new startup architecture.
+- *Boundaries:* Keep startup local-first and calm. Diagnostics should aid recovery and debugging without leaking technical detail into normal user-facing surfaces.
+
+**Action:** Add targeted startup diagnostics and recovery visibility around Hable’s sync-gated shell. That includes enough local telemetry or state reporting to understand whether startup is waiting on auth, queue drain, sync, or reminder restoration, and enough bounded UI messaging to tell the user whether the app is still preparing, retrying, offline but usable, or genuinely stuck.
+
+**Hable perspective:** Startup should feel trustworthy. When it is fast, diagnostics should be invisible. When it is slow or blocked, Hable should explain what category of recovery is happening instead of appearing frozen.
+
+**Implementation scope:**
+- Startup coordinator/auth/sync/reminder restoration surfaces that participate in shell gating.
+- Bounded local diagnostics or coarse health reporting for startup stage visibility.
+- UI messaging for retrying/offline/preparing states on the gated shell.
+- Focused tests and QA guidance for delayed or failed startup scenarios.
+- Documentation updates for the startup readiness contract.
+
+**Scalability considerations:** Diagnostics should stay coarse and bounded. The goal is actionable startup-state visibility, not a verbose logging firehose that becomes another maintenance burden.
+
+**Future split guidance:** If later work needs remote startup telemetry, crash/session analytics, or full observability tooling, split those into dedicated infrastructure tasks. This task is only for targeted startup diagnostics and user-visible recovery clarity.
+
+**Edge cases:** Missing network on cold start, expired auth, slow storage reads, reminder restoration exceptions, long offline mutation queues, and repeated retries that should not loop forever without changing UI state.
+
+**Acceptance criteria:**
+- Startup gating states are diagnosable in development and clearer to users when recovery is in progress.
+- The app can distinguish key blocked categories such as auth restore, sync wait, retry, and offline fallback.
+- The startup UI remains calm and non-technical while still giving useful recovery context.
+- Focused verification covers at least one delayed or failed startup path.
+- Relevant docs are updated and broader observability work remains separate.
+
+**Dependencies:** `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="expand-offline-logging-and-notification-regression-coverage"></a>
+### [ ] Expand Offline Logging And Notification Regression Coverage
+
+**Raw source:** Offline and Notification Coverage Expansion: Add deterministic test coverage for offline logging, reconnect sync recovery, local-notification tap routing, and then fix the concrete bugs those tests expose.
+
+**Issue:** Hable now has broader automated and manual coverage than before, but the most failure-prone offline and notification paths still depend heavily on manual confidence. That leaves the app vulnerable exactly where its product promise is strongest: queued logging, reconnect reconciliation, notification routing, and recovery from unstable connectivity or delayed delivery.
+
+**Triage:**
+- *Should exist:* Yes. This is a focused reliability/testing task tied directly to Hable’s offline-first contract.
+- *Smallest safe scope:* Add deterministic regression coverage for the most critical offline and notification flows, then repair the concrete failures those tests reveal.
+- *Skipped scope:* Do not expand into a full device-farm or every imaginable end-to-end scenario in one task.
+- *Boundaries:* Keep the work centered on the core offline mutation and notification-routing paths that matter most to user trust.
+
+**Action:** Add targeted automated coverage and any necessary fixes for offline habit logging, reconnect sync recovery, local reminder notification tap routing, and adjacent reminder/activity reconciliation behaviors. Use the tests to expose concrete bugs rather than just asserting the current implementation.
+
+**Hable perspective:** Hable’s differentiator is that check-ins should remain dependable even when connectivity is not. Tests in this area are not optional polish; they are the proof that the product contract actually holds.
+
+**Implementation scope:**
+- Automated tests around offline log creation, queued replay, reconnect reconciliation, and local-notification routing.
+- Minimal code fixes required by the new coverage.
+- QA doc updates so manual verification complements rather than substitutes for deterministic coverage.
+- Optional harness improvements only where they directly enable the targeted scenarios.
+
+**Scalability considerations:** Test breadth can explode quickly. The task should prioritize deterministic coverage of the highest-risk offline and notification behaviors rather than chasing every variant through slow end-to-end suites.
+
+**Future split guidance:** If later work needs a full cross-platform device lab, chaos/network fuzzing, or extensive push-delivery automation, split those into separate testing infrastructure tasks. This task is only for the core offline and local-notification regression gap.
+
+**Edge cases:** Duplicate replay, partial queue drain, delayed reconnect, notification tap on cold start, deleted target content after a notification is delivered, and platform-specific differences in local-notification activation behavior.
+
+**Acceptance criteria:**
+- Deterministic coverage exists for the main offline logging and reconnect recovery path.
+- Local reminder notification tap routing is covered and validated against the intended in-app destination behavior.
+- Any bugs exposed by the new coverage are fixed within the same task scope.
+- QA guidance is updated to align with the automated coverage rather than duplicating it blindly.
+- Broader device-farm or push-automation work remains split separately.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="build-a-cross-platform-release-automation-matrix-and-refresh-build-integrity-docs"></a>
+### [ ] Build A Cross-Platform Release Automation Matrix And Refresh Build Integrity Docs
+
+**Raw source:** Build and Release Automation Matrix: Add CI/CD build matrix automation, branch previews, environment-variable based secret injection, source-map upload, or standardized build-regression templates. update the Flutter/hable/Developement/sys_build_integrity.md
+
+**Issue:** Hable now spans Android, web, macOS, and Windows, and its build/release knowledge is spread across verification tasks and manual docs. That is enough for local iteration, but it is not enough for reliable repeated delivery. Without an explicit release automation matrix, each platform remains vulnerable to config drift, inconsistent secrets handling, brittle manual build steps, and missing regression checks. The raw prompt also explicitly calls out the need to refresh `Developement/sys_build_integrity.md`, so the backlog item must own both the automation direction and the canonical documentation update.
+
+**Triage:**
+- *Should exist:* Yes. Release reliability is a real engineering track and the current multi-platform surface area justifies it.
+- *Smallest safe scope:* Define and implement a pragmatic first-pass build matrix and supporting docs for the currently shipped platforms, without trying to solve every release/distribution workflow in one task.
+- *Skipped scope:* Do not merge in store submission automation, notarization pipelines, or every environment-management concern unless they are necessary for the first build matrix to function.
+- *Boundaries:* Keep the first pass reproducible and evidence-driven. The point is reliable builds and regression visibility, not a giant CI estate for its own sake.
+
+**Action:** Create the first real cross-platform build/release automation matrix for Hable. Cover the important build targets, environment/secret injection strategy, regression checks, and preview or artifact workflows that make sense for the current stack. Update `Developement/sys_build_integrity.md` so it becomes the canonical reference for how the matrix works, what it verifies, and what remains manual.
+
+**Hable perspective:** Hable is no longer a single-target prototype. A consistent release matrix protects the product from platform-specific breakage and makes future feature work less risky because build expectations are explicit and repeatable.
+
+**Implementation scope:**
+- CI/CD or scripted build matrix definition for Android, web, macOS, and Windows as appropriate to the current repo/tooling.
+- Environment-variable and secret-injection strategy aligned with current backend/build needs.
+- Artifact, preview, or regression-template workflow only where it materially improves delivery confidence.
+- `Developement/sys_build_integrity.md` and any related release docs.
+- Focused verification of the matrix and what remains intentionally manual.
+
+**Scalability considerations:** Build automation can sprawl quickly. The first pass should standardize the highest-value checks and artifact flows while keeping platform-specific store/distribution complexity in clearly separated tracks.
+
+**Future split guidance:** If later work needs full store submission automation, code-signing/notarization orchestration, source-map upload pipelines, or preview-environment promotion controls, split those into dedicated release-engineering tasks. This task is only for the first cross-platform build matrix and its documentation contract.
+
+**Edge cases:** Missing secrets in CI, platform-specific plugin drift, generated files causing false failures, partial matrix success, preview builds targeting the wrong backend, and differentiating required release checks from optional local developer checks.
+
+**Acceptance criteria:**
+- Hable has a documented and implemented first-pass build/release automation matrix for the relevant current platforms.
+- Secret/environment handling is explicit and safer than ad hoc manual injection.
+- `Developement/sys_build_integrity.md` is updated to reflect the real matrix, verification scope, and manual boundaries.
+- The matrix improves regression visibility without pretending that unrelated store/distribution automation is already solved.
+- Relevant docs are updated and larger release-engineering tracks remain split separately.
+
+**Dependencies:** `Developement/sys_build_integrity.md`, `Developement/macos_distribution.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="audit-and-raise-accessibility-compatibility-across-mobile-desktop-and-web-surfaces"></a>
+### [x] Audit And Raise Accessibility Compatibility Across Mobile Desktop And Web Surfaces
+
+**Raw source:** accessibility compatibility
+
+**Issue:** Hable already contains scattered `Semantics` usage and some accessibility-aware widget work, but accessibility is still a future placeholder rather than a system-level contract. The current app has high-interaction custom surfaces such as `MudLongPressButton`, partner-ring/group states, onboarding slides, dense Home cards, Social feed rows, nested Settings, and profile/history visuals. Those surfaces can easily regress screen-reader labeling, focus order, keyboard navigation, text scaling, hit targets, reduced-motion behavior, and contrast if accessibility remains implicit. The existing docs even acknowledge future accessibility controls in Settings, which means the product contract has already recognized the gap. The task now is to move accessibility from ad hoc semantics patches into a bounded compatibility baseline across mobile, desktop, and web.
+
+**Triage:**
+- *Should exist:* Yes. Accessibility is product correctness, not optional polish, especially for a habit app whose core loop depends on frequent repeated interaction.
+- *Smallest safe scope:* Audit the primary user journeys and fix the highest-impact compatibility gaps in semantics, focus/navigation, tap targets, text scaling, and reduced-motion behavior without redesigning the full visual system.
+- *Skipped scope:* Do not broaden this into WCAG certification work, a total visual redesign, sign-language/video content work, or every conceivable assistive-technology optimization in one pass.
+- *Boundaries:* Preserve Hable’s existing visual identity and interaction model where possible. The task is to make the shipped patterns operable and understandable, not to replace custom UI with generic stock controls everywhere.
+
+**Action:** Run a structured accessibility pass across Hable’s most important flows: auth, onboarding slides, Home habit cards and Mud completion interaction, Social hub, Profile, nested Settings, habit create/edit, notification/activity surfaces, and any major empty/loading/error states. Add or correct semantics labels, values, roles, and headings; ensure keyboard and screen-reader focus order works on desktop/web; verify large-text and text-scaling resilience; preserve minimum tap targets; respect reduced-motion expectations where meaningful animations exist; and tighten contrast or state communication where color alone currently carries too much meaning. The result should be a documented accessibility baseline that Hable can keep extending rather than a one-off scattering of fixes.
+
+**Hable perspective:** Hable’s core daily action is unusually custom: a ring-first, long-press commitment interaction with social state layered around it. That makes accessibility especially important, because custom interaction patterns are where compatibility gaps hide. The right contract is not “remove Mud,” but “make Mud and the surrounding screens understandable and operable through semantics, focus, keyboard, motion, and scaling-aware design.”
+
+**Implementation scope:**
+- Primary UI surfaces such as `lib/screens/home_screen.dart`, `lib/widgets/mud_long_press_button.dart`, `lib/widgets/habit_card.dart`, `lib/widgets/habit_partner_row.dart`, onboarding/auth screens, Social hub screens, and `lib/screens/profile_screen.dart`: audit and fix semantics, headings, labels, values, state narration, and focus order.
+- Theme/layout surfaces: verify text scaling, contrast-sensitive states, minimum hit areas, and reduced-motion handling where transitions or celebratory moments exist.
+- Settings/accessibility entry point: replace or tighten the placeholder contract if the audit introduces real toggles or explain what remains future scope.
+- Web/desktop interaction layers: verify keyboard traversal, action activation, and semantics propagation beyond touch-first assumptions.
+- Tests and QA: add focused widget tests for semantics where practical and expand manual QA guidance for screen readers, keyboard navigation, and text-scaling checks.
+- Documentation: update the relevant UX/QA/development docs so accessibility expectations are explicit instead of implied.
+
+**Scalability considerations:** Accessibility work scales best when semantics and focus ownership live close to the reusable widgets that define Hable’s interaction patterns. Avoid per-screen one-off patches where the same card/button/row is reused broadly, or the app will drift again as features expand.
+
+**Future split guidance:** If this audit reveals deeper needs such as a dedicated reduced-motion mode, higher-contrast theme variants, haptic/audio alternatives, or accessibility-specific onboarding/help surfaces, append those as separate follow-up tasks. This task is only for establishing the baseline compatibility contract and correcting the highest-impact current gaps.
+
+**Edge cases:** Screen-reader announcements for custom long-press progress, partner-status rings that rely on color, timeline/order changes after mark-read actions, dense lists under large text, narrow mobile widths, desktop keyboard-only navigation, web semantics differences, loading/skeleton states with no announced meaning, and celebration overlays that may steal focus or trap navigation.
+
+**Acceptance criteria:**
+- Hable has a documented accessibility baseline covering its primary flows across mobile, desktop, and web.
+- Core reusable interaction surfaces expose meaningful semantics labels, values, roles, and state narration instead of relying on visual-only cues.
+- Keyboard/focus navigation works for major desktop/web flows and does not depend on touch-only assumptions.
+- Large text/text scaling and minimum tap-target checks pass on the main habit, social, onboarding, and settings surfaces without severe layout breakage.
+- Important motion-heavy interactions degrade gracefully when reduced-motion expectations apply.
+- QA guidance and any practical automated semantics tests are updated to guard the repaired behaviors.
+- Relevant docs are updated and any deeper accessibility enhancements are split into separate follow-up tasks rather than silently skipped.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion notes:** Completed on 2026-07-13. Audited critical interaction surfaces including `MudLongPressButton` and `HabitCard`. Added explicit `Semantics` widget wrapping to `MudLongPressButton` to announce the hold-to-complete progress value and properly wire `onLongPress` for screen readers. Increased the tap target of the 'Skip' button in `HabitCard` to meet minimum accessibility guidelines, and added `MediaQuery.disableAnimationsOf(context)` checks to respect reduced-motion settings during celebratory ring pulses.
+
+<a id="expand-hable-localization-to-english-german-urdu-russian-tamil-and-persian"></a>
+### [ ] Expand Hable Localization To English German Urdu Russian Tamil And Persian
+
+**Raw source:** multi language support (at least English, German, Urdu, Russian, Tamil and Persian/Farsi)
+
+**Issue:** Hable already includes Flutter localization dependencies and at least a starter `l10n` pipeline, but the app is still effectively English-first and only partially localized. That leaves a significant product gap because the current UX depends heavily on emotionally specific copy: onboarding slides, quote and reminder phrasing, Mud-state explanations, settings/help labels, social activity text, completion moments, and validation/errors. Adding six target languages is not just a string-export task. Urdu and Persian/Farsi introduce right-to-left layout requirements, while all locales need consistent fallback behavior, ICU/plural/date formatting, and a clear rule for which content stays untranslated (for example user-generated habit names) versus which product copy must be localized. Without a bounded task, Hable risks ending up with a mix of localized and hard-coded strings, broken RTL assumptions, and a settings surface that advertises language support without actually carrying the app.
+
+**Triage:**
+- *Should exist:* Yes. Language support materially changes who can use the app and should be engineered deliberately rather than added string-by-string ad hoc.
+- *Smallest safe scope:* Complete the localization pipeline for all primary user-facing product copy, add locale selection/persistence, and verify RTL behavior for Urdu and Persian across the main flows.
+- *Skipped scope:* Do not attempt server-side locale negotiation, user-generated content translation, multilingual moderation systems, or a huge CMS/content-management layer in this task.
+- *Boundaries:* Keep Flutter-generated localization as the source of truth for product copy. Localize the app shell and first-party strings first; do not block the task on translating external quote/vendor content unless Hable already owns a safe localized fallback path.
+
+**Action:** Expand Hable’s localization contract from partial English support to a real six-language app baseline: English, German, Urdu, Russian, Tamil, and Persian/Farsi. Audit hard-coded strings across the main flows, move remaining user-facing product copy into ARB-backed localization, add supported locales and a persisted language-selection path, verify dates/numbers/plurals through Flutter/Intl conventions, and test RTL layout and semantics on Urdu and Persian. Ensure the settings surface communicates the language choice clearly and that onboarding, auth, home, social, profile, reminders, and major feedback states all follow the same localization pipeline instead of a mix of generated strings and inline literals. implement language button on the login screen, and onboarding as well as settings, so the onboarding should be international too. If the quote of the day is in english, keep it in english.
+
+**Hable perspective:** Hable’s copy is not incidental chrome; it is part of the product’s emotional tone. That means localization has to cover the actual habit journey, not just menu labels. The right engineering contract is one generated Flutter localization system, one persisted locale preference, and one explicit distinction between localized product copy and user-authored content that should remain as entered.
+
+**Implementation scope:**
+- `lib/l10n/*.arb`, generated localization files, and app bootstrap/localization config in `lib/main.dart` or equivalent: expand supported locales and move remaining first-party strings into the localization pipeline.
+- Major UI surfaces: onboarding, auth, Home, Social, Profile, Settings, habit form, notification/activity copy, validation and error messages, and any completion or empty-state surfaces with hard-coded text.
+- Locale selection/persistence: wire a real language control in Settings and persist the selected locale locally so restart behavior is deterministic.
+- RTL support: verify and correct layout assumptions, icon/text ordering, alignments, and semantics for Urdu and Persian/Farsi.
+- Copy sources tied to quotes/reminders/fallback text: ensure first-party fallback copy has localized variants or explicitly documented fallback behavior.
+- Tests and QA: add targeted localization smoke coverage where practical and expand manual QA to include locale switching and RTL verification.
+- Documentation: update QA/UX/development docs so supported languages and localization boundaries are explicit.
+
+**Scalability considerations:** Localization expands continuously as features grow, so the key scaling rule is to eliminate hard-coded UI strings at the reusable-surface level. Keep locale ownership centralized and data-driven so future screens or languages do not require another architectural pass.
+
+**Future split guidance:** If later work needs locale-specific quote sourcing, backend-driven translated content, regional experiments, transliteration helpers, or full content-operations workflows, append separate follow-up tasks. This task is only for the first-party Flutter localization baseline and the six-language product contract requested here.
+
+**Edge cases:** RTL rendering on mixed LTR/RTL content, pluralization and date formatting, partner names/habit titles remaining user-authored, fallback copy when a translation key is missing, locale switching during runtime, notification/reminder copy variants, long translated strings on compact cards/buttons, and keeping automated tests stable across locale-sensitive snapshots.
+
+**Acceptance criteria:**
+- Hable supports English, German, Urdu, Russian, Tamil, and Persian/Farsi for its primary first-party product copy.
+- The major user flows no longer depend on scattered hard-coded English strings outside deliberate exceptions.
+- A real language-selection path exists and the chosen locale persists across app restarts.
+- Urdu and Persian/Farsi render correctly with RTL-aware layout and semantics on the main flows.
+- Date/number/plural-sensitive copy follows Flutter/Intl conventions rather than ad hoc string concatenation.
+- QA guidance and any practical automated coverage are updated for locale switching, translation completeness, and RTL checks.
+- Relevant docs are updated and any deeper multilingual content/infrastructure work is split into follow-up tasks.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

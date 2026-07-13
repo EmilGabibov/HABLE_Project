@@ -9,5 +9,3 @@ FUTURE:
 - accessibility compatibility
 
 - multi language support (at least English, German, Urdu, Russian, Tamil and Persian/Farsi)
-
-- some improvement on 'mud' game, for example different stages with different difficulty levels (maybe like valorant ranks?) and rewards and in-app awards. think deeply what else we can do. hard level for the last check-in.

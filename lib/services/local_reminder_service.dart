@@ -25,7 +25,8 @@ class LocalReminderService {
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS);
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows);
 
   Future<void> initialize() async {
     if (_initialized || !_pluginAvailable) return;
@@ -38,10 +39,12 @@ class LocalReminderService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
+    const windowsSettings = WindowsInitializationSettings();
     const initializationSettings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,
       macOS: darwinSettings,
+      windows: windowsSettings,
     );
 
     try {
@@ -172,6 +175,7 @@ class LocalReminderService {
         ),
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
+        windows: WindowsNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,

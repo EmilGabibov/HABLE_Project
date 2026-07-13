@@ -67,9 +67,10 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 - **Evidence:** Record `pod install` output if dependencies are updated. Document any Xcode/Swift version incompatibility.
 
 ### macOS
-- **Constraints:** macOS relies on desktop entitlements and pods.
-- **Verification Commands:** `flutter build macos`
+- **Constraints:** macOS relies on desktop entitlements and pods. Local ad-hoc signing (`-`) does not support the `keychain-access-groups` entitlement present in `Release.entitlements`.
+- **Verification Commands:** `flutter build macos` (uses debug). For release performance testing locally, prefer `flutter build macos --profile`.
 - **Evidence:** Document any permission/entitlement failures. Ensure local SQLite binaries link correctly.
+- **Local Release Builds:** If a local operator strictly requires `flutter build macos --release` without a valid Apple Development Certificate, they must temporarily remove the `keychain-access-groups` key from `macos/Runner/Release.entitlements` during compilation and avoid committing that change. Production distribution requires this entitlement.
 
 ### Windows
 - **Constraints:** Cannot be compiled from a macOS host.

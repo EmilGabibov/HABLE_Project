@@ -3,6 +3,7 @@
 *Updated from completed tasks through 2026-07-13 21:09 CEST.*
 *Last future-guidance prompt extracted from active/completed queue: 2026-07-13 21:09 CEST (`Clarify The Difference Between Leaderboard Totals, Profile Gamification, And Per-Log Points Surfaces`).*
 *Resume future extraction from the first later completed task in `Task2_Archived.md` or newly archived items added after this timestamp.*
+*Backlog reconciliation note on 2026-07-13 23:01 CEST: several former future-only bullets were promoted into active engineered tasks in `Task1_Engineered.md`; this file now keeps only the still-deferred split guidance to avoid duplicate ownership.*
 
 This document aggregates the still-relevant "Future split guidance" from recently completed Hable tasks. It is organized by delivery priority and implementation hardness so future raw tasks can be added with less duplication and less scope creep.
 
@@ -10,10 +11,6 @@ This document aggregates the still-relevant "Future split guidance" from recentl
 *These items protect Hable's offline-first contract, multi-user correctness, and release safety.*
 
 ### Easy
-- **Startup Diagnostics and Recovery Visibility:** If startup readiness keeps being hard to debug, split a narrow task for offline boot telemetry, queue-health diagnostics, or clearer startup recovery states.
-  - *Source tasks:* `Gate Authenticated Shell On Startup Sync Readiness`, recent sync-coordinator work.
-  - *User perspective:* The app explains "still syncing" or "retrying" states cleanly instead of feeling frozen at launch.
-
 - **Social Integrity Cleanup Follow-Ups:** If more edge cases appear, split targeted fixes for reciprocal-request UX, deleted-account reconciliation, or local social-cache cleanup instead of broad social refactors.
   - *Source tasks:* `Harden Self-Friend Request Guarding And Social Cache Cleanup`.
   - *User perspective:* Friends/search states stay trustworthy and do not show ghost or impossible relationships.
@@ -23,23 +20,15 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* `Run ADB Smoke Tests For Auth, Friend Harness, And Recent UI Changes`.
   - *User perspective:* Fewer regressions reach a manual tester before being caught.
 
-- **Offline and Notification Coverage Expansion:** Add deterministic test coverage for offline logging, reconnect sync recovery, local-notification tap routing, and then fix the concrete bugs those tests expose.
-  - *Source tasks:* `Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions`, later QA follow-ups.
-  - *User perspective:* Check-ins and reminders still behave correctly when connectivity is unstable.
-
-- **Build and Release Automation Matrix:** Add CI/CD build matrix automation, branch previews, environment-variable based secret injection, source-map upload, or standardized build-regression templates.
-  - *Source tasks:* web deploy, signing/package-name tasks, build-integrity guideline task.
-  - *User perspective:* Releases break less often and are easier to reproduce across Android, web, macOS, and Windows.
-
 - **Environment-Based Backend Targeting:** If release Android/web builds need something stronger than `kDebugMode`, split a task for explicit environment-based API configuration.
   - *Source tasks:* Android APK verification and manual smoke guidance.
   - *User perspective:* Test builds and production builds talk to the correct backend reliably.
 
-### Hard
-- **Realtime or Push Delivery Architecture:** If foreground polling becomes insufficient, split push/WebSocket delivery, richer sync telemetry, or leaderboard-specific caching into separate backend/client tasks.
-  - *Source tasks:* `Implement foreground daily-sync polling and lifecycle flush`, notification-center follow-ups.
-  - *User perspective:* Social changes arrive quickly without requiring app reopen or repeated manual refresh.
+- **Backend-Driven Web Push For PWA Reminders:** If Hable requires true closed-browser re-engagement, split a dedicated infrastructure task for web-push service workers and VAPID. The current local reminder system cannot schedule closed-app deliveries on web.
+  - *Source tasks:* `Define Platform-Specific Habit Reminder Delivery For Android macOS Windows And PWA`.
+  - *User perspective:* PWA users get reliable notifications even when the Hable tab is closed, matching native platforms.
 
+### Hard
 - **Authentication Hardening Beyond MVP:** Add refresh rotation, revocation, account deletion/export, stronger abuse telemetry, production email hardening, passkeys/OAuth, or multi-device session management as separate auth tasks.
   - *Source tasks:* auth docs, password-reset/auth tasks, JWT-auth tasks.
   - *User perspective:* Account security feels production-ready rather than prototype-grade.
@@ -56,18 +45,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* social integrity fixes, accepted-friend primitive tasks.
   - *User perspective:* You can control who interacts with you and clean up stale relationships safely.
 
-- **Avatar and Profile-Media Expansion:** Profile photo uploads, richer avatar management, moderation/storage, and avatar history should stay separate from emoji-avatar correctness work.
-  - *Source tasks:* avatar optimism/correctness follow-ups.
-  - *User perspective:* Profiles feel more personal without risking the core profile flow.
-
 ### Medium
 - **Partner and Invite Flow Expansion:** Split follow-ups for partner management after creation, invite cancellation, bulk invites, friend search inside the form, or habit invite from create/edit surfaces.
   - *Source tasks:* habit creation/Home add tasks, accepted-friend primitive tasks.
   - *User perspective:* Shared-habit setup becomes flexible without making the current create flow confusing.
-
-- **Notification Inbox UX Upgrade:** Add grouped inbox structure, better focus/auto-scroll back into the relevant habit, and platform-specific notification categories/actions where supported.
-  - *Source tasks:* notification-center and Social Activity consolidation tasks.
-  - *User perspective:* Tapping an activity or reminder takes you to the exact thing that needs attention.
 
 - **Three-Player Social QA Harness:** Expand browser automation from the current two-user loop into deterministic three-user invite/nudge/follow scenarios.
   - *Source tasks:* web multi-user plan, Playwright regression harness.
@@ -77,14 +58,6 @@ This document aggregates the still-relevant "Future split guidance" from recentl
 - **Follow Model and Friend Activity Feed:** Durable "follow habit" relationships, friend activity feeds, public habit templates, richer encouragement messages, and recommendation logic should be split out from the current MVP social model.
   - *Source tasks:* friend-profile/nudge/follow-related tasks.
   - *User perspective:* Social feels like an ecosystem rather than a narrow invite-only workflow.
-
-- **Push Notification Infrastructure:** Cloudflare web push, FCM/APNs, VAPID management, quiet hours, digesting, cross-device read-state sync, and admin/global announcements should stay as dedicated infrastructure work.
-  - *Source tasks:* `Build Notification Center And Local Reminder MVP`, nudge/reminder follow-ups.
-  - *User perspective:* Notifications remain timely and consistent even when the app is closed.
-
-- **Realtime Shared-Habit Consistency:** Batch sync, conflict-resolution UI, realtime shared updates, and broader lifecycle conflict handling should remain separate after the current bidirectional lifecycle path is proven.
-  - *Source tasks:* shared-habit lifecycle sync and polling tasks.
-  - *User perspective:* Shared habits behave predictably even when multiple people act from different devices at the same time.
 
 ## Priority 3: UX, Gamification, and Product Polish
 *These items improve feel, delight, and larger-surface product expression after the core loop is stable.*
@@ -126,6 +99,14 @@ This document aggregates the still-relevant "Future split guidance" from recentl
 - **Empty-Day and Streak Moments:** Split specific tasks for empty-day encouragement states, streak-specific haptics, shared-habit celebration feedback, or richer quote-driven moment design.
   - *Source tasks:* scoring/habit-state document, completion splash task.
   - *User perspective:* The app responds more intelligently to good days, missed days, and streaks.
+
+- **Accessibility Mode Expansion:** Dedicated reduced-motion controls, higher-contrast variants, alternative feedback channels, or accessibility-specific onboarding/help should stay separate from the baseline accessibility compatibility pass.
+  - *Source tasks:* `Audit And Raise Accessibility Compatibility Across Mobile Desktop And Web Surfaces`.
+  - *User perspective:* Accessibility can deepen over time without blocking the baseline compatibility contract.
+
+- **Localized Content Operations:** Locale-specific quote sourcing, translated fallback-content governance, regional experimentation, or backend-delivered multilingual content should remain separate from the first-party Flutter localization baseline.
+  - *Source tasks:* `Expand Hable Localization To English German Urdu Russian Tamil And Persian`, quote-engine follow-ups.
+  - *User perspective:* More languages and smarter localized content can grow after the app shell itself is consistently multilingual.
 
 ### Hard
 - **Seasonal Leaderboards and Score Resets:** Seasonal ladders/reset policy, richer score-history surfaces, badge ceremonies, and QA for score-event idempotency should remain separate from the current cumulative scoring system.
