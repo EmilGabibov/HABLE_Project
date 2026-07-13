@@ -45,6 +45,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* `Strengthen Shared-Habit Consistency For Multi-Device And Realtime Conflict Cases`.
   - *User perspective:* Shared habit states never regress or appear confusing when offline devices reconnect simultaneously.
 
+- **Cross-Platform Push Infrastructure Implementation:** Establish a dedicated push backend layer and client subscription lifecycles spanning FCM/APNs and WebPush. Manage `push_subscriptions` idempotently alongside preferences without leaking remote messaging into authoritative local state.
+  - *Source tasks:* `Build Dedicated Cross-Platform Push Notification Infrastructure`.
+  - *User perspective:* Cross-platform notifications reliably re-engage users when the app is closed, with deduplication and quiet-hours support.
+
 ## Priority 2: Social Product Depth and Multi-User Scale
 *These items grow Hable beyond the current accepted-friend + shared-habit MVP.*
 

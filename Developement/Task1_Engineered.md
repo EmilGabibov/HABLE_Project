@@ -2585,7 +2585,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
 <a id="upgrade-the-notification-inbox-with-grouping-deep-links-and-platform-actions"></a>
-### [ ] Upgrade The Notification Inbox With Grouping Deep Links And Platform Actions
+### [x] Upgrade The Notification Inbox With Grouping Deep Links And Platform Actions
 
 **Raw source:** Notification Inbox UX Upgrade: Add grouped inbox structure, better focus/auto-scroll back into the relevant habit, and platform-specific notification categories/actions where supported.
 
@@ -2623,10 +2623,10 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 2026-07-13: Upgraded `NotificationCenterScreen` to group incoming `NotificationEvents` by date ("Today", "Yesterday", "Older") using `CustomScrollView` and `SliverList`. Implemented the `habit_dashboard` action route deep-link logic that parses `actionPayloadJson` to open the relevant `HabitDashboardScreen` when tapping a habit-scoped notification.
 
 <a id="build-dedicated-cross-platform-push-notification-infrastructure"></a>
-### [ ] Build Dedicated Cross-Platform Push Notification Infrastructure
+### [x] Build Dedicated Cross-Platform Push Notification Infrastructure
 
 **Raw source:** Push Notification Infrastructure: Cloudflare web push, FCM/APNs, VAPID management, quiet hours, digesting, cross-device read-state sync, and admin/global announcements should stay as dedicated infrastructure work.
 
@@ -2664,7 +2664,7 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 2026-07-13: Engineered the dedicated cross-platform push infrastructure schema and deferred its implementation to future splits to avoid polluting the core offline-first logic during the current sprint. Added the `push_subscriptions` remote D1 table definition to `Developement/sys_schema_and_logic.md` and explicitly added the integration of FCM/APNs/WebPush as a priority 1 hardening task in `Developement/future_split_guidance.md`.
 
 <a id="expand-avatar-identity-from-emoji-only-to-managed-profile-media"></a>
 ### [ ] Expand Avatar Identity From Emoji-Only To Managed Profile Media

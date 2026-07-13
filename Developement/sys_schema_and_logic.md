@@ -44,6 +44,7 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * **`SearchDocuments` table:** Local Drift-only metadata for offline search (id, title, author, source, etc).
 * **`UsageAggregateBuckets` table (Drift-only):** Coarse development diagnostics buckets keyed by `bucket_date`, `platform`, `build_channel`, `screen_name`, and `metric_name`, with aggregate `count`, aggregate `total_duration_ms`, and local upload-watermark columns. This table must never include user IDs, emails, usernames, auth tokens, device/session/install IDs, IPs, user agents, habit titles, or route parameters.
 * **`usage_aggregate_buckets` table (D1-only):** Remote development aggregate sink keyed by the same coarse dimensions. Stores only rolled-up counts and rounded duration totals for `app_open`, `screen_visit`, and `screen_visible_ms`. Upload is disabled by default and requires an explicit compile-time flag.
+* **`push_subscriptions` table (D1-only):** Remote table for FCM/APNs/WebPush tokens keyed by `(user_id, device_token)`, including `platform`, `endpoint_url` (for VAPID), `auth_keys`, `created_at`, `updated_at`, and `quiet_hours_enabled`. Client normalized local state is authoritative, remote delivery serves only to prompt users back to the app.
 
 ### B. Cloudflare KV (Key-Value) - High-Speed Transient Data
 
