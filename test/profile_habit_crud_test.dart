@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,6 +126,61 @@ void main() {
         HabitStatus.active,
       );
       expect(observedHabitLists.last.single.status, HabitStatus.active);
+    },
+  );
+
+  test(
+    'rerunHabit resets archived solo challenge duration, clears logs, and queues reset sync',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      const userId = 'user-2';
+      const habitId = 'habit-rerun';
+      final now = DateTime(2026, 7, 13, 9, 0);
+
+      await db.insertUser(
+        UsersCompanion.insert(userId: userId, username: 'Alice'),
+      );
+      await db.insertHabit(
+        HabitsCompanion.insert(
+          habitId: habitId,
+          userId: userId,
+          title: 'Meditation',
+          isCustom: const Value(false),
+          targetDuration: 7,
+          currentDuration: 0,
+          status: HabitStatus.abandoned,
+          colorHex: const Value('FF9CAF88'),
+        ),
+      );
+      await db.insertLog(
+        LogsCompanion.insert(
+          logId: 'log-1',
+          habitId: habitId,
+          actionDate: now,
+          status: LogStatus.completed,
+          updatedAt: Value(now),
+          isSynced: const Value(true),
+        ),
+      );
+
+      await db.rerunHabit(habitId);
+
+      final rerunHabit = await db.getHabit(habitId);
+      expect(rerunHabit, isNotNull);
+      expect(rerunHabit!.status, HabitStatus.active);
+      expect(rerunHabit.currentDuration, 7);
+
+      final logs = await db.watchLogsForHabit(habitId).first;
+      expect(logs, isEmpty);
+
+      final queue = await db.getPendingSyncItems();
+      final rerunPayload =
+          jsonDecode(queue.single.payload) as Map<String, dynamic>;
+      expect(rerunPayload['habit_id'], habitId);
+      expect(rerunPayload['status'], 'active');
+      expect(rerunPayload['reset_progress'], true);
     },
   );
 }

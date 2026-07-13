@@ -1,0 +1,27 @@
+{
+  "@@locale": "en",
+  "homeTabTitle": "Home",
+  "@homeTabTitle": {
+    "description": "Title for the Home tab"
+  },
+  "socialTabTitle": "Social",
+  "@socialTabTitle": {
+    "description": "Title for the Social tab"
+  },
+  "profileTabTitle": "Profile",
+  "@profileTabTitle": {
+    "description": "Title for the Profile tab"
+  },
+  "activityTabTitle": "Activity",
+  "@activityTabTitle": {
+    "description": "Title for the Activity tab inside Social"
+  },
+  "friendsTabTitle": "Friends",
+  "@friendsTabTitle": {
+    "description": "Title for the Friends tab inside Social"
+  },
+  "leaderboardTabTitle": "Leaderboard",
+  "@leaderboardTabTitle": {
+    "description": "Title for the Leaderboard tab inside Social"
+  }
+}

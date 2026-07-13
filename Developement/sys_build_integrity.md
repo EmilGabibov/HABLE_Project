@@ -23,12 +23,22 @@ When a cross-platform or general dependency update causes build failures, always
 ## 2. Web Build Investigation Workflow
 
 **Constraint:** The web build is tightly coupled to Cloudflare Pages.
-- **Command:** `flutter build web --release --base-href /` (or `flutter build web` as seen in `commands.md`).
+- **Command:** `flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production` (or another explicit environment override when intentionally targeting non-production).
 - **Workflow:** 
   1. Run the build command.
   2. If it fails, capture the exact error output in the current task's completion notes or walkthrough.
   3. Resolve the dependency, package version, or Dart compilation error.
   4. Verify the build succeeds locally. Note: A successful local build does not guarantee the Pages deployment smoke test will pass, but it is the prerequisite.
+
+### Backend Targeting Contract
+
+All Flutter builds should resolve backend targets through the central `lib/config/api_config.dart` contract:
+
+1. `HABLE_API_BASE_URL` manual override wins for unusual smoke setups.
+2. `HABLE_APP_ENV` selects an environment preset: `local`, `staging`, or `production`.
+3. If neither define is supplied, debug/profile builds fall back to `local` and release builds fall back to `production`.
+
+`staging` is valid even if Hable does not yet have a permanent staging alias. In that case it deterministically falls back to production unless `HABLE_STAGING_API_BASE_URL` is provided.
 
 ## 3. Concurrency Rules & Branching
 
@@ -46,9 +56,10 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 ### Android
 - **Constraints:** Hable uses a multi-flavor architecture (`primary` and `friend`).
 - **Verification Commands:** 
-  - `flutter build apk --flavor primary -t lib/main.dart`
-  - `flutter build apk --flavor friend -t lib/main.dart`
+  - `flutter build apk --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
+  - `flutter build apk --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
 - **Evidence:** Record success/failure logs for both flavors. Address any signing or keystore issues if release builds are requested.
+- **Local smoke note:** For local Wrangler testing keep `HABLE_APP_ENV=local` and use `HABLE_API_BASE_URL` only when the device cannot reach `127.0.0.1:8787` directly (for example Android emulator `10.0.2.2`).
 
 ### iOS
 - **Constraints:** iOS builds depend on CocoaPods and Xcode. `sql_wasm` does not apply here; it uses the native `sqlite3` plugin.

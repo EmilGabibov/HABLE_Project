@@ -33,14 +33,17 @@ If a user skips a habit, open a glassmorphic bottom sheet requiring a text input
 > [!IMPORTANT]
 > **The Mud mathematical check-in is a specialized, physics-driven interaction unique to Hable.** Its algorithm is NOT subject to normal UI refactoring rules. Do not simplify, extract, or inline the resistance math into the widget `build()` method. The `StateNotifier` isolation boundary is mandatory (see `sys_offline_architecture.md §3 — The Resistance State Isolation`). Haptic intervals and curve control points are intentionally calibrated — do not remove or approximate them.
 
-The gesture's behavioral characteristics depend entirely on the habit timeline progression. The physical resistance behaves according to two variables: total duration ($D$) and current day index ($d$).
+The gesture's behavioral characteristics depend entirely on the habit timeline progression. The physical resistance behaves according to a tiered model based on total duration ($D$) and current day index ($d$).
 
-The baseline resistance coefficient ($R$) is bounded between $0.0$ and $1.0$:
-$$R = 1.0 - \left(\frac{d}{D}\right)$$
+The baseline resistance coefficient ($R$) is bounded between $0.0$ and $1.0$ and mapped to tiers:
+* **Mastery Band (Final 3 Check-ins or $D \le 3$):** $R = 1.0$ (1500ms) - The hardest resistance, reserved for the end of the journey to signify mastery.
+* **Tier 1 (First third of non-mastery days):** $R = 0.8$ (1280ms) - Initial challenge.
+* **Tier 2 (Middle third of non-mastery days):** $R = 0.5$ (950ms) - Developing.
+* **Tier 3 (Final third of non-mastery days):** $R = 0.2$ (620ms) - Proficient, the easiest resistance just before the final mastery spike.
 
 This coefficient linearly maps to the animation controller configuration:
-* **Maximum Target Duration (Day 1, $R = 1.0$):** 1500 milliseconds.
-* **Minimum Target Duration (Final Day, $R = 0.0$):** 400 milliseconds.
+* **Maximum Target Duration ($R = 1.0$):** 1500 milliseconds.
+* **Minimum Target Duration ($R = 0.0$):** 400 milliseconds.
 
 **Important:** This math must be executed within a Riverpod `StateNotifier`, NOT within the UI widget's `build` method. The widget only receives the final `resistanceCoefficient` and `calculatedDurationMs`.
 

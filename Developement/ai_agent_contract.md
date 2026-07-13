@@ -24,11 +24,9 @@
 1. **Select exactly one** pending raw item from `Task0_Raw.md`.
 2. **Query the knowledge graph** using `/graphify query "your question"` (or `mcp_graphify_query_graph`) to gather context on existing files, Flutter widgets, Riverpod providers, and Drift tables.
 3. **Read related domain documentation** in the `Developement/` folder depending on the prompt's subject (e.g., `ux_mud_and_animations.md` for widgets, `sys_offline_architecture.md` for background sync) to maintain architectural standards.
-4. Run a **Ponytail triage** before expanding the raw item.
-   - Use the active Ponytail binding for the host: `@ponytail` / `/ponytail` when exposed, or the installed Ponytail skill/instructions/hooks.
-   - Treat Ponytail as an instruction bond, not an MCP/tool dependency. Let it evaluate scope safety, non-negotiable architectural boundaries (e.g., Offline-First), and what to skip.
-5. If the raw prompt is **not clear** after plugin triage, write the required triage questions for the user to answer before proceeding.
-6. **Preserve the user's intent**, expand it from the Hable web/mobile app perspective using gathered context, and keep the engineered scope to the smallest safe version determined by the Ponytail triage.
+4. **Triage the raw item** before expanding it to evaluate scope safety, non-negotiable architectural boundaries (e.g., Offline-First), and what to skip.
+5. If the raw prompt is **not clear** after triage, write the required triage questions for the user to answer before proceeding.
+6. **Preserve the user's intent**, expand it from the Hable web/mobile app perspective using gathered context, and keep the engineered scope to the smallest safe version determined by the triage.
 7. **Append** the engineered version to `Task1_Engineered.md`, explicitly listing the related development document in the "Dependencies" section so subsequent tasks will read and update it.
 8. **Verify** that the appended task exists in `Task1_Engineered.md`, add a stable HTML anchor (`<a id="task-slug"></a>`) immediately before the task heading, and capture that anchor.
 9. **Only then** remove the raw item or mark it as transferred with the engineered task title, date, and `Task1_Engineered.md#task-slug` anchor.
@@ -43,7 +41,7 @@ Every new entry in `Task1_Engineered.md` must include:
 - **Title** (Must be descriptive and specific. Do NOT use single-word titles)
 - **Raw source** (the original user prompt)
 - **Issue** (problem statement)
-- **Ponytail triage** (whether the task should exist, smallest safe scope, skipped scope, and boundaries)
+- **Triage** (whether the task should exist, smallest safe scope, skipped scope, and boundaries)
 - **Action** (what to do)
 - **Hable perspective** (Flutter/Riverpod/Drift-specific context)
 - **Implementation scope** (name likely Flutter widgets, Riverpod providers, Drift DAOs, background sync queues, and test surfaces)
@@ -143,6 +141,6 @@ Keep implementation guidance **concrete**. Name the likely:
 
 ## 7. Known Script Limits and Boundaries
 
-- **Validation Gaps**: Scripts (if ported to Hable) check for broken links and placeholders, but do NOT enforce the presence of Ponytail triage fields. The agent must enforce these manually.
+- **Validation Gaps**: Scripts (if ported to Hable) check for broken links and placeholders, but do NOT enforce the presence of triage fields. The agent must enforce these manually.
 - **Manual Repair Boundaries**: If a formatting error breaks a script, the agent must fix the formatting in `Task1_Engineered.md` (e.g., ensuring `# Remaining Tasks` exists exactly once).
 - **Follow-up Raw Tasks**: Append separate raw tasks to `Task0_Raw.md` for any concrete tool/process gaps discovered during an audit.

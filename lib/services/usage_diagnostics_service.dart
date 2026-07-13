@@ -25,6 +25,8 @@ const allowedUsageMetricNames = <String>{
   'app_open',
   'screen_visit',
   'screen_visible_ms',
+  'prefetch_on_time',
+  'prefetch_missed',
 };
 
 class UsageDiagnosticsService {
@@ -75,6 +77,19 @@ class UsageDiagnosticsService {
       metricName: 'app_open',
       countDelta: 1,
     );
+    await uploadPendingBuckets();
+  }
+
+  Future<void> recordBackgroundEvent(String metricName) async {
+    if (_disposed || !_localCollectionEnabled) return;
+    if (!allowedUsageMetricNames.contains(metricName)) return;
+    
+    await _incrementBucket(
+      screenName: 'app', // Attach background events to the 'app' pseudo-screen
+      metricName: metricName,
+      countDelta: 1,
+    );
+    // Background tasks are typically short-lived, so flush immediately.
     await uploadPendingBuckets();
   }
 

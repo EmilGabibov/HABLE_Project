@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// Habit status enum stored as text in SQLite.
-enum HabitStatus { active, completed, abandoned }
+enum HabitStatus { active, finished, abandoned }
 
 /// Log action status enum stored as text in SQLite.
 enum LogStatus { completed, skipped }
@@ -73,6 +73,7 @@ class Habits extends Table {
   /// Hex color string (e.g. 'FF9CAF88') for ring/avatar tinting. Assigned on
   /// creation from a fixed pastel palette; never null after migration.
   TextColumn get colorHex => text().withDefault(const Constant('FF9CAF88'))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
 
@@ -264,6 +265,7 @@ class NotificationEvents extends Table {
 
 /// Per-user local reminder preference for different types of reminders.
 class ReminderSettings extends Table {
+  IntColumn get id => integer().autoIncrement()();
   TextColumn get userId => text()();
   TextColumn get type => textEnum<ReminderType>().withDefault(const Constant('dailyHabit'))();
   BoolColumn get isEnabled => boolean().withDefault(const Constant(false))();
@@ -271,9 +273,6 @@ class ReminderSettings extends Table {
   IntColumn get minute => integer().withDefault(const Constant(0))();
   BoolColumn get isPermissionDenied => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
-
-  @override
-  Set<Column> get primaryKey => {userId, type};
 }
 
 /// Coarse anonymous diagnostics buckets for development-only usage reporting.

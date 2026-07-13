@@ -2630,3 +2630,139 @@ Enable users to manage their own habits.
 - Behavior verified: Reworked the mud completion control to use explicit pointer hold/cancel timing instead of platform long-press recognition. Early release now reverses the ring without calling `onCompletion`, while a sustained hold completes exactly once. Verified with `flutter test test/mud_long_press_button_test.dart`.
 - Documentation updates: Updated `Developement/ux_mud_and_animations.md` with the cancellation rule and `Developement/qa_web_multi_user_plan.md` with the explicit short-press failure check for shared habits. `Developement/ux_habit_states_and_scoring.md` was reviewed and left unchanged because backend score ownership did not change.
 - Completed At: 2026-07-12 14:28 CEST
+
+<a id="auto-archive-completed-habits-into-profile-history-and-expand-lifecycle-actions"></a>
+### [x] Auto-Archive Completed Habits Into Profile History And Expand Lifecycle Actions
+
+**Raw source:** Habit Archiving & Achievement Conversion. Insight: Completed habits currently clutter the Home screen. Action: Implement a transition where a habit with zero days remaining is automatically moved to an "Achievements" section in the Profile. Long-Press Menu: Deepen the `MudLongPressButton` menu to include Active Habits: Edit, Delete, Archive (manual), Reroll Reminder, Nudge Friend. Archived Habits: Rerun (reset duration/logs), View History, Share Certificate.
+
+**Issue:** Hable already has two adjacent but mismatched lifecycle surfaces: Home reads `watchActiveHabits`, while Profile splits `watchAllHabits` into `Active` and `Archived`, and also separately renders server-owned `achievementUnlocks`. Completed single-user habits can still linger in the active lifecycle path until manually archived, and the current action model is fragmented between Profile icon buttons and Home-card interactions. If implemented naively, this raw prompt would risk inventing a second achievements system on top of the existing backend-owned badge model, or broadening `MudLongPressButton` into a kitchen-sink menu without clear ownership boundaries.
+
+**Ponytail triage:**
+- *Should exist:* Yes. Hiding finished habits from Home is a real lifecycle issue, and the user also needs a coherent way to manage archived vs active habits.
+- *Smallest safe scope:* Automatically transition owner-controlled habits whose challenge duration reaches zero from the active Home lifecycle into the existing archived/profile history lane, then add a narrow action surface for the missing lifecycle actions around active and archived habits.
+- *Skipped scope:* Do not invent a brand-new achievement persistence system, printable certificate renderer, or full historical analytics experience in this task. Reuse the current archived-habit and backend-owned achievements surfaces.
+- *Boundaries:* Keep `MudLongPressButton` focused on completion interaction. Lifecycle management can be exposed through the habit-card/profile action surfaces without moving business logic into the hold-to-complete widget itself.
+
+**Action:** Audit the habit-completion path, archive/restore flows, and Profile management UI. When an owner-controlled non-shared challenge reaches zero remaining days, move it out of the active Home stream automatically by transitioning it into the archived lifecycle state instead of leaving it as a cluttering active card. Reframe the Profile archived area as the durable history surface adjacent to server-owned achievements, and add the missing lifecycle actions with clear state gating: active habits need edit/delete/manual archive plus existing social actions where applicable; archived habits need rerun/reset and log-history access. If branded certificate sharing still requires net-new rendering or export infrastructure, defer that to a follow-up raw task rather than bloating this change.
+
+**Hable perspective:** Hable’s true achievement system is backend-owned badges and score progression, while completed habits are local/shared lifecycle records stored in Drift and mirrored through sync. The correct product boundary is therefore: badges remain in the existing achievements surface, completed challenges become archived history in Profile, and Home only shows actionable active habits. Any auto-archive rule must preserve shared-habit ownership/partner semantics and avoid conflating daily completion with lifecycle completion.
+
+**Implementation scope:**
+- `lib/database/database.dart`: adjust the lifecycle transition path (`completeHabitDay`, archive/restore helpers, and any rerun helper) so eligible owner-controlled habits auto-archive when their challenge completes, while shared-habit safeguards remain intact.
+- `lib/providers/habit_actions_provider.dart`: expose any missing lifecycle actions such as rerun/reset in one place and keep sync flushing consistent with archive/restore/delete behavior.
+- `lib/screens/home_screen.dart`: remove archived/finished challenges from the actionable Home path and surface the smallest appropriate active-habit action entry points without overloading the mud button.
+- `lib/screens/profile_screen.dart`: treat archived habits as the post-completion history lane near achievements and replace the current icon-only management affordances with the state-aware action set for active vs archived habits.
+- Tests: add focused database/provider/widget coverage for owner auto-archive at zero remaining days, rerun/reset behavior, shared-habit non-auto-archive protection, and Profile action visibility by lifecycle state.
+
+**Scalability considerations:** Drift table growth is the main long-term risk because rerun/history features read habit logs over time. Keep the first implementation scoped to existing per-habit queries and avoid whole-table scans or duplicated history tables. Riverpod rebuild pressure should stay bounded by reusing the current `watchActiveHabits` and `watchAllHabits` streams rather than adding extra lifecycle watchers.
+
+**Future split guidance:** If Hable later needs shareable completion certificates, timeline-rich history pages, milestone recap cards, or a unified “Achievements & History” redesign, split those into follow-up tasks. This task is only for auto-archiving finished challenges and the minimum action model needed to manage active vs archived habits safely.
+
+**Edge cases:** Shared habits reaching zero remaining days, supporter-role viewers with no edit authority, rerunning a habit that still has pending unsynced logs, deleting an archived habit, restoring then immediately rerunning, offline completion that should auto-archive locally before sync flush, logs/history ordering after rerun, and preserving backend achievement badges independently of habit archival state.
+
+**Acceptance criteria:**
+- Owner-controlled non-shared habits that reach zero remaining days no longer stay on Home as actionable active cards; they transition into the archived/profile history lane automatically.
+- Shared-habit daily completion and shared-lifecycle rules remain correct; partner progress does not incorrectly auto-archive the shared metadata row.
+- Profile exposes distinct lifecycle actions for active vs archived habits, including rerun/reset and history access for archived entries.
+- The existing backend-owned achievements surface remains intact and is not replaced with a duplicate local “completed habits as badges” system.
+- Focused automated tests cover the auto-archive transition and state-gated action availability.
+- Relevant docs are verified and updated if lifecycle state ownership or profile history semantics change from the current spec text.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Updated `lib/database/database.dart` so solo habits that reach zero remaining days auto-transition into archived history (`abandoned`) and enqueue the matching owner metadata sync, while shared habits still stay active. Added owner-only rerun/reset support in `lib/providers/habit_actions_provider.dart` and `backend/src/index.ts` using a minimal `reset_progress` contract that is explicitly rejected for shared habits. Reworked `lib/screens/profile_screen.dart` archived management into an archived-history lane with state-aware actions plus a bottom-sheet history viewer, without replacing the existing backend-owned achievements surface. Added regression coverage in `test/habit_completion_progress_test.dart` and `test/profile_habit_crud_test.dart`; verified with `flutter test test/habit_completion_progress_test.dart test/profile_habit_crud_test.dart`. Verified and updated dependency docs: `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, and `Developement/qa_testing.md`. Completed At: 2026-07-13 11:46 CEST
+
+<a id="add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions"></a>
+### [x] Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions
+
+**Raw source:** Add an end-to-end regression harness for partner shared habits that covers invite acceptance, mirrored completion state on both cards, nudge delivery in Social Activity, and score/flame award only after all participants complete.
+
+**Issue:** Testing the core multi-user loop (Alice and Bob) currently requires a manual, time-consuming ADB twin-app pass or manual browser juggling. Regressions in shared habit states, nudges, or scoring can easily slip through because single-user unit/widget tests cannot validate the asynchronous sync and state mirrored across two isolated clients.
+
+**Ponytail triage:**
+- *Should exist:* Yes. The social check-in and scoring loop is the app's primary interaction. Automated verification is essential.
+- *Smallest safe scope:* Create a Playwright (or similar multi-context) test script targeting the Web build. It should spawn two isolated browser contexts (Alice and Bob), register/login, and walk through the exact steps defined in `qa_web_multi_user_plan.md` up to mutual check-in and scoring.
+- *Skipped scope:* Do not attempt dual-device Appium/Flutter Driver tests on Android. Limit to Web for the multi-user E2E regression. No new UI features.
+- *Boundaries:* The harness must respect the offline-first sync (waiting for sync flushes) and not manipulate the database directly—only through the UI as a real user would.
+
+**Action:** Set up a Node/Playwright test project (e.g., in a new `e2e/` directory). Write a script that orchestrates two browser contexts. Implement the flow: Alice creates a habit and invites Bob -> Bob accepts -> Alice completes -> Bob completes -> Verify both cards update and leaderboard scores increment only after mutual completion.
+
+**Hable perspective:** Hable's offline-first architecture means UI state often relies on background sync. The test harness will need to handle async waits (e.g., waiting for the sync indicator to finish or UI to update) rather than expecting synchronous API responses.
+
+**Implementation scope:**
+- `e2e/package.json` & Playwright config: Setup for multi-context web testing.
+- `e2e/tests/shared_habit.spec.ts`: The main test script handling Alice and Bob's interactions.
+- `Developement/qa_testing.md`: Document the new automated web harness and how to run it.
+
+**Scalability considerations:** Scalability impact: Playwright tests can be flaky if they rely on hardcoded timeouts. The harness must scale by using smart locator waits (e.g., waiting for a specific DOM element or semantics label to update after sync) rather than arbitrary delays.
+
+**Future split guidance:** If the test suite grows to cover push notifications or offline scenarios (toggling network offline in Playwright), those should be split into separate tasks. This task is only for the happy path mutual completion and scoring loop.
+
+**Edge cases:** Network sync delays causing timeouts, animations (like the mud button) delaying state checks, seeded user cleanup to prevent test data pollution.
+
+**Acceptance criteria:**
+- A single command (e.g., `npm run test:e2e`) runs the dual-browser test.
+- The test verifies friend request, habit invite, invite acceptance, nudge delivery, and mutual completion.
+- The test verifies that points/flames are only awarded after *both* participants complete the habit.
+- The test runs reliably without arbitrary `sleep` commands, relying on UI/DOM state.
+- Documentation is updated.
+
+**Dependencies:** `Developement/qa_web_multi_user_plan.md`, `Developement/qa_testing.md`
+
+**Completion notes:** 
+- Initialized new Playwright project in `e2e/`.
+- Configured `e2e/playwright.config.ts` to support dual-browser-context tests targeting the web build via `BASE_URL`.
+- Implemented `e2e/tests/shared_habit.spec.ts` testing the complete mutual shared habit, nudge, and leaderboard score progression.
+- Updated `Developement/qa_testing.md` to document the new `npm run test` harness.
+- Updated `Developement/qa_web_multi_user_plan.md` explicitly referencing the new Playwright scripts.
+- Completed At: 2026-07-12 14:35 Z
+
+<a id="introduce-explicit-environment-based-backend-targeting-for-flutter-and-release-builds"></a>
+### [x] Introduce Explicit Environment-Based Backend Targeting For Flutter And Release Builds
+
+**Raw source:** Environment-Based Backend Targeting: If release Android/web builds need something stronger than `kDebugMode`, split a task for explicit environment-based API configuration.
+
+**Issue:** Hable currently resolves `apiBaseUrl` in `lib/config/api_config.dart` from a single `HABLE_API_BASE_URL` override or a binary `kDebugMode` fallback. That is too implicit for the current release surface. Android debug verification, local ADB smoke runs, web deployment, and release packaging now all depend on the app talking to the correct backend, but the default contract is still effectively "debug means localhost, release means production." That leaves no first-class environment identity for staging, preview, production, or explicit local development, and it makes release-like testing rely on ad hoc URL overrides rather than a documented build-target contract.
+
+**Triage:**
+- *Should exist:* Yes. This is a release-safety and operator-correctness task, not speculative infrastructure.
+- *Smallest safe scope:* Introduce one explicit Flutter-side environment selector with documented allowed values and keep the existing direct base-URL override as an escape hatch.
+- *Skipped scope:* Do not build a full remote config system, per-user environment switching UI, backend multi-tenant routing layer, or CI deployment matrix in this task.
+- *Boundaries:* Keep environment selection compile-time/config-driven. The app should not infer production-vs-staging from UI flavor names, auth state, or runtime guesswork once the explicit environment contract exists.
+
+**Action:** Replace the current `kDebugMode`-centric backend targeting fallback with an explicit app environment contract, for example `local`, `staging`, and `production`, resolved from `--dart-define` values. Keep `HABLE_API_BASE_URL` as the highest-priority manual override for unusual smoke setups, but otherwise derive the base URL from the declared environment instead of from debug/release mode alone. Update the build/run documentation so Android, web, and manual smoke workflows all use the same environment vocabulary and default expectations.
+
+**Hable perspective:** Hable now spans Flutter web deployment, Android flavor builds, local Wrangler backend testing, and release packaging. Backend targeting is therefore part of the product’s operational correctness, not just developer convenience. The client should stay offline-first and Drift-backed, but whenever it does talk to the network, it must do so against the intended backend for that build target. Environment targeting belongs in one central config boundary so auth, sync, social search, calendar feed rotation, diagnostics, and future API calls all stay aligned.
+
+**Implementation scope:**
+- `lib/config/api_config.dart`: replace the current implicit fallback logic with explicit environment parsing and centralized URL resolution. Preserve `HABLE_API_BASE_URL` as a highest-priority manual override.
+- Flutter environment contract: add typed constants/helpers for recognized values such as `local`, `staging`, and `production`, plus safe fallback/error behavior for invalid values.
+- Call sites already using `apiBaseUrl` such as `auth_provider.dart`, `sync_service.dart`, `social_hub_screen.dart`, `social_providers.dart`, `calendar_provider.dart`, and `usage_diagnostics_service.dart`: verify they continue to read the same central source without needing per-feature overrides.
+- Documentation: update `Developement/commands.md`, `Developement/sys_build_integrity.md`, and any relevant QA runbooks so local ADB reverse, emulator targeting, release builds, and web deploy smoke steps use the explicit environment contract.
+- Test surface: add focused unit coverage for environment parsing and URL resolution, including override precedence, default production behavior for release-like builds, and local-target selection for manual development.
+
+**Scalability considerations:** Scalability impact: none expected at runtime. The benefit is operational scale: one shared environment contract reduces accidental cross-environment traffic as more release channels, smoke flows, and backend integrations are added.
+
+**Future split guidance:** If Hable later needs preview-per-branch environments, CI-injected deployment metadata, runtime environment banners, or environment-specific feature flags, split those into follow-up release/tooling tasks. This task is only for explicit API target resolution and documentation.
+
+**Edge cases:** invalid `--dart-define` value, `HABLE_API_BASE_URL` override combined with an environment define, Android emulator vs USB device localhost access, release APK built against a local backend by mistake, web debug builds pointing at production unexpectedly, background services or diagnostics using a mismatched URL path, and preserving current local smoke workflows without forcing every command to pass both defines.
+
+**Acceptance criteria:**
+- API target selection no longer relies primarily on `kDebugMode` to distinguish local versus production backends.
+- The app supports an explicit environment selector for backend targeting, with documented recognized values and deterministic fallback behavior.
+- `HABLE_API_BASE_URL` remains available as an explicit manual override and takes precedence over the environment preset.
+- Existing networked surfaces continue to resolve their backend base URL through the same central config source.
+- Documentation clearly states how to run local Android/web smoke flows and how to build release-like artifacts against the intended backend.
+- Focused tests verify environment parsing, override precedence, and resolved base URLs.
+- Dependencies are verified and updated if the environment contract changes developer or QA workflows.
+
+**Dependencies:** `Developement/commands.md`, `Developement/sys_build_integrity.md`, `Developement/qa_testing.md`
+
+**Completion notes:**
+- Files touched: `lib/config/api_config.dart`, `test/api_config_test.dart`, `Developement/commands.md`, `Developement/sys_build_integrity.md`, `Developement/qa_testing.md`.
+- Behavior verified: backend targeting now resolves through a central environment contract with precedence `HABLE_API_BASE_URL` override -> `HABLE_APP_ENV` preset -> debug/profile local fallback or release production fallback. Recognized environment presets include `local`, `staging`, and `production`; `staging` deterministically falls back to production unless `HABLE_STAGING_API_BASE_URL` is provided.
+- Networked surfaces preserved: auth, sync, social, calendar, and diagnostics continue to read the same shared `apiBaseUrl` source with no per-feature divergence.
+- Verification run: `flutter test test/api_config_test.dart` and `flutter analyze lib/config/api_config.dart test/api_config_test.dart`.
+- Dependencies verified and updated: `Developement/commands.md`, `Developement/sys_build_integrity.md`, and `Developement/qa_testing.md` were updated to document the explicit environment contract for local smoke, release builds, and web deploy flows.
+- Completed At: 2026-07-13 16:12 CEST

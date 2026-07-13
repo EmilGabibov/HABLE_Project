@@ -58,6 +58,11 @@ class HabitActionsController {
     await _ref.read(syncServiceProvider).flushPending();
   }
 
+  Future<void> rerunHabit(String habitId) async {
+    await _db.rerunHabit(habitId);
+    await _ref.read(syncServiceProvider).flushPending();
+  }
+
   Future<void> deleteHabit(String habitId) async {
     final token = _ref.read(authProvider).token;
     if (token == null || _userId == null) return;

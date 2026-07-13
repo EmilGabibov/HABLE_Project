@@ -80,6 +80,10 @@ void main() {
       ),
     );
 
+    // Expand the row to see names and overflow
+    await tester.tap(find.byType(HabitPartnerRow));
+    await tester.pumpAndSettle();
+
     expect(find.text('Alex'), findsOneWidget);
     expect(find.text('Blair'), findsOneWidget);
     expect(find.text('Casey'), findsOneWidget);
@@ -125,6 +129,10 @@ void main() {
       ),
     );
 
+    // Expand to interact with profiles and nudges
+    await tester.tap(find.byType(HabitPartnerRow));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const Key('partner-profile-p1')));
     await tester.pump();
 
@@ -165,6 +173,10 @@ void main() {
         ),
       ),
     );
+
+    // Expand to see nudge label
+    await tester.tap(find.byType(HabitPartnerRow));
+    await tester.pumpAndSettle();
 
     expect(find.text('nudged'), findsOneWidget);
   });
@@ -227,6 +239,10 @@ void main() {
         ),
       ),
     );
+
+    // Expand to verify compact layout
+    await tester.tap(find.byType(HabitPartnerRow));
+    await tester.pumpAndSettle();
 
     // Names should be hidden in compactMode
     expect(find.text('CompactAlex'), findsNothing);

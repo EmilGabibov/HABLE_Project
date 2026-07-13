@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hable/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/auth_provider.dart';
@@ -33,6 +35,15 @@ class HableApp extends ConsumerWidget {
       title: 'Hable',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''),
+      ],
       navigatorObservers: [usageRouteObserver],
       home: const _AppGate(),
     );

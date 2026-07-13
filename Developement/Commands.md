@@ -5,7 +5,9 @@ Quick reference for all build, install, and deploy shell commands across platfor
 ## Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash
-flutter build web && cd backend && npx wrangler pages deploy ../build/web --project-name=hable
+flutter build web --release --base-href / \
+  --dart-define=HABLE_APP_ENV=production && \
+cd backend && npx wrangler pages deploy ../build/web --project-name=hable
 ```
 
 ## Build Android APKs
@@ -20,13 +22,34 @@ flutter build apk --flavor friend -t lib/main.dart
 ```
 
 For local backend testing, debug builds now default to `http://127.0.0.1:8787`.
+The backend target is resolved in this order:
+1. `HABLE_API_BASE_URL` manual override
+2. `HABLE_APP_ENV` preset: `local`, `staging`, or `production`
+3. Fallback when no define is passed: debug/profile -> `local`, release -> `production`
+
+`staging` currently resolves to `production` unless `HABLE_STAGING_API_BASE_URL` is also provided.
+
 Use `adb reverse tcp:8787 tcp:8787` on a physical Android device.
 If you need to target a different backend host, pass:
 ```bash
 flutter build apk --debug --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=local \
   --dart-define=HABLE_API_BASE_URL=http://10.0.2.2:8787
 ```
 The override above is the usual emulator case; replace the URL as needed.
+
+To make a debug or profile build talk to production explicitly:
+```bash
+flutter run -d chrome \
+  --dart-define=HABLE_APP_ENV=production
+```
+
+To target a dedicated staging backend alias:
+```bash
+flutter run -d chrome \
+  --dart-define=HABLE_APP_ENV=staging \
+  --dart-define=HABLE_STAGING_API_BASE_URL=https://staging-hable.pages.dev
+```
 
 ## Install APKs via ADB
 Install the **primary** APK on a connected USB device:
@@ -65,4 +88,3 @@ Empty/clean Flutter build outputs and caches (deletes the `build/` directory):
 ```bash
 flutter clean
 ```
-

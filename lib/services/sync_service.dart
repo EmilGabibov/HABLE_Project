@@ -87,20 +87,39 @@ class SyncService {
     String body;
     String payload;
 
-    final nudges = socialUnread.where((n) => n.type == NotificationEventType.nudge).length;
-    final invites = socialUnread.where((n) => n.type == NotificationEventType.habitInvitation).length;
+    final nudges = socialUnread.where((n) => n.type == NotificationEventType.nudge).toList();
+    final invites = socialUnread.where((n) => n.type == NotificationEventType.habitInvitation).toList();
+
+    Future<String> formatUserNames(List<String> sourceIds, String actionVerb) async {
+      final ids = sourceIds.toSet().toList();
+      final names = <String>[];
+      for (final id in ids) {
+        final user = await _db.getUser(id);
+        if (user != null) {
+          names.add(user.username.isNotEmpty ? user.username : 'Someone');
+        } else {
+          names.add('Someone');
+        }
+      }
+      if (names.isEmpty) return 'You have new ${actionVerb}s.';
+      if (names.length == 1) return '${names[0]} $actionVerb you.';
+      if (names.length == 2) return '${names[0]} and ${names[1]} $actionVerb you.';
+      return '${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 > 1 ? 's' : ''} $actionVerb you.';
+    }
 
     if (socialUnread.length == 1) {
       body = socialUnread.first.body;
       payload = socialUnread.first.actionPayloadJson ?? '{"route": "social"}';
-    } else if (nudges > 0 && invites > 0) {
-      body = 'You have $nudges nudge${nudges == 1 ? '' : 's'} and $invites invite${invites == 1 ? '' : 's'}.';
+    } else if (nudges.isNotEmpty && invites.isNotEmpty) {
+      body = 'You have ${nudges.length} nudge${nudges.length == 1 ? '' : 's'} and ${invites.length} invite${invites.length == 1 ? '' : 's'}.';
       payload = '{"route": "social"}';
-    } else if (nudges > 0) {
-      body = 'You have $nudges new nudge${nudges == 1 ? '' : 's'} from friends.';
+    } else if (nudges.isNotEmpty) {
+      final sourceIds = nudges.map((n) => n.sourceId).whereType<String>().toList();
+      body = await formatUserNames(sourceIds, 'nudged');
       payload = '{"route": "social"}';
-    } else if (invites > 0) {
-      body = 'You have $invites new habit invite${invites == 1 ? '' : 's'}.';
+    } else if (invites.isNotEmpty) {
+      final sourceIds = invites.map((n) => n.sourceId).whereType<String>().toList();
+      body = await formatUserNames(sourceIds, 'invited');
       payload = '{"route": "social"}';
     } else {
       body = 'You have ${socialUnread.length} new social interaction${socialUnread.length == 1 ? '' : 's'}.';
@@ -112,8 +131,9 @@ class SyncService {
     final scheduleHour = now.minute + 1 >= 60 ? (now.hour + 1) % 24 : now.hour;
 
     await _localReminderService.scheduleReminder(
+      notificationId: 299, // Social recap
       userId: userId,
-      type: ReminderType.dailyHabit,
+      type: ReminderType.dailyHabit, // Reusing slot type for now, but explicit ID
       hour: scheduleHour,
       minute: scheduleMinute,
       title: title,
@@ -442,8 +462,19 @@ class SyncService {
             nudgedAt: nudgedAt,
           );
           final actionPayload = <String, dynamic>{'sender_id': senderId};
-          if (habitId != null) actionPayload['habit_id'] = habitId;
+          String? habitName;
+          if (habitId != null) {
+            actionPayload['habit_id'] = habitId;
+            final habit = await _db.getHabit(habitId);
+            habitName = habit?.title;
+          }
           if (timestamp != null) actionPayload['timestamp'] = timestamp;
+          
+          final senderName = friend?.username ?? 'A friend';
+          final bodyText = habitName != null 
+              ? '$senderName nudged you to check-in on $habitName'
+              : '$senderName sent you a reminder on a shared habit.';
+
           await _upsertNotificationEvent(
             userId: userId,
             notificationId: 'nudge:$senderId:${habitId ?? 'any'}',
@@ -451,8 +482,7 @@ class SyncService {
             sourceType: 'nudge',
             sourceId: senderId,
             title: 'You were nudged',
-            body:
-                '${friend?.username ?? 'A friend'} sent you a reminder on a shared habit.',
+            body: bodyText,
             actionRoute: 'home',
             actionPayload: actionPayload,
             createdAt: nudgedAt,

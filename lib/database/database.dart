@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -80,7 +80,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(friendRelationships);
       }
       if (from < 13) {
-        await m.addColumn(reminderSettings, reminderSettings.isPermissionDenied);
+        await m.addColumn(
+          reminderSettings,
+          reminderSettings.isPermissionDenied,
+        );
+      }
+      if (from < 14) {
+        await m.alterTable(TableMigration(reminderSettings));
       }
     },
   );
@@ -179,26 +185,51 @@ class AppDatabase extends _$AppDatabase {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
-    final hasPartners = await (select(partnerships)..where((p) => p.habitId.equals(habitId))).get().then((list) => list.isNotEmpty);
+    final hasPartners =
+        await (select(partnerships)..where((p) => p.habitId.equals(habitId)))
+            .get()
+            .then((list) => list.isNotEmpty);
 
     final remainingDays = habit.currentDuration > 0
         ? habit.currentDuration - 1
         : 0;
-    
+
     // Distinguish between Daily Check-In and Challenge Lifecycle Completion.
-    // Shared habits never automatically complete their lifecycle just because duration hits 0.
-    final nextStatus = remainingDays == 0 && !keepActiveWhenDurationEnds && !hasPartners
-        ? HabitStatus.completed
+    // Shared habits never automatically complete their lifecycle just because
+    // duration hits 0. Owner-controlled solo challenges move into the existing
+    // archived/history lane instead of a separate completed-only state.
+    final nextStatus =
+        remainingDays == 0 && !keepActiveWhenDurationEnds && !hasPartners
+        ? HabitStatus.finished
         : HabitStatus.active;
 
-    await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
-      HabitsCompanion(
-        currentDuration: Value(remainingDays),
-        status: Value(nextStatus),
-        updatedAt: Value(DateTime.now()),
-        isSynced: const Value(false),
-      ),
-    );
+    final now = DateTime.now();
+    await transaction(() async {
+      await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
+        HabitsCompanion(
+          currentDuration: Value(remainingDays),
+          status: Value(nextStatus),
+          updatedAt: Value(now),
+          isSynced: const Value(false),
+        ),
+      );
+
+      if (nextStatus == HabitStatus.abandoned || nextStatus == HabitStatus.finished) {
+        await enqueueSync(
+          SyncQueueCompanion.insert(
+            action: SyncAction.updateHabit,
+            payload: jsonEncode({
+              'habit_id': habitId,
+              'title': habit.title,
+              'target_duration': habit.targetDuration,
+              'color_hex': habit.colorHex,
+              'status': 'abandoned',
+              'updated_at': now.toIso8601String(),
+            }),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> updateHabitStatus(String habitId, HabitStatus newStatus) =>
@@ -362,6 +393,38 @@ class AppDatabase extends _$AppDatabase {
             'target_duration': habit.targetDuration,
             'color_hex': habit.colorHex,
             'status': 'active',
+            'updated_at': now.toIso8601String(),
+          }),
+        ),
+      );
+    });
+  }
+
+  Future<void> rerunHabit(String habitId) async {
+    final habit = await getHabit(habitId);
+    if (habit == null) return;
+
+    final now = DateTime.now();
+    await transaction(() async {
+      await (delete(logs)..where((l) => l.habitId.equals(habitId))).go();
+      await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
+        HabitsCompanion(
+          currentDuration: Value(habit.targetDuration),
+          status: const Value(HabitStatus.active),
+          updatedAt: Value(now),
+          isSynced: const Value(false),
+        ),
+      );
+      await enqueueSync(
+        SyncQueueCompanion.insert(
+          action: SyncAction.updateHabit,
+          payload: jsonEncode({
+            'habit_id': habitId,
+            'title': habit.title,
+            'target_duration': habit.targetDuration,
+            'color_hex': habit.colorHex,
+            'status': 'active',
+            'reset_progress': true,
             'updated_at': now.toIso8601String(),
           }),
         ),
@@ -877,7 +940,6 @@ class AppDatabase extends _$AppDatabase {
       (select(notificationEvents)
             ..where((n) => n.userId.equals(userId))
             ..orderBy([
-              (n) => OrderingTerm.asc(n.readAt),
               (n) => OrderingTerm.desc(n.createdAt),
             ]))
           .watch();
@@ -929,16 +991,38 @@ class AppDatabase extends _$AppDatabase {
   // Reminder settings operations
   // ---------------------------------------------------------------------------
 
-  Future<void> saveReminderSetting(ReminderSettingsCompanion setting) =>
-      into(reminderSettings).insertOnConflictUpdate(setting);
+  Future<int> insertReminderSetting(ReminderSettingsCompanion setting) =>
+      into(reminderSettings).insert(setting);
 
-  Future<ReminderSetting?> getReminderSetting(String userId, ReminderType type) => (select(
-    reminderSettings,
-  )..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))).getSingleOrNull();
+  Future<void> updateReminderSetting(ReminderSetting setting) =>
+      update(reminderSettings).replace(setting);
 
-  Stream<ReminderSetting?> watchReminderSetting(String userId, ReminderType type) => (select(
-    reminderSettings,
-  )..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))).watchSingleOrNull();
+  Future<void> deleteReminderSetting(int id) =>
+      (delete(reminderSettings)..where((r) => r.id.equals(id))).go();
+
+  Future<List<ReminderSetting>> getReminderSettings(
+    String userId,
+    ReminderType type,
+  ) =>
+      (select(reminderSettings)
+            ..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))
+            ..orderBy([
+              (r) => OrderingTerm(expression: r.hour),
+              (r) => OrderingTerm(expression: r.minute),
+            ]))
+          .get();
+
+  Stream<List<ReminderSetting>> watchReminderSettings(
+    String userId,
+    ReminderType type,
+  ) =>
+      (select(reminderSettings)
+            ..where((r) => r.userId.equals(userId) & r.type.equalsValue(type))
+            ..orderBy([
+              (r) => OrderingTerm(expression: r.hour),
+              (r) => OrderingTerm(expression: r.minute),
+            ]))
+          .watch();
 
   // ---------------------------------------------------------------------------
   // Habit color palette assignment

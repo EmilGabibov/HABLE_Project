@@ -11,7 +11,7 @@ The backend must never expose a user's entire profile or habit list. Social data
 
 * **The Partnership Junction:** The Cloudflare Worker must resolve social queries using the `partnerships` D1 table, where each directed row carries the viewer's role for that habit: `owner`, `partner`, or `supporter`.
 * **Data Payload Masking:** When syncing (`GET /api/sync/daily`), the API must only return the `username`, `avatar_url`, `current_duration`, and habit metadata (`title`, `color_hex`, `target_duration`) of the specific shared habit. Journal entries are strictly private.
-* **Role Enforcement:** Ownership and participation are enforced server-side. Only `owner` may update/archive a habit, `owner` and `partner` may log completion/skip, and nudges require an actual shared-habit participation row rather than accepted friendship alone.
+* **Role Enforcement:** Ownership and participation are enforced server-side. Only `owner` may update/archive a habit, `owner` and `partner` may log completion/skip, and nudges require an actual shared-habit participation row rather than accepted friendship alone. Owner-only reruns/reset-progress are limited to solo habits; shared challenges must not be reset out from under partners.
 
 ### Friend Search & Habit Partner Invitations
 

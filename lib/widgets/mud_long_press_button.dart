@@ -68,7 +68,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   void _initAnimation() {
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: widget.calculatedDurationMs),
+      duration: Duration(milliseconds: max(100, widget.calculatedDurationMs)),
     );
 
     final Curve dynamicCurve = CurvedAnimation(
@@ -197,7 +197,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     _controller.animateTo(
       0.0,
       duration: Duration(
-        milliseconds: (widget.calculatedDurationMs * 0.5).toInt(),
+        milliseconds: max(100, (widget.calculatedDurationMs * 0.5).toInt()),
       ),
       curve: Curves.easeOutQuint,
     );

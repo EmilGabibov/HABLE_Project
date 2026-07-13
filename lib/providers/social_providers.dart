@@ -9,6 +9,36 @@ import 'database_provider.dart';
 import 'auth_provider.dart';
 
 // ---------------------------------------------------------------------------
+// Leaderboard Provider
+// ---------------------------------------------------------------------------
+
+final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
+  ref,
+) async {
+  final auth = ref.watch(authProvider);
+  if (auth.token == null) return [];
+
+  final response = await http
+      .get(
+        Uri.parse('$apiBaseUrl/api/social/leaderboard'),
+        headers: {'Authorization': 'Bearer ${auth.token}'},
+      )
+      .timeout(const Duration(seconds: 10));
+
+  if (response.statusCode == 200) {
+    final contentType = response.headers['content-type'] ?? '';
+    if (!contentType.toLowerCase().contains('application/json')) {
+      throw Exception(
+        'Leaderboard endpoint returned ${contentType.isEmpty ? 'non-JSON' : contentType} content.',
+      );
+    }
+    final data = jsonDecode(response.body);
+    return data['leaderboard'] ?? [];
+  }
+  throw Exception('Failed to fetch leaderboard');
+});
+
+// ---------------------------------------------------------------------------
 // Partner Snapshots Provider
 // Streams from local Drift table — never blocks UI on network.
 // ---------------------------------------------------------------------------

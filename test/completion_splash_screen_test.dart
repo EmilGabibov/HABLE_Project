@@ -5,7 +5,6 @@ import 'package:hable/screens/completion_splash_screen.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart' show HabitStatus;
 import 'package:hable/providers/quote_provider.dart';
-import 'package:drift/drift.dart' show Value;
 
 void main() {
   testWidgets('CompletionSplashScreen renders habit info and daily quote', (tester) async {
@@ -19,6 +18,7 @@ void main() {
       status: HabitStatus.active,
       colorHex: 'FF9CAF88',
       updatedAt: DateTime.now(),
+      createdAt: DateTime.now(),
       isSynced: false,
     );
 

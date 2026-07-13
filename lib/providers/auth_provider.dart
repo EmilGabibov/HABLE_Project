@@ -6,9 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' hide Column;
 import '../config/api_config.dart';
 import '../database/database.dart';
-import '../data/mascot_reminder_copy.dart';
-import '../database/tables.dart';
-import '../services/local_reminder_service.dart';
+import 'notification_providers.dart';
 import 'database_provider.dart';
 import 'package:flutter/foundation.dart';
 
@@ -540,19 +538,8 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _restoreReminderForUser(String userId) async {
-    final setting = await _db.getReminderSetting(userId, ReminderType.dailyHabit);
-    if (setting == null || !setting.isEnabled) return;
-
     try {
-      final copy = MascotReminderCopyHelper.getCopyForType(ReminderType.dailyHabit);
-      await ref.read(localReminderServiceProvider).scheduleReminder(
-        userId: userId,
-        type: ReminderType.dailyHabit,
-        hour: setting.hour,
-        minute: setting.minute,
-        title: copy.title,
-        body: copy.body,
-      );
+      await ref.read(notificationActionsProvider).restoreRemindersForUser(userId);
     } catch (error) {
       debugPrint('Failed to restore reminder schedule: $error');
     }
@@ -560,7 +547,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _cancelReminderForUser(String userId) async {
     try {
-      await ref.read(localReminderServiceProvider).cancelReminder(userId, ReminderType.dailyHabit);
+      await ref.read(notificationActionsProvider).cancelRemindersForUser(userId);
     } catch (error) {
       debugPrint('Failed to cancel reminder schedule: $error');
     }

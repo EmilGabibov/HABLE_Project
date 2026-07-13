@@ -4,9 +4,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 import '../database/database.dart';
-import '../database/tables.dart' show HabitStatus, PartnershipRole;
+import '../database/tables.dart' show HabitStatus, LogStatus, PartnershipRole;
 import '../data/standard_habits.dart';
 import '../providers/habit_providers.dart';
 import '../providers/sync_provider.dart';
@@ -24,13 +23,12 @@ import '../providers/notification_providers.dart';
 import '../providers/social_providers.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/database_provider.dart';
-import '../providers/sync_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
 import '../widgets/narrow_layout.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool showBackButton;
 
@@ -41,71 +39,92 @@ class ProfileScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUserId = ref.watch(authProvider).userId;
-    final isFriend = userId != currentUserId && currentUserId != null;
+    final isFriend = widget.userId != currentUserId && currentUserId != null;
 
     if (isFriend) {
       return _buildFriendProfile(context, ref);
     }
 
     final userAsync = ref.watch(currentUserProvider);
-    final distributionAsync = ref.watch(logDistributionProvider(userId));
-    final historyAsync = ref.watch(pointHistoryProvider(userId));
-    final allHabitsAsync = ref.watch(allHabitsProvider(userId));
-    final achievementsAsync = ref.watch(achievementUnlocksProvider(userId));
+    final distributionAsync = ref.watch(logDistributionProvider(widget.userId));
+    final historyAsync = ref.watch(pointHistoryProvider(widget.userId));
+    final allHabitsAsync = ref.watch(allHabitsProvider(widget.userId));
+    final achievementsAsync = ref.watch(achievementUnlocksProvider(widget.userId));
 
     return UsageTrackedScreen(
       screenName: 'profile',
       child: Scaffold(
         body: SafeArea(
           child: NarrowLayout(
-            child: CustomScrollView(
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Row(
-                      children: [
-                        if (showBackButton) ...[
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                      child: Row(
+                        children: [
+                          if (widget.showBackButton) ...[
+                            IconButton(
+                              tooltip: 'Back',
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: AppTheme.deepCharcoal,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Text(
+                            'Profile',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const Spacer(),
                           IconButton(
-                            tooltip: 'Back',
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: Icon(
-                              Icons.arrow_back_rounded,
+                            tooltip: 'Open settings',
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => SettingsScreen(userId: widget.userId),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.settings_rounded,
                               color: AppTheme.deepCharcoal,
                             ),
                           ),
-                          const SizedBox(width: 8),
                         ],
-                        Text(
-                          'Profile',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          tooltip: 'Open settings',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => SettingsScreen(userId: userId),
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.settings_rounded,
-                            color: AppTheme.deepCharcoal,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
 
-                // User card
-                SliverToBoxAdapter(
-                  child: userAsync.when(
+                  // User card
+                  SliverToBoxAdapter(
+                    child: userAsync.when(
                     data: (user) => Padding(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                       child: Card(
@@ -171,399 +190,407 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Text(
-                      'Server-owned progression syncs into Profile and Social Hub through local Drift.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.warmGray.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Pie chart — Completion Distribution
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Habit Distribution',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 20),
-                            distributionAsync.when(
-                              data: (dist) {
-                                final total = dist.values.fold(
-                                  0,
-                                  (a, b) => a + b,
-                                );
-                                if (total == 0) {
-                                  return SizedBox(
-                                    height: 160,
-                                    child: Center(
-                                      child: Text(
-                                        'No data yet',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return SizedBox(
-                                  height: 160,
-                                  child: PieChart(
-                                    PieChartData(
-                                      sectionsSpace: 3,
-                                      centerSpaceRadius: 36,
-                                      sections: [
-                                        PieChartSectionData(
-                                          value: dist['completed']!.toDouble(),
-                                          color: AppTheme.completionGreen,
-                                          title: '${dist['completed']}',
-                                          titleStyle: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                          radius: 40,
-                                        ),
-                                        PieChartSectionData(
-                                          value: dist['skipped']!.toDouble(),
-                                          color: AppTheme.skipAmber,
-                                          title: '${dist['skipped']}',
-                                          titleStyle: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                          radius: 40,
-                                        ),
-                                        PieChartSectionData(
-                                          value: dist['overdue']!.toDouble(),
-                                          color: AppTheme.overdueRose,
-                                          title: '${dist['overdue']}',
-                                          titleStyle: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                          radius: 40,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                              loading: () => const _ChartSkeleton(),
-                              error: (_, _) => const _ChartSkeleton(),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _Legend(
-                                  color: AppTheme.completionGreen,
-                                  label: 'Completed',
-                                ),
-                                _Legend(
-                                  color: AppTheme.skipAmber,
-                                  label: 'Skipped',
-                                ),
-                                _Legend(
-                                  color: AppTheme.overdueRose,
-                                  label: 'Overdue',
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Line chart — 30-day point velocity
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '30-Day Progress',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 20),
-                            historyAsync.when(
-                              data: (history) {
-                                if (history.isEmpty) {
-                                  return SizedBox(
-                                    height: 160,
-                                    child: Center(
-                                      child: Text(
-                                        'No data yet',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return SizedBox(
-                                  height: 160,
-                                  child: LineChart(
-                                    LineChartData(
-                                      gridData: const FlGridData(show: false),
-                                      titlesData: const FlTitlesData(
-                                        show: false,
-                                      ),
-                                      borderData: FlBorderData(show: false),
-                                      lineBarsData: [
-                                        LineChartBarData(
-                                          spots: history
-                                              .asMap()
-                                              .entries
-                                              .map(
-                                                (e) => FlSpot(
-                                                  e.key.toDouble(),
-                                                  e.value.value.toDouble(),
-                                                ),
-                                              )
-                                              .toList(),
-                                          isCurved: true,
-                                          color: AppTheme.sageGreen,
-                                          barWidth: 3,
-                                          dotData: const FlDotData(show: false),
-                                          belowBarData: BarAreaData(
-                                            show: true,
-                                            color: AppTheme.sageGreen
-                                                .withValues(alpha: 0.1),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                              loading: () => const _ChartSkeleton(),
-                              error: (_, _) => const _ChartSkeleton(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Achievement badges
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Achievements',
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                userAsync.when(
-                                  data: (user) => achievementsAsync.when(
-                                    data: (achievements) => IconButton(
-                                      icon: const Icon(
-                                        Icons.ios_share_rounded,
-                                        size: 20,
-                                      ),
-                                      color: AppTheme.sageGreen,
-                                      onPressed: () {
-                                        if (user == null) return;
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => AchievementSharePreview(
-                                              user: user,
-                                              achievements: achievements,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    loading: () => const SizedBox.shrink(),
-                                    error: (_, _) => const SizedBox.shrink(),
-                                  ),
-                                  loading: () => const SizedBox.shrink(),
-                                  error: (_, _) => const SizedBox.shrink(),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            achievementsAsync.when(
-                              data: (achievements) {
-                                if (achievements.isEmpty) {
-                                  return Text(
-                                    'Complete a habit to earn your first badge!',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  );
-                                }
-                                return Wrap(
-                                  spacing: 12,
-                                  runSpacing: 12,
-                                  children: achievements
-                                      .map(
-                                        (a) => _AchievementBadge(
-                                          title: _achievementLabel(
-                                            a.achievementId,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                );
-                              },
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, _) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Calendar Feed Subscription
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Calendar Subscription',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Add your habits to your native calendar app',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: AppTheme.warmGray.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 16),
-                            _CalendarSubscriptionCard(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Manage Habits
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Manage Habits',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        TextButton.icon(
-                          onPressed: () => HabitFormSheet.show(context),
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Add New'),
-                        ),
+SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverAppBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: AppTheme.deepCharcoal,
+                      unselectedLabelColor: AppTheme.warmGray,
+                      indicatorColor: AppTheme.sageGreen,
+                      tabs: const [
+                        Tab(text: 'Trophy Room'),
+                        Tab(text: 'Journey'),
                       ],
                     ),
                   ),
                 ),
-                allHabitsAsync.when(
-                  data: (habits) {
-                    if (habits.isEmpty) {
-                      return const SliverToBoxAdapter(child: SizedBox.shrink());
-                    }
-
-                    final active = habits
-                        .where((h) => h.status == HabitStatus.active)
-                        .toList();
-                    final archived = habits
-                        .where((h) => h.status == HabitStatus.abandoned)
-                        .toList();
-
-                    return SliverList(
-                      delegate: SliverChildListDelegate([
-                        if (active.isNotEmpty) ...[
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
-                            child: Text(
-                              'Active',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.sageGreen,
-                              ),
-                            ),
-                          ),
-                          ...active.map(
-                            (h) => _HabitListTile(habit: h, isActive: true),
-                          ),
-                        ],
-                        if (archived.isNotEmpty) ...[
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                            child: Text(
-                              'Archived',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.overdueRose,
-                              ),
-                            ),
-                          ),
-                          ...archived.map(
-                            (h) => _HabitListTile(habit: h, isActive: false),
-                          ),
-                        ],
-                      ]),
-                    );
-                  },
-                  loading: () =>
-                      const SliverToBoxAdapter(child: SizedBox.shrink()),
-                  error: (_, _) =>
-                      const SliverToBoxAdapter(child: SizedBox.shrink()),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ];
+            },
+            body: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTrophyRoom(context, userAsync, achievementsAsync),
+                _buildJourney(context, distributionAsync, historyAsync, allHabitsAsync),
               ],
             ),
           ),
         ),
       ),
+    ));
+  }
+
+
+  Widget _buildTrophyRoom(
+    BuildContext context,
+    AsyncValue<User?> userAsync,
+    AsyncValue<List<AchievementUnlock>> achievementsAsync,
+  ) {
+    return CustomScrollView(
+      slivers: [
+
+        // Achievement badges
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Achievements',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        userAsync.when(
+                          data: (user) => achievementsAsync.when(
+                            data: (achievements) => IconButton(
+                              icon: const Icon(
+                                Icons.ios_share_rounded,
+                                size: 20,
+                              ),
+                              color: AppTheme.sageGreen,
+                              onPressed: () {
+                                if (user == null) return;
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => AchievementSharePreview(
+                                      user: user,
+                                      achievements: achievements,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, _) => const SizedBox.shrink(),
+                          ),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    achievementsAsync.when(
+                      data: (achievements) {
+                        if (achievements.isEmpty) {
+                          return Text(
+                            'Complete a habit to earn your first badge!',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          );
+                        }
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: achievements
+                              .map(
+                                (a) => _AchievementBadge(
+                                  title: _achievementLabel(a.achievementId),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+      ],
+    );
+  }
+
+  Widget _buildJourney(
+    BuildContext context,
+    AsyncValue<Map<String, int>> distributionAsync,
+    AsyncValue<List<MapEntry<DateTime, int>>> historyAsync,
+    AsyncValue<List<Habit>> allHabitsAsync,
+  ) {
+    return CustomScrollView(
+      slivers: [
+        // Pie chart — Completion Distribution
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Habit Distribution',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    distributionAsync.when(
+                      data: (dist) {
+                        final total = dist.values.fold(0, (a, b) => a + b);
+                        if (total == 0) {
+                          return SizedBox(
+                            height: 160,
+                            child: Center(
+                              child: Text(
+                                'No data yet',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          );
+                        }
+                        return SizedBox(
+                          height: 160,
+                          child: PieChart(
+                            PieChartData(
+                              sectionsSpace: 3,
+                              centerSpaceRadius: 36,
+                              sections: [
+                                PieChartSectionData(
+                                  value: dist['completed']!.toDouble(),
+                                  color: AppTheme.completionGreen,
+                                  title: '${dist['completed']}',
+                                  titleStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                  radius: 40,
+                                ),
+                                PieChartSectionData(
+                                  value: dist['skipped']!.toDouble(),
+                                  color: AppTheme.skipAmber,
+                                  title: '${dist['skipped']}',
+                                  titleStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                  radius: 40,
+                                ),
+                                PieChartSectionData(
+                                  value: dist['overdue']!.toDouble(),
+                                  color: AppTheme.overdueRose,
+                                  title: '${dist['overdue']}',
+                                  titleStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                  radius: 40,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      loading: () => const _ChartSkeleton(),
+                      error: (_, _) => const _ChartSkeleton(),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _Legend(color: AppTheme.completionGreen, label: 'Completed'),
+                        _Legend(color: AppTheme.skipAmber, label: 'Skipped'),
+                        _Legend(color: AppTheme.overdueRose, label: 'Overdue'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Line chart — 30-day point velocity
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '30-Day Progress',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    historyAsync.when(
+                      data: (history) {
+                        if (history.isEmpty) {
+                          return SizedBox(
+                            height: 160,
+                            child: Center(
+                              child: Text(
+                                'No data yet',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          );
+                        }
+                        return SizedBox(
+                          height: 160,
+                          child: LineChart(
+                            LineChartData(
+                              gridData: const FlGridData(show: false),
+                              titlesData: const FlTitlesData(show: false),
+                              borderData: FlBorderData(show: false),
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: history
+                                      .asMap()
+                                      .entries
+                                      .map((e) => FlSpot(e.key.toDouble(), e.value.value.toDouble()))
+                                      .toList(),
+                                  isCurved: true,
+                                  color: AppTheme.sageGreen,
+                                  barWidth: 3,
+                                  dotData: const FlDotData(show: false),
+                                  belowBarData: BarAreaData(
+                                    show: true,
+                                    color: AppTheme.sageGreen.withValues(alpha: 0.1),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      loading: () => const _ChartSkeleton(),
+                      error: (_, _) => const _ChartSkeleton(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Calendar Feed Subscription
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Calendar Subscription',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Add your habits to your native calendar app',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.warmGray.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _CalendarSubscriptionCard(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Manage Habits
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Manage Habits',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                TextButton.icon(
+                  onPressed: () => HabitFormSheet.show(context),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add New'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        allHabitsAsync.when(
+          data: (habits) {
+            if (habits.isEmpty) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
+
+            final active = habits.where((h) => h.status == HabitStatus.active).toList();
+            final abandoned = habits.where((h) => h.status == HabitStatus.abandoned).toList();
+            final finished = habits.where((h) => h.status == HabitStatus.finished).toList();
+
+            return SliverList(
+              delegate: SliverChildListDelegate([
+                if (active.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    child: Text(
+                      'Active',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.sageGreen,
+                      ),
+                    ),
+                  ),
+                  ...active.map((h) => _HabitListTile(habit: h, isActive: true)),
+                ],
+                if (finished.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                    child: Text(
+                      'Hall of Fame',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.mutedLavender,
+                      ),
+                    ),
+                  ),
+                  ...finished.map((h) => _HabitListTile(habit: h, isActive: false)),
+                ],
+                if (abandoned.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                    child: Text(
+                      'Archived history',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.overdueRose,
+                      ),
+                    ),
+                  ),
+                  ...abandoned.map((h) => _HabitListTile(habit: h, isActive: false)),
+                ],
+              ]),
+            );
+          },
+          loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+          error: (_, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+      ],
     );
   }
 
   Widget _buildFriendProfile(BuildContext context, WidgetRef ref) {
-    final friendProfileAsync = ref.watch(friendProfileProvider(userId));
+    final friendProfileAsync = ref.watch(friendProfileProvider(widget.userId));
 
     return Scaffold(
       body: SafeArea(
@@ -664,7 +691,7 @@ class ProfileScreen extends ConsumerWidget {
                         ...habits.map(
                           (h) => _FriendHabitListTile(
                             habitData: h,
-                            friendUserId: userId,
+                            friendUserId: widget.userId,
                           ),
                         ),
                     ]),
@@ -1114,17 +1141,12 @@ class _DailyReminderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final reminderAsync = ref.watch(reminderSettingForUserProvider(userId));
+    final reminderAsync = ref.watch(reminderSettingsForUserProvider(userId));
     final actions = ref.read(notificationActionsProvider);
-    final reminders = ref.read(localReminderServiceProvider);
 
     return reminderAsync.when(
-      data: (setting) {
-        final enabled = setting?.isEnabled ?? false;
-        final isDenied = setting?.isPermissionDenied ?? false;
-        final hour = setting?.hour ?? 20;
-        final minute = setting?.minute ?? 0;
-        final timeLabel = _formatReminderTime(hour, minute);
+      data: (settings) {
+        final hasDenied = settings.any((s) => s.isPermissionDenied);
 
         return Card(
           child: Padding(
@@ -1141,154 +1163,112 @@ class _DailyReminderCard extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Daily reminder',
+                        'Daily reminders',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                    Switch(
-                      value: enabled,
-                      onChanged: (value) async {
-                        if (value) {
-                          final hasPerm = await reminders.checkPermission();
-                          if (!hasPerm) {
-                            if (!context.mounted) return;
-                            final proceed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Allow Reminders'),
-                                content: const Text(
-                                  'Hable needs notification permissions to send you daily reminders. You can turn this off at any time.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
-                                    child: const Text('Continue'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (proceed != true) return;
-                          }
-                        }
-
-                        if (!context.mounted) return;
-                        await actions.updateDailyReminder(
-                          userId: userId,
-                          enabled: value,
-                          hour: hour,
-                          minute: minute,
-                        );
-                      },
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  enabled
-                      ? 'A local reminder is scheduled for $timeLabel on this device.'
-                      : (isDenied 
-                          ? 'Notifications are blocked. Enable them to receive reminders.'
-                          : 'Enable one daily reminder to return to today\'s habits.'),
+                  settings.isEmpty
+                      ? 'Enable daily reminders to return to your habits.'
+                      : 'Hable will remind you each day at these times.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.warmGray.withValues(alpha: 0.9),
                   ),
                 ),
-                if (isDenied)
+                if (hasDenied)
                   Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: OutlinedButton.icon(
-                      onPressed: () => reminders.openSettings(),
+                      onPressed: () => ref.read(localReminderServiceProvider).openSettings(),
                       icon: const Icon(Icons.settings),
                       label: const Text('Enable in System Settings'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.error,
-                        side: BorderSide(color: Theme.of(context).colorScheme.error),
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                   ),
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final initial = TimeOfDay(hour: hour, minute: minute);
-                        final picked = await showTimePicker(
-                          context: context,
-                          initialTime: initial,
-                        );
-                        if (picked == null || !context.mounted) return;
-                        if (!enabled) {
-                          await actions.updateReminderPreferenceTime(
-                            userId: userId,
-                            enabled: false,
-                            hour: picked.hour,
-                            minute: picked.minute,
-                          );
-                        } else {
-                          final hasPerm = await reminders.checkPermission();
-                          if (!hasPerm) {
-                            if (!context.mounted) return;
-                            final proceed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Allow Reminders'),
-                                content: const Text(
-                                  'Hable needs notification permissions to send you daily reminders. You can turn this off at any time.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
-                                    child: const Text('Continue'),
-                                  ),
-                                ],
+                if (settings.isNotEmpty) ...[
+                  for (final setting in settings)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final initial = TimeOfDay(hour: setting.hour, minute: setting.minute);
+                                final picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: initial,
+                                );
+                                if (picked == null || !context.mounted) return;
+                                await actions.updateDailyReminder(
+                                  setting: setting,
+                                  enabled: setting.isEnabled,
+                                  hour: picked.hour,
+                                  minute: picked.minute,
+                                );
+                              },
+                              icon: const Icon(Icons.schedule_rounded),
+                              label: Text(_formatReminderTime(setting.hour, setting.minute)),
+                              style: OutlinedButton.styleFrom(
+                                alignment: Alignment.centerLeft,
                               ),
-                            );
-                            if (proceed != true) return;
-                          }
-
-                          if (!context.mounted) return;
-                          await actions.updateDailyReminder(
-                            userId: userId,
-                            enabled: true,
-                            hour: picked.hour,
-                            minute: picked.minute,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.schedule_rounded),
-                      label: Text('Time: $timeLabel'),
-                    ),
-                    if (enabled)
-                      TextButton(
-                        onPressed: () async {
-                          await actions.updateDailyReminder(
-                            userId: userId,
-                            enabled: false,
-                            hour: hour,
-                            minute: minute,
-                          );
-                        },
-                        child: const Text('Turn off'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Switch(
+                            value: setting.isEnabled,
+                            onChanged: (value) async {
+                              await actions.updateDailyReminder(
+                                setting: setting,
+                                enabled: value,
+                                hour: setting.hour,
+                                minute: setting.minute,
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () async {
+                              await actions.removeDailyReminder(setting);
+                            },
+                          ),
+                        ],
                       ),
-                  ],
+                    ),
+                  const SizedBox(height: 8),
+                ],
+                FilledButton.icon(
+                  onPressed: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: const TimeOfDay(hour: 20, minute: 0),
+                    );
+                    if (picked == null || !context.mounted) return;
+                    await actions.addDailyReminder(
+                      userId: userId,
+                      hour: picked.hour,
+                      minute: picked.minute,
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Time'),
                 ),
               ],
             ),
           ),
         );
       },
-      loading: () => const SizedBox.shrink(),
-      error: (error, _) => Text('Error: $error'),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => Text('Error loading reminders: $e'),
     );
   }
 
@@ -1469,6 +1449,11 @@ class _HabitListTile extends ConsumerWidget {
       loading: () => PartnershipRole.owner,
       error: (_, _) => PartnershipRole.owner,
     );
+    final hasPartners = partnersAsync.when(
+      data: (partners) => partners.isNotEmpty,
+      loading: () => false,
+      error: (_, _) => false,
+    );
     final canEdit = role == PartnershipRole.owner;
     final habitMeta = standardHabitForTitle(habit.title);
 
@@ -1492,7 +1477,11 @@ class _HabitListTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${habit.targetDuration} days · ${role.name}'),
+          Text(
+            isActive
+                ? '${habit.currentDuration} days left · ${role.name}'
+                : '${habit.targetDuration} day challenge · ${role.name}',
+          ),
           const SizedBox(height: 6),
           partnersAsync.when(
             data: (partners) => HabitPartnerRow(
@@ -1504,49 +1493,23 @@ class _HabitListTile extends ConsumerWidget {
           ),
         ],
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 20),
-            onPressed: canEdit
-                ? () => HabitFormSheet.show(context, existingHabit: habit)
-                : null,
-          ),
-          if (isActive)
-            IconButton(
-              icon: const Icon(
-                Icons.archive_outlined,
-                size: 20,
-                color: AppTheme.overdueRose,
-              ),
-              onPressed: canEdit
-                  ? () => ref
-                        .read(habitActionsProvider)
-                        .archiveHabit(habit.habitId)
-                  : null,
-            )
-          else
-            IconButton(
-              icon: const Icon(
-                Icons.unarchive_outlined,
-                size: 20,
-                color: AppTheme.sageGreen,
-              ),
-              onPressed: canEdit
-                  ? () => ref
-                        .read(habitActionsProvider)
-                        .restoreHabit(habit.habitId)
-                  : null,
-            ),
-          IconButton(
-            icon: const Icon(
-              Icons.delete_outline,
-              size: 20,
-              color: AppTheme.overdueRose,
-            ),
-            onPressed: canEdit
-                ? () async {
+      trailing: canEdit
+          ? PopupMenuButton<String>(
+              tooltip: 'Open habit actions',
+              icon: const Icon(Icons.more_horiz_rounded),
+              onSelected: (value) async {
+                final actions = ref.read(habitActionsProvider);
+                switch (value) {
+                  case 'edit':
+                    HabitFormSheet.show(context, existingHabit: habit);
+                    break;
+                  case 'archive':
+                    await actions.archiveHabit(habit.habitId);
+                    break;
+                  case 'restore':
+                    await actions.restoreHabit(habit.habitId);
+                    break;
+                  case 'delete':
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (dialogContext) => AlertDialog(
@@ -1568,17 +1531,57 @@ class _HabitListTile extends ConsumerWidget {
                         ],
                       ),
                     );
-
                     if (confirmed == true) {
-                      await ref
-                          .read(habitActionsProvider)
-                          .deleteHabit(habit.habitId);
+                      await actions.deleteHabit(habit.habitId);
                     }
-                  }
-                : null,
-          ),
-        ],
-      ),
+                    break;
+                  case 'rerun':
+                    await actions.rerunHabit(habit.habitId);
+                    break;
+                  case 'history':
+                    await showModalBottomSheet<void>(
+                      context: context,
+                      builder: (_) => _HabitHistorySheet(habit: habit),
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => isActive
+                  ? [
+                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      const PopupMenuItem(
+                        value: 'archive',
+                        child: Text('Archive'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: AppTheme.overdueRose),
+                        ),
+                      ),
+                    ]
+                  : [
+                      const PopupMenuItem(
+                        value: 'history',
+                        child: Text('View History'),
+                      ),
+                      if (!hasPartners)
+                        const PopupMenuItem(
+                          value: 'rerun',
+                          child: Text('Rerun'),
+                        ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: AppTheme.overdueRose),
+                        ),
+                      ),
+                    ],
+            )
+          : null,
+      isThreeLine: true,
     );
   }
 
@@ -1599,6 +1602,93 @@ class _HabitListTile extends ConsumerWidget {
     } catch (_) {
       return AppTheme.sageGreen;
     }
+  }
+}
+
+class _HabitHistorySheet extends ConsumerWidget {
+  final Habit habit;
+
+  const _HabitHistorySheet({required this.habit});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final logsAsync = ref.watch(habitLogsProvider(habit.habitId));
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(habit.title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Archived challenge history',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: logsAsync.when(
+                data: (logs) {
+                  if (logs.isEmpty) {
+                    return const Text('No history recorded yet.');
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: logs.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final log = logs[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(_historyLabel(log)),
+                        subtitle: Text(_formatHistoryDate(log.actionDate)),
+                        dense: true,
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, _) => const Text('Unable to load habit history.'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _historyLabel(Log log) {
+    if (log.status == LogStatus.completed) {
+      return 'Completed';
+    }
+    return log.journalNote?.trim().isNotEmpty == true
+        ? 'Skipped: ${log.journalNote!.trim()}'
+        : 'Skipped';
+  }
+
+  String _formatHistoryDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[date.month - 1];
+    final day = date.day.toString().padLeft(2, '0');
+    return '$month $day, ${date.year}';
   }
 }
 
@@ -1782,5 +1872,34 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: AppTheme.surface,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
 import 'package:hable/services/connectivity_service.dart';
@@ -18,6 +17,7 @@ class FakeLocalReminderService extends LocalReminderService {
 
   @override
   Future<void> scheduleReminder({
+    required int notificationId,
     required String userId,
     required ReminderType type,
     required int hour,
@@ -27,6 +27,7 @@ class FakeLocalReminderService extends LocalReminderService {
     String? payload,
   }) async {
     scheduledCalls.add({
+      'notificationId': notificationId,
       'userId': userId,
       'type': type,
       'hour': hour,

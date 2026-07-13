@@ -2,7 +2,7 @@
 
 HIGH PRIORITY:
 
-- after habit complition, find a way and a place to archive it. now, it stays on the home screen. it should be archived as an achievement. possible to rerun and tracking again as an option in long-press menu. develope the the long-press menu deeply: for active habits, we can add, delete, edit, reroll reminder time, archive, nudge-friend, etc. do for other categories too. think deeply what else we can add here.
+- after habit complition, find a way and a place to archive them. now, it stays on the home screen. it should be archived as an achievement. possible to rerun and tracking again as an option in long-press menu. develope the the long-press menu deeply: for active habits, we can add, delete, edit, reroll reminder time, archive, nudge-friend, etc. do for other categories too. think deeply what else we can add here.
 
 UI improvements: the 3d animation in screen has been ocupied most the viewport and I think made it heavy, remove it or move it to the header or footer. it is not neede on the top of the list of active habits.
 make possible to navigate between main pages like swipping availble for switching tabs on social page., a smooth navigation, through all three pages.
@@ -18,4 +18,12 @@ FUTURE:
 - wrap the partners icons with this component (npx @21st-dev/cli add preetsuthar17/avatar-group) for partner icons in daily schedule cards and some other places. make it small and non-distracting and beautiful. preserve their rings, the nudge buttoon will stay as it is and applies for the rest not checked-in partners. also think deeper what else we can do. expand the partner list which have overlapped by long-press. make the touch area of nudge button slightly larger for easier tapping.
 
 - social gamification: develop an "assist" mechanic for the nudge system. right now nudges are just alerts. If a guy nudges a friend, they should get an assist point or support badge or idk something that would make them actually want to nudge people. this gamifies the outer expectation for "obligers" making it feel like a co-op game. we can implement this by checking the lastNudgeAt timestamp during the completion payload to the backend. think deeply how to balance this so nudges don't get spammed
+- show the 3d rendered animation just on scoial page, at friends section an pin it there, the 3d rendered animation should be removed from homepage and other pages. make it an element of this page. put in a card element design; for lowering the distraction, and using the viewport spaces more efficient.
 
+- on the social page the notifications on activity tab, 
+  - the time trend seems not accurate
+  - don't reorder the list based on user's click; no reordring needed. order them DESC based on time. 
+  - decrease the gap between notification on the list
+  - for nudging notifs, use the shared habit name; e.g. [name] nudged you to check-in on [habit_name]. 
+
+- empty state of home page, we still have two adding habit button, the FAB is enough.

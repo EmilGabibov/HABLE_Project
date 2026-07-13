@@ -66,6 +66,11 @@ A core part of the Hable experience is how it feels to interact with habits acro
 - **Proposed Adjustment:** Integrate the 🔥 (streak) into the progress bar elegantly.
   > **Note on Streaks vs. Days:** The user shouldn't be overloaded with numbers. If a habit runs for 30 days, showing both "Day 14/30" and "🔥 14 Streak" is redundant. **Recommendation:** For challenge-based habits (e.g., 30-day challenge), emphasize the "Day X/Y" progress. For continuous lifestyle habits (no end date), emphasize the "🔥 Streak".
 
+### 5.3.1 Completed Challenge Lifecycle
+- Solo challenge habits that reach zero remaining days should leave Home automatically by moving into Profile's archived-history lane rather than staying as active cards or turning into a second badge system.
+- Backend-owned achievements remain the canonical badge surface. Completed habits belong to history, not to a duplicate local achievements collection.
+- Shared habits are different: a participant's daily completion must not auto-archive the shared metadata row until the explicit shared-lifecycle rules say so.
+
 ### 5.4 Streak Milestones
 - **Research:** Variable rewards or unexpected celebrations for milestones (7 days, 30 days) significantly boost retention.
 - **Proposed UX (Future):** Special animations and intense haptics when hitting a major streak milestone.

@@ -32,6 +32,7 @@ const partnershipRoles = ['owner', 'partner', 'supporter'] as const
 type PartnershipRole = (typeof partnershipRoles)[number]
 const completedCheckInPoints = 5
 const sharedHabitBonusPoints = 5
+const nudgeAssistPoints = 2
 const streakBadgeThresholds = [10, 100, 1000] as const
 const levelTiers = [
   { id: 'newbie', name: 'Newbie', minPoints: 0 },
@@ -1503,12 +1504,22 @@ app.post('/api/social/nudge', async (c) => {
     return c.json({ error: 'Unauthorized: Not a participant in a shared habit' }, 403)
   }
 
+  const today = new Date().toISOString().split('T')[0]
+  const capKey = habit_id
+    ? `nudge_limit:${sender_id}:${target_user_id}:${habit_id}:${today}`
+    : `nudge_limit:${sender_id}:${target_user_id}:any:${today}`
+
+  if (await c.env.NUDGES.get(capKey)) {
+    return c.json({ success: true, message: 'Nudge already sent today' })
+  }
+
   const key = habit_id
     ? `nudge:${target_user_id}:${sender_id}:${habit_id}`
     : `nudge:${target_user_id}:${sender_id}`
   
   // Set in KV with 24 hours TTL (86400 seconds)
   await c.env.NUDGES.put(key, new Date().toISOString(), { expirationTtl: 86400 })
+  await c.env.NUDGES.put(capKey, '1', { expirationTtl: 86400 })
   await unlockAchievement(c.env, sender_id, 'first_nudge', `nudge:${sender_id}:${target_user_id}`)
 
   return c.json({ success: true, message: 'Nudge sent successfully' })
@@ -1627,7 +1638,16 @@ app.post('/api/sync/habit', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
-  const { habit_id, title, target_duration, color_hex, status, created_at, updated_at } = await c.req.json()
+  const {
+    habit_id,
+    title,
+    target_duration,
+    color_hex,
+    status,
+    created_at,
+    updated_at,
+    reset_progress,
+  } = await c.req.json()
 
   if (!habit_id || !title || target_duration === undefined) {
     return c.json({ error: 'Missing required habit fields' }, 400)
@@ -1636,6 +1656,20 @@ app.post('/api/sync/habit', async (c) => {
   const existingHabit = await c.env.DB.prepare('SELECT user_id FROM habits WHERE id = ?').bind(habit_id).first<{ user_id: string }>()
   if (existingHabit && existingHabit.user_id !== userId) {
     return c.json({ error: 'Unauthorized: Only owners can update or archive a habit' }, 403)
+  }
+
+  if (reset_progress === true) {
+    const participantCountResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as participant_count FROM partnerships WHERE habit_id = ?'
+    ).bind(habit_id).first<{ participant_count: number | string | null }>()
+    const participantCount = Number(participantCountResult?.participant_count ?? 0)
+
+    if (participantCount > 1) {
+      return c.json({ error: 'Reset progress is only supported for solo habits' }, 409)
+    }
+
+    await c.env.DB.prepare('DELETE FROM habit_logs WHERE habit_id = ?').bind(habit_id).run()
+    await c.env.DB.prepare('DELETE FROM habit_progress WHERE user_id = ? AND habit_id = ?').bind(userId, habit_id).run()
   }
 
   await c.env.DB.prepare(`
@@ -1719,6 +1753,28 @@ app.post('/api/sync/log', async (c) => {
     await unlockAchievement(c.env, userId, 'first_check_in', `check_in:${log_id}`)
     await unlockStreakBadges(c.env, userId, habit_id, log_id)
     await awardSharedHabitBonusIfReady(c.env, habit_id, toLogDate(resolvedLoggedAt))
+
+    // Check for assist points (nudge within 4 hours)
+    const nudgePrefix = `nudge:${userId}:`
+    const nudgeList = await c.env.NUDGES.list({ prefix: nudgePrefix })
+    for (const key of nudgeList.keys) {
+      const parts = key.name.slice(nudgePrefix.length).split(':')
+      const senderId = parts[0]
+      const nudgeHabitId = parts.length > 1 ? parts[1] : null
+      
+      if (!nudgeHabitId || nudgeHabitId === habit_id) {
+        const nudgedAtStr = await c.env.NUDGES.get(key.name)
+        if (nudgedAtStr) {
+          const nudgedAt = new Date(nudgedAtStr)
+          const loggedAtDate = new Date(resolvedLoggedAt)
+          const diffMs = loggedAtDate.getTime() - nudgedAt.getTime()
+          if (diffMs > 0 && diffMs <= 4 * 60 * 60 * 1000) {
+            await awardScoreEvent(c.env, senderId, `assist:${log_id}:${senderId}`, nudgeAssistPoints, 'nudge_assist')
+            await c.env.NUDGES.delete(key.name)
+          }
+        }
+      }
+    }
   }
 
   return c.json({ success: true, accepted: isNewLog })
@@ -1922,19 +1978,16 @@ app.get('/calendar/:token.ics', async (c) => {
 
   const userId = tokenRecord.user_id
 
-  // Fetch active habits for the user (rolling 30-day window)
+  // Fetch active habits for the user (live progress)
   const { results: habits } = await c.env.DB.prepare(`
     SELECT
       h.id,
       h.title,
       h.target_duration,
-      COUNT(DISTINCT hl.id) as completed_count
+      COALESCE(hp.current_duration, 0) as completed_count
     FROM habits h
-    LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.user_id = h.user_id
-      AND hl.status = 'completed'
-      AND hl.logged_at >= date('now', '-30 days')
+    LEFT JOIN habit_progress hp ON h.id = hp.habit_id AND hp.user_id = h.user_id
     WHERE h.user_id = ? AND h.status = 'active'
-    GROUP BY h.id
   `).bind(userId).all()
 
   // Fetch user info for calendar event
@@ -1948,12 +2001,16 @@ app.get('/calendar/:token.ics', async (c) => {
   const now = new Date()
   const prodId = '-//Hable//Hable Calendar//EN'
 
+  const tzParam = c.req.query('tz') || 'UTC'
+  const alarmHourStr = c.req.query('alarmHour')
+  const alarmMinuteStr = c.req.query('alarmMinute')
+
   let icsContent = 'BEGIN:VCALENDAR\r\n'
   icsContent += 'VERSION:2.0\r\n'
   icsContent += `PRODID:${prodId}\r\n`
   icsContent += 'CALSCALE:GREGORIAN\r\n'
   icsContent += `X-WR-CALNAME:${escapeIcsText(username)}'s Habits\r\n`
-  icsContent += 'X-WR-TIMEZONE:UTC\r\n'
+  icsContent += `X-WR-TIMEZONE:${tzParam}\r\n`
 
   const today = new Date()
   const endDate = new Date(today)
@@ -1963,13 +2020,10 @@ app.get('/calendar/:token.ics', async (c) => {
     const dateStr = d.toISOString().split('T')[0]
     const events = habits as Array<{id: string; title: string; target_duration: number; completed_count: number}>
 
-    if (events && events.length > 0) {
-      const summary = `${events.map((h: {title: string; completed_count: number; target_duration: number}) => h.title).join(', ')}`
-      const description = events
-        .map((h: {title: string; completed_count: number; target_duration: number}) => `${h.title}: ${h.completed_count}/${h.target_duration}`)
-        .join('\\n')
-
-      const uid = `${dateStr}-${userId}@hable.local`
+    for (const habit of events) {
+      const summary = habit.title
+      const description = `${habit.title}: ${habit.completed_count}/${habit.target_duration} completed`
+      const uid = `${dateStr}-${habit.id}@hable.local`
       const dtstamp = formatIcsDate(now)
 
       icsContent += 'BEGIN:VEVENT\r\n'
@@ -1979,6 +2033,17 @@ app.get('/calendar/:token.ics', async (c) => {
       icsContent += `SUMMARY:${escapeIcsText(summary)}\r\n`
       icsContent += `DESCRIPTION:${escapeIcsText(description)}\r\n`
       icsContent += 'STATUS:CONFIRMED\r\n'
+
+      if (alarmHourStr) {
+        const h = parseInt(alarmHourStr) || 20
+        const m = parseInt(alarmMinuteStr || '0') || 0
+        icsContent += 'BEGIN:VALARM\r\n'
+        icsContent += 'ACTION:DISPLAY\r\n'
+        icsContent += 'DESCRIPTION:Habit Reminder\r\n'
+        icsContent += `TRIGGER;RELATED=START:PT${h}H${m > 0 ? m + 'M' : ''}\r\n`
+        icsContent += 'END:VALARM\r\n'
+      }
+
       icsContent += 'END:VEVENT\r\n'
     }
   }

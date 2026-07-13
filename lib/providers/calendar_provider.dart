@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import '../config/api_config.dart' show apiBaseUrl;
 import 'auth_provider.dart';
+import 'database_provider.dart';
+import '../database/tables.dart';
 
 class CalendarFeedState {
   final bool isLoading;
@@ -31,6 +34,28 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
     return CalendarFeedState();
   }
 
+  Future<String> _appendLocalSettingsToUrl(String url) async {
+    try {
+      final tz = await FlutterTimezone.getLocalTimezone();
+      final db = ref.read(databaseProvider);
+      final userId = ref.read(authProvider).userId;
+
+      String modifiedUrl = '$url?tz=${Uri.encodeComponent(tz.toString())}';
+
+      if (userId != null) {
+        final reminderSettings = await db.getReminderSettings(userId, ReminderType.dailyHabit);
+        final reminderSetting = reminderSettings.where((r) => r.isEnabled).firstOrNull;
+        if (reminderSetting != null) {
+          modifiedUrl = '$modifiedUrl&alarmHour=${reminderSetting.hour}&alarmMinute=${reminderSetting.minute}';
+        }
+      }
+      return modifiedUrl;
+    } catch (e) {
+      print('Error appending timezone/alarm to calendar feed URL: $e');
+      return url;
+    }
+  }
+
   Future<void> fetchCalendarFeedUrl() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -52,9 +77,15 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        String? feedUrl = data['feed_url'] as String?;
+
+        if (feedUrl != null) {
+          feedUrl = await _appendLocalSettingsToUrl(feedUrl);
+        }
+
         state = state.copyWith(
           isLoading: false,
-          feedUrl: data['feed_url'] as String?,
+          feedUrl: feedUrl,
         );
       } else {
         state = state.copyWith(
@@ -88,9 +119,15 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        String? feedUrl = data['feed_url'] as String?;
+
+        if (feedUrl != null) {
+          feedUrl = await _appendLocalSettingsToUrl(feedUrl);
+        }
+
         state = state.copyWith(
           isLoading: false,
-          feedUrl: data['feed_url'] as String?,
+          feedUrl: feedUrl,
         );
       } else {
         state = state.copyWith(

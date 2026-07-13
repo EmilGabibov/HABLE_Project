@@ -15,6 +15,7 @@ void main() {
         status: HabitStatus.active,
         colorHex: 'FF9CAF88',
         updatedAt: DateTime(2026),
+        createdAt: DateTime(2026),
         isSynced: true,
         targetDuration: 30, // 30 day challenge
         currentDuration: 0,

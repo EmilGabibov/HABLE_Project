@@ -67,7 +67,7 @@ final class ResistanceProvider
   }
 }
 
-String _$resistanceHash() => r'67e3aa25e2a84ab8669baa91df22033c31185600';
+String _$resistanceHash() => r'2db5127a0f0d8f40702c3924cb5ea802fce9e9ce';
 
 /// Isolates the "Mud" physics math from the UI thread.
 /// Input: currentDay, totalDuration

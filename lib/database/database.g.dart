@@ -720,6 +720,18 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     requiredDuringInsert: false,
     defaultValue: const Constant('FF9CAF88'),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -757,6 +769,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     currentDuration,
     status,
     colorHex,
+    createdAt,
     updatedAt,
     isSynced,
   ];
@@ -830,6 +843,12 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         colorHex.isAcceptableOrUnknown(data['color_hex']!, _colorHexMeta),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -885,6 +904,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.string,
         data['${effectivePrefix}color_hex'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -917,6 +940,7 @@ class Habit extends DataClass implements Insertable<Habit> {
   /// Hex color string (e.g. 'FF9CAF88') for ring/avatar tinting. Assigned on
   /// creation from a fixed pastel palette; never null after migration.
   final String colorHex;
+  final DateTime createdAt;
   final DateTime updatedAt;
   final bool isSynced;
   const Habit({
@@ -928,6 +952,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     required this.currentDuration,
     required this.status,
     required this.colorHex,
+    required this.createdAt,
     required this.updatedAt,
     required this.isSynced,
   });
@@ -946,6 +971,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       );
     }
     map['color_hex'] = Variable<String>(colorHex);
+    map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_synced'] = Variable<bool>(isSynced);
     return map;
@@ -961,6 +987,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       currentDuration: Value(currentDuration),
       status: Value(status),
       colorHex: Value(colorHex),
+      createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isSynced: Value(isSynced),
     );
@@ -982,6 +1009,7 @@ class Habit extends DataClass implements Insertable<Habit> {
         serializer.fromJson<String>(json['status']),
       ),
       colorHex: serializer.fromJson<String>(json['colorHex']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
     );
@@ -1000,6 +1028,7 @@ class Habit extends DataClass implements Insertable<Habit> {
         $HabitsTable.$converterstatus.toJson(status),
       ),
       'colorHex': serializer.toJson<String>(colorHex),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
     };
@@ -1014,6 +1043,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     int? currentDuration,
     HabitStatus? status,
     String? colorHex,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
   }) => Habit(
@@ -1025,6 +1055,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     currentDuration: currentDuration ?? this.currentDuration,
     status: status ?? this.status,
     colorHex: colorHex ?? this.colorHex,
+    createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     isSynced: isSynced ?? this.isSynced,
   );
@@ -1042,6 +1073,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           : this.currentDuration,
       status: data.status.present ? data.status.value : this.status,
       colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
     );
@@ -1058,6 +1090,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('currentDuration: $currentDuration, ')
           ..write('status: $status, ')
           ..write('colorHex: $colorHex, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced')
           ..write(')'))
@@ -1074,6 +1107,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     currentDuration,
     status,
     colorHex,
+    createdAt,
     updatedAt,
     isSynced,
   );
@@ -1089,6 +1123,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.currentDuration == this.currentDuration &&
           other.status == this.status &&
           other.colorHex == this.colorHex &&
+          other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.isSynced == this.isSynced);
 }
@@ -1102,6 +1137,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<int> currentDuration;
   final Value<HabitStatus> status;
   final Value<String> colorHex;
+  final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isSynced;
   final Value<int> rowid;
@@ -1114,6 +1150,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.currentDuration = const Value.absent(),
     this.status = const Value.absent(),
     this.colorHex = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1127,6 +1164,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     required int currentDuration,
     required HabitStatus status,
     this.colorHex = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1145,6 +1183,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<int>? currentDuration,
     Expression<String>? status,
     Expression<String>? colorHex,
+    Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isSynced,
     Expression<int>? rowid,
@@ -1158,6 +1197,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (currentDuration != null) 'current_duration': currentDuration,
       if (status != null) 'status': status,
       if (colorHex != null) 'color_hex': colorHex,
+      if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isSynced != null) 'is_synced': isSynced,
       if (rowid != null) 'rowid': rowid,
@@ -1173,6 +1213,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<int>? currentDuration,
     Value<HabitStatus>? status,
     Value<String>? colorHex,
+    Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<bool>? isSynced,
     Value<int>? rowid,
@@ -1186,6 +1227,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       currentDuration: currentDuration ?? this.currentDuration,
       status: status ?? this.status,
       colorHex: colorHex ?? this.colorHex,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
       rowid: rowid ?? this.rowid,
@@ -1221,6 +1263,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (colorHex.present) {
       map['color_hex'] = Variable<String>(colorHex.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -1244,6 +1289,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('currentDuration: $currentDuration, ')
           ..write('status: $status, ')
           ..write('colorHex: $colorHex, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('rowid: $rowid')
@@ -7483,6 +7529,19 @@ class $ReminderSettingsTable extends ReminderSettings
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ReminderSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
   @override
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
@@ -7565,6 +7624,7 @@ class $ReminderSettingsTable extends ReminderSettings
   );
   @override
   List<GeneratedColumn> get $columns => [
+    id,
     userId,
     type,
     isEnabled,
@@ -7585,6 +7645,9 @@ class $ReminderSettingsTable extends ReminderSettings
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
     if (data.containsKey('user_id')) {
       context.handle(
         _userIdMeta,
@@ -7630,11 +7693,15 @@ class $ReminderSettingsTable extends ReminderSettings
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {userId, type};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   ReminderSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ReminderSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
       userId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
@@ -7678,6 +7745,7 @@ class $ReminderSettingsTable extends ReminderSettings
 }
 
 class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
+  final int id;
   final String userId;
   final ReminderType type;
   final bool isEnabled;
@@ -7686,6 +7754,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   final bool isPermissionDenied;
   final DateTime updatedAt;
   const ReminderSetting({
+    required this.id,
     required this.userId,
     required this.type,
     required this.isEnabled,
@@ -7697,6 +7766,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
     map['user_id'] = Variable<String>(userId);
     {
       map['type'] = Variable<String>(
@@ -7713,6 +7783,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
 
   ReminderSettingsCompanion toCompanion(bool nullToAbsent) {
     return ReminderSettingsCompanion(
+      id: Value(id),
       userId: Value(userId),
       type: Value(type),
       isEnabled: Value(isEnabled),
@@ -7729,6 +7800,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ReminderSetting(
+      id: serializer.fromJson<int>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
       type: $ReminderSettingsTable.$convertertype.fromJson(
         serializer.fromJson<String>(json['type']),
@@ -7744,6 +7816,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
       'userId': serializer.toJson<String>(userId),
       'type': serializer.toJson<String>(
         $ReminderSettingsTable.$convertertype.toJson(type),
@@ -7757,6 +7830,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   }
 
   ReminderSetting copyWith({
+    int? id,
     String? userId,
     ReminderType? type,
     bool? isEnabled,
@@ -7765,6 +7839,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
     bool? isPermissionDenied,
     DateTime? updatedAt,
   }) => ReminderSetting(
+    id: id ?? this.id,
     userId: userId ?? this.userId,
     type: type ?? this.type,
     isEnabled: isEnabled ?? this.isEnabled,
@@ -7775,6 +7850,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   );
   ReminderSetting copyWithCompanion(ReminderSettingsCompanion data) {
     return ReminderSetting(
+      id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
       type: data.type.present ? data.type.value : this.type,
       isEnabled: data.isEnabled.present ? data.isEnabled.value : this.isEnabled,
@@ -7790,6 +7866,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   @override
   String toString() {
     return (StringBuffer('ReminderSetting(')
+          ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('type: $type, ')
           ..write('isEnabled: $isEnabled, ')
@@ -7803,6 +7880,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
 
   @override
   int get hashCode => Object.hash(
+    id,
     userId,
     type,
     isEnabled,
@@ -7815,6 +7893,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ReminderSetting &&
+          other.id == this.id &&
           other.userId == this.userId &&
           other.type == this.type &&
           other.isEnabled == this.isEnabled &&
@@ -7825,6 +7904,7 @@ class ReminderSetting extends DataClass implements Insertable<ReminderSetting> {
 }
 
 class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
+  final Value<int> id;
   final Value<String> userId;
   final Value<ReminderType> type;
   final Value<bool> isEnabled;
@@ -7832,8 +7912,8 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
   final Value<int> minute;
   final Value<bool> isPermissionDenied;
   final Value<DateTime> updatedAt;
-  final Value<int> rowid;
   const ReminderSettingsCompanion({
+    this.id = const Value.absent(),
     this.userId = const Value.absent(),
     this.type = const Value.absent(),
     this.isEnabled = const Value.absent(),
@@ -7841,9 +7921,9 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     this.minute = const Value.absent(),
     this.isPermissionDenied = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   ReminderSettingsCompanion.insert({
+    this.id = const Value.absent(),
     required String userId,
     this.type = const Value.absent(),
     this.isEnabled = const Value.absent(),
@@ -7851,9 +7931,9 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     this.minute = const Value.absent(),
     this.isPermissionDenied = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
   }) : userId = Value(userId);
   static Insertable<ReminderSetting> custom({
+    Expression<int>? id,
     Expression<String>? userId,
     Expression<String>? type,
     Expression<bool>? isEnabled,
@@ -7861,9 +7941,9 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     Expression<int>? minute,
     Expression<bool>? isPermissionDenied,
     Expression<DateTime>? updatedAt,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
       if (type != null) 'type': type,
       if (isEnabled != null) 'is_enabled': isEnabled,
@@ -7872,11 +7952,11 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
       if (isPermissionDenied != null)
         'is_permission_denied': isPermissionDenied,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   ReminderSettingsCompanion copyWith({
+    Value<int>? id,
     Value<String>? userId,
     Value<ReminderType>? type,
     Value<bool>? isEnabled,
@@ -7884,9 +7964,9 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     Value<int>? minute,
     Value<bool>? isPermissionDenied,
     Value<DateTime>? updatedAt,
-    Value<int>? rowid,
   }) {
     return ReminderSettingsCompanion(
+      id: id ?? this.id,
       userId: userId ?? this.userId,
       type: type ?? this.type,
       isEnabled: isEnabled ?? this.isEnabled,
@@ -7894,13 +7974,15 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
       minute: minute ?? this.minute,
       isPermissionDenied: isPermissionDenied ?? this.isPermissionDenied,
       updatedAt: updatedAt ?? this.updatedAt,
-      rowid: rowid ?? this.rowid,
     );
   }
 
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
     }
@@ -7924,23 +8006,20 @@ class ReminderSettingsCompanion extends UpdateCompanion<ReminderSetting> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
   @override
   String toString() {
     return (StringBuffer('ReminderSettingsCompanion(')
+          ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('type: $type, ')
           ..write('isEnabled: $isEnabled, ')
           ..write('hour: $hour, ')
           ..write('minute: $minute, ')
           ..write('isPermissionDenied: $isPermissionDenied, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('rowid: $rowid')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -9053,6 +9132,7 @@ typedef $$HabitsTableCreateCompanionBuilder =
       required int currentDuration,
       required HabitStatus status,
       Value<String> colorHex,
+      Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
       Value<int> rowid,
@@ -9067,6 +9147,7 @@ typedef $$HabitsTableUpdateCompanionBuilder =
       Value<int> currentDuration,
       Value<HabitStatus> status,
       Value<String> colorHex,
+      Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
       Value<int> rowid,
@@ -9172,6 +9253,11 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<String> get colorHex => $composableBuilder(
     column: $table.colorHex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9303,6 +9389,11 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -9370,6 +9461,9 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<String> get colorHex =>
       $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -9491,6 +9585,7 @@ class $$HabitsTableTableManager
                 Value<int> currentDuration = const Value.absent(),
                 Value<HabitStatus> status = const Value.absent(),
                 Value<String> colorHex = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9503,6 +9598,7 @@ class $$HabitsTableTableManager
                 currentDuration: currentDuration,
                 status: status,
                 colorHex: colorHex,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 rowid: rowid,
@@ -9517,6 +9613,7 @@ class $$HabitsTableTableManager
                 required int currentDuration,
                 required HabitStatus status,
                 Value<String> colorHex = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9529,6 +9626,7 @@ class $$HabitsTableTableManager
                 currentDuration: currentDuration,
                 status: status,
                 colorHex: colorHex,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 rowid: rowid,
@@ -13113,6 +13211,7 @@ typedef $$NotificationEventsTableProcessedTableManager =
     >;
 typedef $$ReminderSettingsTableCreateCompanionBuilder =
     ReminderSettingsCompanion Function({
+      Value<int> id,
       required String userId,
       Value<ReminderType> type,
       Value<bool> isEnabled,
@@ -13120,10 +13219,10 @@ typedef $$ReminderSettingsTableCreateCompanionBuilder =
       Value<int> minute,
       Value<bool> isPermissionDenied,
       Value<DateTime> updatedAt,
-      Value<int> rowid,
     });
 typedef $$ReminderSettingsTableUpdateCompanionBuilder =
     ReminderSettingsCompanion Function({
+      Value<int> id,
       Value<String> userId,
       Value<ReminderType> type,
       Value<bool> isEnabled,
@@ -13131,7 +13230,6 @@ typedef $$ReminderSettingsTableUpdateCompanionBuilder =
       Value<int> minute,
       Value<bool> isPermissionDenied,
       Value<DateTime> updatedAt,
-      Value<int> rowid,
     });
 
 class $$ReminderSettingsTableFilterComposer
@@ -13143,6 +13241,11 @@ class $$ReminderSettingsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get userId => $composableBuilder(
     column: $table.userId,
     builder: (column) => ColumnFilters(column),
@@ -13189,6 +13292,11 @@ class $$ReminderSettingsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get userId => $composableBuilder(
     column: $table.userId,
     builder: (column) => ColumnOrderings(column),
@@ -13234,6 +13342,9 @@ class $$ReminderSettingsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
@@ -13295,6 +13406,7 @@ class $$ReminderSettingsTableTableManager
               $$ReminderSettingsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<int> id = const Value.absent(),
                 Value<String> userId = const Value.absent(),
                 Value<ReminderType> type = const Value.absent(),
                 Value<bool> isEnabled = const Value.absent(),
@@ -13302,8 +13414,8 @@ class $$ReminderSettingsTableTableManager
                 Value<int> minute = const Value.absent(),
                 Value<bool> isPermissionDenied = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => ReminderSettingsCompanion(
+                id: id,
                 userId: userId,
                 type: type,
                 isEnabled: isEnabled,
@@ -13311,10 +13423,10 @@ class $$ReminderSettingsTableTableManager
                 minute: minute,
                 isPermissionDenied: isPermissionDenied,
                 updatedAt: updatedAt,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
+                Value<int> id = const Value.absent(),
                 required String userId,
                 Value<ReminderType> type = const Value.absent(),
                 Value<bool> isEnabled = const Value.absent(),
@@ -13322,8 +13434,8 @@ class $$ReminderSettingsTableTableManager
                 Value<int> minute = const Value.absent(),
                 Value<bool> isPermissionDenied = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => ReminderSettingsCompanion.insert(
+                id: id,
                 userId: userId,
                 type: type,
                 isEnabled: isEnabled,
@@ -13331,7 +13443,6 @@ class $$ReminderSettingsTableTableManager
                 minute: minute,
                 isPermissionDenied: isPermissionDenied,
                 updatedAt: updatedAt,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

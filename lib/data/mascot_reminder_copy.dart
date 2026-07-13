@@ -27,10 +27,4 @@ class MascotReminderCopyHelper {
     ReminderCopy('Habit time!', 'Let\'s get those habits done.'),
     ReminderCopy('A gentle nudge', 'Time to review your daily goals.'),
   ];
-
-  static const _friendActivityCopies = [
-    ReminderCopy('Friends are active!', 'See what your friends are up to.'),
-    ReminderCopy('Social check-in', 'Check out the latest friend activity.'),
-    ReminderCopy('Stay connected', 'Your friends have updated their habits.'),
-  ];
 }

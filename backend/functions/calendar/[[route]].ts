@@ -55,19 +55,16 @@ app.get('/*', async (c) => {
 
   const userId = tokenRecord.user_id
 
-  // Fetch active habits for the user (rolling 30-day window)
+  // Fetch active habits for the user (live progress)
   const { results: habits } = await c.env.DB.prepare(`
     SELECT
       h.id,
       h.title,
       h.target_duration,
-      COUNT(DISTINCT hl.id) as completed_count
+      COALESCE(hp.current_duration, 0) as completed_count
     FROM habits h
-    LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.user_id = h.user_id
-      AND hl.status = 'completed'
-      AND hl.logged_at >= date('now', '-30 days')
+    LEFT JOIN habit_progress hp ON h.id = hp.habit_id AND hp.user_id = h.user_id
     WHERE h.user_id = ? AND h.status = 'active'
-    GROUP BY h.id
   `).bind(userId).all()
 
   // Fetch user info for calendar event
@@ -100,7 +97,7 @@ app.get('/*', async (c) => {
       const summary = `${events.map((h: {title: string; completed_count: number; target_duration: number}) => h.title).join(', ')}`
       const description = events
         .map((h: {title: string; completed_count: number; target_duration: number}) => `${h.title}: ${h.completed_count}/${h.target_duration}`)
-        .join('\\n')
+        .join('\n')
 
       const uid = `${dateStr}-${userId}@hable.local`
       const dtstamp = formatIcsDate(now)

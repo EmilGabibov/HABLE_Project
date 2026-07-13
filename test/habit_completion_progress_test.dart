@@ -6,7 +6,7 @@ import 'package:hable/database/tables.dart';
 
 void main() {
   test(
-    'completeHabitDay decrements remaining days and completes at zero',
+    'completeHabitDay decrements remaining days and archives solo habits at zero',
     () async {
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
@@ -47,7 +47,13 @@ void main() {
       final afterThree = await db.getHabit(habitId);
       expect(afterThree, isNotNull);
       expect(afterThree!.currentDuration, 0);
-      expect(afterThree.status, HabitStatus.completed);
+      expect(afterThree.status, HabitStatus.finished);
+
+      final activeHabits = await db.watchActiveHabits(userId).first;
+      expect(activeHabits, isEmpty);
+
+      final queue = await db.getPendingSyncItems();
+      expect(queue.last.action, SyncAction.updateHabit);
     },
   );
 

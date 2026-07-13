@@ -14,6 +14,7 @@ import '../providers/quote_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
 import '../providers/notification_providers.dart';
+import '../providers/celebration_provider.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
 import '../models/habit_visual_state.dart';
@@ -24,6 +25,7 @@ import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
 import 'completion_splash_screen.dart';
+import '../widgets/badge_reveal_dialog.dart';
 import '../widgets/milestone_wish_carousel.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -81,6 +83,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
+      if (next.isNotEmpty) {
+        final badge = next.first;
+        final parts = badge.achievementId.replaceAll('_', ' ').split(' ');
+        final title = parts.map((e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '').join(' ');
+        
+        BadgeRevealDialog.show(
+          context,
+          title,
+          'You unlocked a new badge!',
+          () {
+            ref.read(celebrationProvider.notifier).markRevealed(badge.achievementId);
+          },
+        );
+      }
+    });
+
     final habitsAsync = ref.watch(activeHabitsProvider(widget.userId));
     final quoteAsync = ref.watch(quoteProvider);
 
@@ -115,6 +134,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     List<Habit> habits,
     AsyncValue<String> quoteAsync,
   ) {
+    bool allEmpty = true;
+    for (final h in habits) {
+      final log = ref.watch(todaysLogProvider(h.habitId)).value;
+      if (log != null && log.status == LogStatus.completed) {
+        allEmpty = false;
+        break;
+      }
+    }
+
     return CustomScrollView(
       slivers: [
         // Header
@@ -224,35 +252,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        // Daily quote
+        // Daily quote or empty-day encouragement
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.sageGreen.withValues(alpha: 0.08),
+                color: allEmpty ? AppTheme.mutedLavender.withValues(alpha: 0.1) : AppTheme.sageGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
-                  Text('💬', style: TextStyle(fontSize: 24)),
+                  Text(allEmpty ? '🚀' : '💬', style: const TextStyle(fontSize: 24)),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: quoteAsync.when(
-                      data: (quote) => Text(
-                        quote,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                    child: allEmpty 
+                      ? Text(
+                          "A new day, a fresh start! Ready to build your streak today?",
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.mutedLavender,
+                          ),
+                        )
+                      : quoteAsync.when(
+                          data: (quote) => Text(
+                            quote,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontStyle: FontStyle.italic,
+                              color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          loading: () => const HableSkeletonBlock(
+                            width: double.infinity,
+                            height: 14,
+                          ),
+                          error: (_, _) => const SizedBox.shrink(),
                         ),
-                      ),
-                      loading: () => const HableSkeletonBlock(
-                        width: double.infinity,
-                        height: 14,
-                      ),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
                   ),
                 ],
               ),
@@ -505,6 +541,11 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
       loading: () => null,
       error: (_, _) => null,
     );
+    final partners = partnersAsync.when(
+      data: (p) => p,
+      loading: () => const <PartnerSnapshot>[],
+      error: (_, _) => const <PartnerSnapshot>[],
+    );
     final visibleSentNudgeFeedback =
         _sentNudgeFeedback != null &&
             DateTime.now().difference(_sentNudgeFeedback!.queuedAt) <
@@ -636,6 +677,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                           habit,
                           challengeDay,
                           viewerRole,
+                          partners,
                         ),
                       ),
                     ),
@@ -805,10 +847,21 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     Habit habit,
     int currentDay,
     PartnershipRole viewerRole,
+    List<PartnerSnapshot> partners,
   ) async {
+    final db = ref.read(databaseProvider);
+    final currentStreak = await db.getStreak(habit.habitId);
+    final newStreak = currentStreak + 1;
+    final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
+
     // Show transient completion feedback on the ring
     if (mounted) {
-      HapticFeedback.heavyImpact();
+      if (isMilestone) {
+        HapticFeedback.heavyImpact();
+      } else {
+        HapticFeedback.mediumImpact();
+      }
+
       setState(() {
         _isShowingCompletionFeedback = true;
       });
@@ -833,9 +886,21 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
           },
         ),
       );
+
+      if (!context.mounted) return;
+      // Check for joint completion
+      if (partners.any((p) => p.hasCompletedToday)) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: const Text('🎉 Joint Completion! You and your partner matched today!'),
+             backgroundColor: AppTheme.mutedLavender,
+             duration: const Duration(seconds: 3),
+             behavior: SnackBarBehavior.floating,
+           ),
+         );
+      }
     }
 
-    final db = ref.read(databaseProvider);
     final logId = const Uuid().v4();
     final now = DateTime.now();
 

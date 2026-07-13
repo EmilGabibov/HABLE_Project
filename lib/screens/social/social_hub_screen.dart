@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import 'package:hable/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
@@ -24,32 +25,6 @@ import '../profile_screen.dart';
 // ---------------------------------------------------------------------------
 // Providers (unchanged — kept at file top per project convention)
 // ---------------------------------------------------------------------------
-
-final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
-  ref,
-) async {
-  final auth = ref.watch(authProvider);
-  if (auth.token == null) return [];
-
-  final response = await http
-      .get(
-        Uri.parse('$apiBaseUrl/api/social/leaderboard'),
-        headers: {'Authorization': 'Bearer ${auth.token}'},
-      )
-      .timeout(const Duration(seconds: 10));
-
-  if (response.statusCode == 200) {
-    final contentType = response.headers['content-type'] ?? '';
-    if (!contentType.toLowerCase().contains('application/json')) {
-      throw Exception(
-        'Leaderboard endpoint returned ${contentType.isEmpty ? 'non-JSON' : contentType} content.',
-      );
-    }
-    final data = jsonDecode(response.body);
-    return data['leaderboard'] ?? [];
-  }
-  throw Exception('Failed to fetch leaderboard');
-});
 
 final userSearchProvider = FutureProvider.family
     .autoDispose<List<dynamic>, String>((ref, query) async {
@@ -449,6 +424,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   Widget build(BuildContext context) {
     final isSyncing = ref.watch(foregroundSyncControllerProvider);
     final userId = ref.watch(authProvider).userId ?? '';
+    final loc = AppLocalizations.of(context);
 
     return UsageTrackedScreen(
       screenName: 'social_hub',
@@ -500,21 +476,20 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               const SizedBox(height: 8),
               TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(icon: Icon(Icons.favorite_rounded), text: 'Friends'),
+                tabs: [
+                  Tab(icon: const Icon(Icons.favorite_rounded), text: loc?.friendsTabTitle ?? 'Friends'),
                   Tab(
-                    icon: Icon(Icons.notifications_rounded),
-                    text: 'Activity',
+                    icon: const Icon(Icons.notifications_rounded),
+                    text: loc?.activityTabTitle ?? 'Activity',
                   ),
                   Tab(
-                    icon: Icon(Icons.leaderboard_rounded),
-                    text: 'Leaderboard',
+                    icon: const Icon(Icons.leaderboard_rounded),
+                    text: loc?.leaderboardTabTitle ?? 'Leaderboard',
                   ),
                 ],
                 labelColor: AppTheme.sageGreen,
                 indicatorColor: AppTheme.sageGreen,
               ),
-              const HabitEnvironmentVisualizer(height: 250),
               Expanded(
                 child: NarrowLayout(
                   child: TabBarView(
@@ -548,6 +523,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
     return CustomScrollView(
       slivers: [
+        // 3D Environment Visualizer pinned to Friends tab
+        const SliverToBoxAdapter(
+          child: HabitEnvironmentVisualizer(height: 250),
+        ),
         // Inline pending requests section (only when there are requests).
         cachedRequestsAsync.when(
           data: (requests) {
@@ -688,7 +667,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 itemCount: notifications.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
                   final notification = notifications[index];
                   return _ActivityCard(
@@ -976,7 +955,7 @@ class _ActivityCard extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: _iconTint(notification.type).withValues(alpha: 0.14),
           child: Icon(
