@@ -59,7 +59,9 @@ A core part of the Hable experience is how it feels to interact with habits acro
 
 ### 5.2 The Check-In Celebration
 - **Research:** Immediate positive reinforcement strengthens the habit loop.
-- **Proposed UX (Future):** When a user completes a habit, there should be a micro-interaction: a subtle haptic burst, a satisfying sound, and a visual flourish (e.g., the Mud button expanding or a checkmark animation).
+- **Current UX:** Habit completion now drains through a serialized celebration queue so badge reveals and habit splashes never overlap. The completion splash uses the completed habit's color as the animated backdrop, requires an explicit `Continue` action, and states the local reward plainly: `5 points earned` for a standard completion or `10 points earned` when the shared completion bonus lands.
+- **History visibility:** Profile → habit history now preserves the per-log local points award as a compact `+5 pts` / `+10 pts` badge so users can verify what that check-in contributed before aggregate score surfaces refresh from sync.
+- **Future polish:** Audio, richer milestone choreography, or broader reward-scene experimentation can still expand from this without changing the serialized overlay contract.
 
 ### 5.3 The Resting State (Completed Today)
 - **Research:** Once a task is done, it should visually "get out of the way" to reduce cognitive load, but remain visible to provide a sense of accomplishment.

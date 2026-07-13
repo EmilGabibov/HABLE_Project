@@ -1,31 +1,40 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
 
-final celebrationProvider = NotifierProvider<CelebrationNotifier, List<AchievementUnlock>>(CelebrationNotifier.new);
+final celebrationProvider =
+    NotifierProvider<CelebrationNotifier, List<AchievementUnlock>>(
+      CelebrationNotifier.new,
+    );
 
 class CelebrationNotifier extends Notifier<List<AchievementUnlock>> {
-  late final dynamic _secureStorage;
-  late final String _userId;
+  dynamic _secureStorage;
+  String _userId = '';
   Set<String> _revealedIds = {};
   bool _initialized = false;
+  StreamSubscription<List<AchievementUnlock>>? _unlocksSubscription;
 
   @override
   List<AchievementUnlock> build() {
     final db = ref.watch(databaseProvider);
     _userId = ref.watch(authProvider.select((a) => a.userId)) ?? '';
     _secureStorage = ref.watch(secureStorageProvider);
-    
+    ref.onDispose(() => _unlocksSubscription?.cancel());
+
     _init();
-    
+
     if (_userId.isNotEmpty) {
-      db.watchAchievementUnlocks(_userId).listen((unlocks) {
+      _unlocksSubscription?.cancel();
+      _unlocksSubscription = db.watchAchievementUnlocks(_userId).listen((
+        unlocks,
+      ) {
         processUnlocks(unlocks);
       });
     }
-    
+
     return [];
   }
 
@@ -48,15 +57,18 @@ class CelebrationNotifier extends Notifier<List<AchievementUnlock>> {
     if (!_initialized) {
       await _init();
     }
-    
+
     // Only consider achievements unlocked in the last 48 hours to avoid bombarding users
     // with ancient achievements if they re-install the app.
     final recentCutoff = DateTime.now().subtract(const Duration(hours: 48));
-    
+    final queuedIds = state.map((unlock) => unlock.achievementId).toSet();
+
     final unrevealed = unlocks.where((u) {
-      return u.unlockedAt.isAfter(recentCutoff) && !_revealedIds.contains(u.achievementId);
+      return u.unlockedAt.isAfter(recentCutoff) &&
+          !_revealedIds.contains(u.achievementId) &&
+          !queuedIds.contains(u.achievementId);
     }).toList();
-    
+
     if (unrevealed.isNotEmpty) {
       state = [...state, ...unrevealed];
     }
@@ -66,8 +78,11 @@ class CelebrationNotifier extends Notifier<List<AchievementUnlock>> {
     if (_userId.isEmpty) return;
     _revealedIds.add(achievementId);
     state = state.where((u) => u.achievementId != achievementId).toList();
-    
+
     final key = 'revealed_badges_$_userId';
-    await _secureStorage.write(key: key, value: jsonEncode(_revealedIds.toList()));
+    await _secureStorage.write(
+      key: key,
+      value: jsonEncode(_revealedIds.toList()),
+    );
   }
 }

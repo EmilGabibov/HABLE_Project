@@ -17,6 +17,8 @@ import '../providers/quote_provider.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
+import '../models/celebration_feedback.dart';
+import '../services/celebration_sequence_controller.dart';
 import '../utils/habit_timeline.dart';
 import '../widgets/badge_reveal_dialog.dart';
 import '../widgets/habit_card.dart';
@@ -26,7 +28,13 @@ import 'completion_splash_screen.dart';
 const _dashboardSentNudgeFeedbackTtl = Duration(seconds: 4);
 const _dashboardNudgeVisibilityTtl = Duration(hours: 24);
 
-class HabitDashboardScreen extends ConsumerWidget {
+class _DashboardCelebrationRequest {
+  final Future<void> Function(BuildContext context, WidgetRef ref) present;
+
+  const _DashboardCelebrationRequest({required this.present});
+}
+
+class HabitDashboardScreen extends ConsumerStatefulWidget {
   const HabitDashboardScreen({super.key, required this.userId});
 
   final String userId;
@@ -39,10 +47,17 @@ class HabitDashboardScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
-      if (next.isEmpty) return;
-      final badge = next.first;
+  ConsumerState<HabitDashboardScreen> createState() =>
+      _HabitDashboardScreenState();
+}
+
+class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
+  final CelebrationSequenceController<_DashboardCelebrationRequest>
+  _celebrationSequence =
+      CelebrationSequenceController<_DashboardCelebrationRequest>();
+
+  void _enqueueAchievementCelebrations(List<AchievementUnlock> unlocks) {
+    for (final badge in unlocks) {
       final parts = badge.achievementId.replaceAll('_', ' ').split(' ');
       final title = parts
           .map(
@@ -51,15 +66,69 @@ class HabitDashboardScreen extends ConsumerWidget {
                 : '${part[0].toUpperCase()}${part.substring(1)}',
           )
           .join(' ');
+      _celebrationSequence.enqueue(
+        _DashboardCelebrationRequest(
+          present: (context, ref) async {
+            await BadgeRevealDialog.show(
+              context,
+              title,
+              'You unlocked a new badge!',
+            );
+            await ref
+                .read(celebrationProvider.notifier)
+                .markRevealed(badge.achievementId);
+          },
+        ),
+        dedupeKey: 'achievement:${badge.achievementId}',
+      );
+    }
+    unawaited(_drainCelebrations());
+  }
 
-      BadgeRevealDialog.show(context, title, 'You unlocked a new badge!', () {
-        ref
-            .read(celebrationProvider.notifier)
-            .markRevealed(badge.achievementId);
-      });
+  void _queueCompletionCelebration({
+    required Habit habit,
+    required String? emoji,
+    required CompletionCelebrationSpec celebration,
+    required int pointsEarned,
+  }) {
+    _celebrationSequence.enqueue(
+      _DashboardCelebrationRequest(
+        present: (context, _) {
+          return Navigator.of(context).push(
+            PageRouteBuilder<void>(
+              opaque: false,
+              pageBuilder: (_, _, _) => CompletionSplashScreen(
+                habit: habit,
+                emoji: emoji,
+                celebration: celebration,
+                pointsEarned: pointsEarned,
+              ),
+            ),
+          );
+        },
+      ),
+      dedupeKey:
+          'completion:${habit.habitId}:${DateTime.now().microsecondsSinceEpoch}',
+    );
+    unawaited(_drainCelebrations());
+  }
+
+  Future<void> _drainCelebrations() async {
+    if (!mounted) return;
+    await _celebrationSequence.drain((request) async {
+      if (!mounted) return;
+      await request.present(context, ref);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
+      if (next.isEmpty) return;
+      _enqueueAchievementCelebrations(next);
     });
 
-    final habitsAsync = ref.watch(activeHabitsProvider(userId));
+    final habitsAsync = ref.watch(activeHabitsProvider(widget.userId));
     final quoteAsync = ref.watch(quoteProvider);
 
     return Scaffold(
@@ -71,9 +140,10 @@ class HabitDashboardScreen extends ConsumerWidget {
             final showSummaryRail = constraints.maxWidth >= 1100;
 
             final content = _DashboardGrid(
-              userId: userId,
+              userId: widget.userId,
               habits: habits,
               columns: columns,
+              onQueueCompletionCelebration: _queueCompletionCelebration,
             );
 
             if (!showSummaryRail) {
@@ -124,11 +194,19 @@ class _DashboardGrid extends StatelessWidget {
     required this.userId,
     required this.habits,
     required this.columns,
+    required this.onQueueCompletionCelebration,
   });
 
   final String userId;
   final List<Habit> habits;
   final int columns;
+  final void Function({
+    required Habit habit,
+    required String? emoji,
+    required CompletionCelebrationSpec celebration,
+    required int pointsEarned,
+  })
+  onQueueCompletionCelebration;
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +228,11 @@ class _DashboardGrid extends StatelessWidget {
       ),
       itemCount: habits.length,
       itemBuilder: (context, index) {
-        return _DashboardHabitTile(habit: habits[index], userId: userId);
+        return _DashboardHabitTile(
+          habit: habits[index],
+          userId: userId,
+          onQueueCompletionCelebration: onQueueCompletionCelebration,
+        );
       },
     );
   }
@@ -232,10 +314,21 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _DashboardHabitTile extends ConsumerStatefulWidget {
-  const _DashboardHabitTile({required this.habit, required this.userId});
+  const _DashboardHabitTile({
+    required this.habit,
+    required this.userId,
+    required this.onQueueCompletionCelebration,
+  });
 
   final Habit habit;
   final String userId;
+  final void Function({
+    required Habit habit,
+    required String? emoji,
+    required CompletionCelebrationSpec celebration,
+    required int pointsEarned,
+  })
+  onQueueCompletionCelebration;
 
   @override
   ConsumerState<_DashboardHabitTile> createState() =>
@@ -397,6 +490,14 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     final currentStreak = await db.getStreak(habit.habitId);
     final newStreak = currentStreak + 1;
     final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
+    final sharedBonusEarned =
+        partners.isNotEmpty &&
+        partners
+            .where((partner) => partner.role != PartnershipRole.supporter)
+            .every((partner) => partner.hasCompletedToday);
+    final pointsEarned = scoreAwardForCompletion(
+      sharedBonusEarned: sharedBonusEarned,
+    );
 
     if (mounted) {
       if (mudTuning.hapticsEnabled) {
@@ -437,16 +538,18 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
         });
       });
 
-      Navigator.of(this.context).push(
-        PageRouteBuilder(
-          opaque: false,
-          pageBuilder: (_, _, _) =>
-              CompletionSplashScreen(habit: habit, emoji: null),
+      widget.onQueueCompletionCelebration(
+        habit: habit,
+        emoji: null,
+        celebration: resolveCompletionCelebration(
+          habit: habit,
+          streakCount: newStreak,
+          sharedBonusEarned: sharedBonusEarned,
         ),
+        pointsEarned: pointsEarned,
       );
 
-      if (partners.any((partner) => partner.hasCompletedToday) &&
-          context.mounted) {
+      if (sharedBonusEarned && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Joint completion registered for this shared habit.'),
@@ -465,6 +568,7 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
         habitId: Value(habit.habitId),
         actionDate: Value(now),
         status: Value(LogStatus.completed),
+        pointsAwarded: Value(pointsEarned),
         updatedAt: Value(now),
         isSynced: const Value(false),
       ),

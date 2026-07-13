@@ -1426,7 +1426,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added a lightweight serialized celebration controller in `lib/services/celebration_sequence_controller.dart` and routed both Home and Dashboard habit completions plus achievement reveals through that queue so overlays drain one at a time instead of racing. `lib/screens/completion_splash_screen.dart` now removes auto-dismiss, uses an explicit `Continue` button, keeps the content scroll-safe on shorter heights, and animates a habit-colored backdrop in sync with the splash content. The completion contract was also extended to surface local score awards directly on the splash (`5 points earned` for a normal completion, `10 points earned` for a shared-bonus completion) and to persist those per-log point values into Profile habit history via the new `logs.points_awarded` column and `+5 pts` / `+10 pts` history badges. `lib/providers/celebration_provider.dart` was hardened against rebuild-driven duplicate subscriptions so achievement unlocks stay single-queued. Focused verification covered the queue controller, completion splash variants, delayed shared-bonus log upgrades, and achievement reveal deduping with `flutter test test/celebration_feedback_test.dart test/completion_splash_screen_test.dart test/log_points_history_test.dart test/celebration_provider_test.dart test/celebration_sequence_controller_test.dart`.
 
 <a id="add-celebration-animation-variants-with-milestone-only-particle-and-full-screen-transitions"></a>
 ### [x] Add Celebration Animation Variants With Milestone-Only Particle And Full-Screen Transitions
@@ -1988,6 +1988,89 @@
 - Focused verification covers at least one overlapping-completion/achievement scenario and one multi-item queue scenario.
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="replace-partner-status-dots-with-filled-mini-rings-and-align-completed-state-to-habit-color"></a>
+### [ ] Replace Partner Status Dots With Filled Mini Rings And Align Completed State To Habit Color
+
+**Raw source:** The partners on habit cards should show check-in status through a small ring around their avatar, like the main profile ring, instead of a separate status dot. The ring should fill with color based on status, and completed state should turn into the habit color.
+
+**Issue:** Hable already shipped the compact expandable partner stack, but the current visual treatment still falls short of the intended status language. In `lib/widgets/habit_partner_row.dart`, collapsed avatars render a border plus a separate 12x12 status dot, and the completed state uses `AppTheme.completionGreen` for that dot rather than the current habit color. The surrounding avatar border changes color, but it does not behave like a true filled mini-ring around the avatar itself. That means the partner surface technically exposes state, but not in the same visual vocabulary as the primary habit ring or the product rule documented in the social/UX specs.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete visual-contract correction on an already-shipped partner surface.
+- *Smallest safe scope:* Replace the current avatar-border-plus-dot treatment with a small ring-based status treatment and align completed coloring to the owning habit.
+- *Skipped scope:* Do not redesign the partner stack layout, change nudge business logic, or reopen the broader avatar-group interaction task.
+- *Boundaries:* Keep this limited to partner avatar status rendering and the associated semantics/test expectations.
+
+**Action:** Rework the partner avatar status presentation so each avatar carries a miniature ring treatment that communicates completed, pending, nudged, or supporter states without relying on a detached corner dot. Use the habit color as the completed-state fill/accent so partner completion reads as part of the same habit-specific visual language as the main card. Preserve the existing compact stack and expanded list behaviors while updating the rendering semantics and tests to match the new ring contract.
+
+**Hable perspective:** The partner row should feel like an extension of the habit’s own ring-first language. A separate green dot communicates "some state exists," but not the more intentional "this partner’s habit ring is in a completed/pending/nudged state tied to this habit."
+
+**Implementation scope:**
+- `lib/widgets/habit_partner_row.dart`: replace the dot-based status indicator with a small ring-based avatar treatment and align completed-state color to `habitColor`.
+- Any shared avatar/status helper only if extracting the ring treatment reduces duplication between collapsed and expanded partner rendering.
+- Tests: update/add focused widget assertions for completed/pending/nudged/supporter ring rendering, especially completed-state use of habit color.
+- Documentation/QA: update wording where manual expectations still describe a dot instead of a mini ring.
+
+**Scalability considerations:** The new ring treatment should remain cheap to render across many habit cards and not introduce heavy custom painting unless clearly necessary. Keep the visual logic deterministic and reuse the same state-color mapping in collapsed and expanded modes.
+
+**Future split guidance:** If later work needs animated partner rings, partial-progress arcs, or richer per-partner completion visuals, split those into separate follow-up tasks. This task is only for replacing the dot with a status ring and correcting the completed color contract.
+
+**Edge cases:** Very small avatar stack sizes, narrow screens, many repeated partner rows, supporter/read-only styling, nudged-vs-pending distinction when no completion exists, dark/light background contrast, and semantics labels still accurately describing state after the visual swap.
+
+**Acceptance criteria:**
+- Partner avatars on habit cards use a small ring-based status treatment rather than a detached status dot.
+- Completed partner state uses the current habit color rather than a generic green.
+- Pending, nudged, and supporter states remain visually distinguishable within the mini-ring contract.
+- The collapsed stack and expanded partner list both reflect the updated ring treatment consistently.
+- Focused widget verification covers the revised status-ring rendering and completed-state color mapping.
+- Relevant docs are verified and updated where they still describe the older dot treatment.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="complete-habit-creation-form-as-a-cohesive-onboarding-style-create-edit-surface"></a>
+### [ ] Complete Habit Creation Form As A Cohesive Onboarding-Style Create/Edit Surface
+
+**Raw source:** Complete the habit creation form, the form is not complete yet. no custom emoji, no other suggestions for time deuration (e.g. 21, 33, 40, the science proven ones). no description for the habit card and its creation form.
+reorder correctly, the emoji at left (emoji picker appears by click), and at the right the name field, the template chips, the description field, and the duration field. and others... reorder and make it complete and elegant. don't forget to show friend emoji next to their name.
+
+**Issue:** Hable already has a working `HabitFormSheet`, but it is still a minimal CRUD modal rather than a fully intentional creation surface. The form currently supports preset chips, title, day duration, pastel color selection, and accepted-friend partner chips for new habits, yet the experience remains fairly raw: validation is silent, the create/edit flows are only lightly differentiated, feedback/error handling is minimal, there is no stronger information architecture around habit type/purpose, and the interaction still reads more like an internal sheet than a polished onboarding-style creation flow. Because habit creation is a primary user action from Home, the missing piece is not core functionality but form completeness and coherence.
+
+**Triage:**
+- *Should exist:* Yes. Habit creation is a primary product surface.
+- *Smallest safe scope:* Finish the current shared `HabitFormSheet` into a more complete, guided create/edit experience without replacing it with a brand-new screen architecture.
+- *Skipped scope:* Do not redesign onboarding globally, invent a full habit marketplace, or move creation into a separate route unless clearly required by the current UX contract.
+- *Boundaries:* Reuse the existing `HabitFormSheet`, preset data, partner picker, and habit-action providers. This task is about completeness and polish of the form contract.
+
+**Action:** Refine `HabitFormSheet` into a cohesive creation/edit surface that feels deliberate and complete: clearer validation and input guidance, better create-versus-edit affordances, stronger state/submit handling, and a more intentional field hierarchy for presets, title, duration, color, and partner selection. Keep the form compatible with the Home FAB and existing edit entry points, and preserve the current shared-source preset and partner-invite behavior rather than replacing it with speculative new creation flows.
+
+**Hable perspective:** Creating a habit is one of Hable’s highest-frequency setup actions. It should feel simple and guided, almost like a lightweight onboarding step, not like a bare admin dialog. The form should help users choose and commit confidently without becoming a complex settings page.
+
+**Implementation scope:**
+- `lib/widgets/habit_form_sheet.dart`: finish the create/edit surface, including validation, hierarchy, CTA behavior, and missing polish on existing fields.
+- Related habit-action/provider wiring only as needed to support better submit/error/saving states.
+- Focused widget coverage for create, edit, validation, preset selection, and partner invite selection behaviors.
+- Documentation/QA updates for the finalized habit-creation form contract.
+
+**Scalability considerations:** Keep the form modular and data-driven. It should be straightforward to extend later with extra fields (for example reminder time or notes) without turning into a monolith.
+
+**Future split guidance:** Full separate creation screens, advanced custom emoji/icon systems, due-time scheduling, or a recommendation/template marketplace should remain separate tasks. This task is only for completing the current shared form.
+
+**Edge cases:** Empty title, invalid/non-positive duration, editing existing habits without resending partner invites, no accepted friends, long preset titles, keyboard overlap on small screens, and submit/error state during async create/update.
+
+**Acceptance criteria:**
+- The shared habit creation/edit form feels complete and guided rather than like a bare CRUD sheet.
+- Validation and submit behavior are explicit and user-visible.
+- Preset, duration, color, and partner-selection flows remain intact and are polished rather than regressed.
+- Create and edit paths are clearly differentiated where appropriate.
+- Focused verification covers create, edit, validation, and partner-selection behavior.
+- Relevant docs are updated to reflect the finalized habit-form contract.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
 **Completion notes:** Pending implementation.
 

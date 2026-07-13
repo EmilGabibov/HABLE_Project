@@ -10,6 +10,7 @@ import '../data/standard_habits.dart';
 import '../providers/habit_providers.dart';
 import '../providers/sync_provider.dart';
 import '../services/local_reminder_service.dart';
+import '../services/client_reset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/habit_partner_row.dart';
@@ -825,6 +826,43 @@ class SettingsScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final shouldReset = await showDialog<bool>(
+                            context: context,
+                            builder: (dialogContext) => AlertDialog(
+                              title: const Text('Recover This Device'),
+                              content: const Text(
+                                'This clears local Hable data on this device and sends you back to login. Use it if the app is stuck or showing old cached state.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(true),
+                                  child: const Text('Clear and Sign In Again'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (shouldReset != true || !context.mounted) return;
+                          await performManualRecoveryReset(
+                            database: ref.read(databaseProvider),
+                            authNotifier: ref.read(authProvider.notifier),
+                          );
+                          if (!context.mounted) return;
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
+                        },
+                        icon: const Icon(Icons.system_update_alt_rounded),
+                        label: const Text('Update / Recover App'),
+                      ),
+                      const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: () async {
                           await ref.read(authProvider.notifier).logout();
@@ -2028,6 +2066,28 @@ class _HabitHistorySheet extends ConsumerWidget {
                         contentPadding: EdgeInsets.zero,
                         title: Text(_historyLabel(log)),
                         subtitle: Text(_formatHistoryDate(log.actionDate)),
+                        trailing: log.pointsAwarded > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.sageGreen.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '+${log.pointsAwarded} pts',
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(
+                                        color: AppTheme.sageGreen,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                              )
+                            : null,
                         dense: true,
                       );
                     },

@@ -1346,6 +1346,18 @@ class $LogsTable extends Logs with TableInfo<$LogsTable, Log> {
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<LogStatus>($LogsTable.$converterstatus);
+  static const VerificationMeta _pointsAwardedMeta = const VerificationMeta(
+    'pointsAwarded',
+  );
+  @override
+  late final GeneratedColumn<int> pointsAwarded = GeneratedColumn<int>(
+    'points_awarded',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _journalNoteMeta = const VerificationMeta(
     'journalNote',
   );
@@ -1390,6 +1402,7 @@ class $LogsTable extends Logs with TableInfo<$LogsTable, Log> {
     habitId,
     actionDate,
     status,
+    pointsAwarded,
     journalNote,
     updatedAt,
     isSynced,
@@ -1429,6 +1442,15 @@ class $LogsTable extends Logs with TableInfo<$LogsTable, Log> {
       );
     } else if (isInserting) {
       context.missing(_actionDateMeta);
+    }
+    if (data.containsKey('points_awarded')) {
+      context.handle(
+        _pointsAwardedMeta,
+        pointsAwarded.isAcceptableOrUnknown(
+          data['points_awarded']!,
+          _pointsAwardedMeta,
+        ),
+      );
     }
     if (data.containsKey('journal_note')) {
       context.handle(
@@ -1478,6 +1500,10 @@ class $LogsTable extends Logs with TableInfo<$LogsTable, Log> {
           data['${effectivePrefix}status'],
         )!,
       ),
+      pointsAwarded: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}points_awarded'],
+      )!,
       journalNote: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}journal_note'],
@@ -1507,6 +1533,7 @@ class Log extends DataClass implements Insertable<Log> {
   final String habitId;
   final DateTime actionDate;
   final LogStatus status;
+  final int pointsAwarded;
   final String? journalNote;
   final DateTime updatedAt;
   final bool isSynced;
@@ -1515,6 +1542,7 @@ class Log extends DataClass implements Insertable<Log> {
     required this.habitId,
     required this.actionDate,
     required this.status,
+    required this.pointsAwarded,
     this.journalNote,
     required this.updatedAt,
     required this.isSynced,
@@ -1530,6 +1558,7 @@ class Log extends DataClass implements Insertable<Log> {
         $LogsTable.$converterstatus.toSql(status),
       );
     }
+    map['points_awarded'] = Variable<int>(pointsAwarded);
     if (!nullToAbsent || journalNote != null) {
       map['journal_note'] = Variable<String>(journalNote);
     }
@@ -1544,6 +1573,7 @@ class Log extends DataClass implements Insertable<Log> {
       habitId: Value(habitId),
       actionDate: Value(actionDate),
       status: Value(status),
+      pointsAwarded: Value(pointsAwarded),
       journalNote: journalNote == null && nullToAbsent
           ? const Value.absent()
           : Value(journalNote),
@@ -1564,6 +1594,7 @@ class Log extends DataClass implements Insertable<Log> {
       status: $LogsTable.$converterstatus.fromJson(
         serializer.fromJson<String>(json['status']),
       ),
+      pointsAwarded: serializer.fromJson<int>(json['pointsAwarded']),
       journalNote: serializer.fromJson<String?>(json['journalNote']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
@@ -1579,6 +1610,7 @@ class Log extends DataClass implements Insertable<Log> {
       'status': serializer.toJson<String>(
         $LogsTable.$converterstatus.toJson(status),
       ),
+      'pointsAwarded': serializer.toJson<int>(pointsAwarded),
       'journalNote': serializer.toJson<String?>(journalNote),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
@@ -1590,6 +1622,7 @@ class Log extends DataClass implements Insertable<Log> {
     String? habitId,
     DateTime? actionDate,
     LogStatus? status,
+    int? pointsAwarded,
     Value<String?> journalNote = const Value.absent(),
     DateTime? updatedAt,
     bool? isSynced,
@@ -1598,6 +1631,7 @@ class Log extends DataClass implements Insertable<Log> {
     habitId: habitId ?? this.habitId,
     actionDate: actionDate ?? this.actionDate,
     status: status ?? this.status,
+    pointsAwarded: pointsAwarded ?? this.pointsAwarded,
     journalNote: journalNote.present ? journalNote.value : this.journalNote,
     updatedAt: updatedAt ?? this.updatedAt,
     isSynced: isSynced ?? this.isSynced,
@@ -1610,6 +1644,9 @@ class Log extends DataClass implements Insertable<Log> {
           ? data.actionDate.value
           : this.actionDate,
       status: data.status.present ? data.status.value : this.status,
+      pointsAwarded: data.pointsAwarded.present
+          ? data.pointsAwarded.value
+          : this.pointsAwarded,
       journalNote: data.journalNote.present
           ? data.journalNote.value
           : this.journalNote,
@@ -1625,6 +1662,7 @@ class Log extends DataClass implements Insertable<Log> {
           ..write('habitId: $habitId, ')
           ..write('actionDate: $actionDate, ')
           ..write('status: $status, ')
+          ..write('pointsAwarded: $pointsAwarded, ')
           ..write('journalNote: $journalNote, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced')
@@ -1638,6 +1676,7 @@ class Log extends DataClass implements Insertable<Log> {
     habitId,
     actionDate,
     status,
+    pointsAwarded,
     journalNote,
     updatedAt,
     isSynced,
@@ -1650,6 +1689,7 @@ class Log extends DataClass implements Insertable<Log> {
           other.habitId == this.habitId &&
           other.actionDate == this.actionDate &&
           other.status == this.status &&
+          other.pointsAwarded == this.pointsAwarded &&
           other.journalNote == this.journalNote &&
           other.updatedAt == this.updatedAt &&
           other.isSynced == this.isSynced);
@@ -1660,6 +1700,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
   final Value<String> habitId;
   final Value<DateTime> actionDate;
   final Value<LogStatus> status;
+  final Value<int> pointsAwarded;
   final Value<String?> journalNote;
   final Value<DateTime> updatedAt;
   final Value<bool> isSynced;
@@ -1669,6 +1710,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
     this.habitId = const Value.absent(),
     this.actionDate = const Value.absent(),
     this.status = const Value.absent(),
+    this.pointsAwarded = const Value.absent(),
     this.journalNote = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1679,6 +1721,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
     required String habitId,
     required DateTime actionDate,
     required LogStatus status,
+    this.pointsAwarded = const Value.absent(),
     this.journalNote = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1692,6 +1735,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
     Expression<String>? habitId,
     Expression<DateTime>? actionDate,
     Expression<String>? status,
+    Expression<int>? pointsAwarded,
     Expression<String>? journalNote,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isSynced,
@@ -1702,6 +1746,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
       if (habitId != null) 'habit_id': habitId,
       if (actionDate != null) 'action_date': actionDate,
       if (status != null) 'status': status,
+      if (pointsAwarded != null) 'points_awarded': pointsAwarded,
       if (journalNote != null) 'journal_note': journalNote,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isSynced != null) 'is_synced': isSynced,
@@ -1714,6 +1759,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
     Value<String>? habitId,
     Value<DateTime>? actionDate,
     Value<LogStatus>? status,
+    Value<int>? pointsAwarded,
     Value<String?>? journalNote,
     Value<DateTime>? updatedAt,
     Value<bool>? isSynced,
@@ -1724,6 +1770,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
       habitId: habitId ?? this.habitId,
       actionDate: actionDate ?? this.actionDate,
       status: status ?? this.status,
+      pointsAwarded: pointsAwarded ?? this.pointsAwarded,
       journalNote: journalNote ?? this.journalNote,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
@@ -1748,6 +1795,9 @@ class LogsCompanion extends UpdateCompanion<Log> {
         $LogsTable.$converterstatus.toSql(status.value),
       );
     }
+    if (pointsAwarded.present) {
+      map['points_awarded'] = Variable<int>(pointsAwarded.value);
+    }
     if (journalNote.present) {
       map['journal_note'] = Variable<String>(journalNote.value);
     }
@@ -1770,6 +1820,7 @@ class LogsCompanion extends UpdateCompanion<Log> {
           ..write('habitId: $habitId, ')
           ..write('actionDate: $actionDate, ')
           ..write('status: $status, ')
+          ..write('pointsAwarded: $pointsAwarded, ')
           ..write('journalNote: $journalNote, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced, ')
@@ -9745,6 +9796,7 @@ typedef $$LogsTableCreateCompanionBuilder =
       required String habitId,
       required DateTime actionDate,
       required LogStatus status,
+      Value<int> pointsAwarded,
       Value<String?> journalNote,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
@@ -9756,6 +9808,7 @@ typedef $$LogsTableUpdateCompanionBuilder =
       Value<String> habitId,
       Value<DateTime> actionDate,
       Value<LogStatus> status,
+      Value<int> pointsAwarded,
       Value<String?> journalNote,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
@@ -9807,6 +9860,11 @@ class $$LogsTableFilterComposer extends Composer<_$AppDatabase, $LogsTable> {
         column: $table.status,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<int> get pointsAwarded => $composableBuilder(
+    column: $table.pointsAwarded,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get journalNote => $composableBuilder(
     column: $table.journalNote,
@@ -9870,6 +9928,11 @@ class $$LogsTableOrderingComposer extends Composer<_$AppDatabase, $LogsTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get pointsAwarded => $composableBuilder(
+    column: $table.pointsAwarded,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get journalNote => $composableBuilder(
     column: $table.journalNote,
     builder: (column) => ColumnOrderings(column),
@@ -9928,6 +9991,11 @@ class $$LogsTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<LogStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get pointsAwarded => $composableBuilder(
+    column: $table.pointsAwarded,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get journalNote => $composableBuilder(
     column: $table.journalNote,
@@ -9996,6 +10064,7 @@ class $$LogsTableTableManager
                 Value<String> habitId = const Value.absent(),
                 Value<DateTime> actionDate = const Value.absent(),
                 Value<LogStatus> status = const Value.absent(),
+                Value<int> pointsAwarded = const Value.absent(),
                 Value<String?> journalNote = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -10005,6 +10074,7 @@ class $$LogsTableTableManager
                 habitId: habitId,
                 actionDate: actionDate,
                 status: status,
+                pointsAwarded: pointsAwarded,
                 journalNote: journalNote,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
@@ -10016,6 +10086,7 @@ class $$LogsTableTableManager
                 required String habitId,
                 required DateTime actionDate,
                 required LogStatus status,
+                Value<int> pointsAwarded = const Value.absent(),
                 Value<String?> journalNote = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -10025,6 +10096,7 @@ class $$LogsTableTableManager
                 habitId: habitId,
                 actionDate: actionDate,
                 status: status,
+                pointsAwarded: pointsAwarded,
                 journalNote: journalNote,
                 updatedAt: updatedAt,
                 isSynced: isSynced,

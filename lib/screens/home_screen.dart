@@ -19,6 +19,8 @@ import '../providers/celebration_provider.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
 import '../utils/habit_timeline.dart';
+import '../models/celebration_feedback.dart';
+import '../services/celebration_sequence_controller.dart';
 import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
@@ -42,6 +44,12 @@ class _QueuedNudgeFeedback {
     required this.partnerName,
     required this.queuedAt,
   });
+}
+
+class _QueuedCelebrationRequest {
+  final Future<void> Function(BuildContext context, WidgetRef ref) present;
+
+  const _QueuedCelebrationRequest({required this.present});
 }
 
 /// Home Screen — focuses ONLY on today's action.
@@ -69,6 +77,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final Map<String, GlobalKey> _habitCardKeys = {};
+  final CelebrationSequenceController<_QueuedCelebrationRequest>
+  _celebrationSequence =
+      CelebrationSequenceController<_QueuedCelebrationRequest>();
 
   @override
   void initState() {
@@ -117,25 +128,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _enqueueAchievementCelebrations(List<AchievementUnlock> unlocks) {
+    for (final badge in unlocks) {
+      final parts = badge.achievementId.replaceAll('_', ' ').split(' ');
+      final title = parts
+          .map(
+            (e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '',
+          )
+          .join(' ');
+      _celebrationSequence.enqueue(
+        _QueuedCelebrationRequest(
+          present: (context, ref) async {
+            await BadgeRevealDialog.show(
+              context,
+              title,
+              'You unlocked a new badge!',
+            );
+            await ref
+                .read(celebrationProvider.notifier)
+                .markRevealed(badge.achievementId);
+          },
+        ),
+        dedupeKey: 'achievement:${badge.achievementId}',
+      );
+    }
+    unawaited(_drainCelebrations());
+  }
+
+  void _queueCompletionCelebration({
+    required Habit habit,
+    required String? emoji,
+    required CompletionCelebrationSpec celebration,
+    required int pointsEarned,
+  }) {
+    _celebrationSequence.enqueue(
+      _QueuedCelebrationRequest(
+        present: (context, _) {
+          return Navigator.of(context).push(
+            PageRouteBuilder<void>(
+              opaque: false,
+              pageBuilder: (_, _, _) => CompletionSplashScreen(
+                habit: habit,
+                emoji: emoji,
+                celebration: celebration,
+                pointsEarned: pointsEarned,
+              ),
+            ),
+          );
+        },
+      ),
+      dedupeKey:
+          'completion:${habit.habitId}:${DateTime.now().microsecondsSinceEpoch}',
+    );
+    unawaited(_drainCelebrations());
+  }
+
+  Future<void> _drainCelebrations() async {
+    if (!mounted) return;
+    await _celebrationSequence.drain((request) async {
+      if (!mounted) return;
+      await request.present(context, ref);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
-      if (next.isNotEmpty) {
-        final badge = next.first;
-        final parts = badge.achievementId.replaceAll('_', ' ').split(' ');
-        final title = parts
-            .map(
-              (e) =>
-                  e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '',
-            )
-            .join(' ');
-
-        BadgeRevealDialog.show(context, title, 'You unlocked a new badge!', () {
-          ref
-              .read(celebrationProvider.notifier)
-              .markRevealed(badge.achievementId);
-        });
-      }
+      if (next.isEmpty) return;
+      _enqueueAchievementCelebrations(next);
     });
 
     final habitsAsync = ref.watch(activeHabitsProvider(widget.userId));
@@ -180,6 +240,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       }
     }
+    final encouragement = resolveHomeEncouragement(
+      hasActiveHabits: habits.isNotEmpty,
+      hasCompletedToday: !allEmpty,
+    );
 
     return CustomScrollView(
       slivers: [
@@ -326,27 +390,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: allEmpty
-                    ? AppTheme.mutedLavender.withValues(alpha: 0.1)
-                    : AppTheme.sageGreen.withValues(alpha: 0.08),
+                color: encouragement.backgroundColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
                   Text(
-                    allEmpty ? '🚀' : '💬',
+                    encouragement.emoji,
                     style: const TextStyle(fontSize: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: allEmpty
-                        ? Text(
-                            "A new day, a fresh start! Ready to build your streak today?",
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.mutedLavender,
-                                ),
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                encouragement.title,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: encouragement.accentColor,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                encouragement.body,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: encouragement.accentColor,
+                                    ),
+                              ),
+                            ],
                           )
                         : quoteAsync.when(
                             data: (quote) => Text(
@@ -424,6 +501,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: _HabitCard(
                     habit: habits[index],
                     userId: widget.userId,
+                    onQueueCompletionCelebration: _queueCompletionCelebration,
                   ),
                 ),
                 childCount: habits.length,
@@ -549,8 +627,19 @@ class _HomeSkeleton extends StatelessWidget {
 class _HabitCard extends ConsumerStatefulWidget {
   final Habit habit;
   final String userId;
+  final void Function({
+    required Habit habit,
+    required String? emoji,
+    required CompletionCelebrationSpec celebration,
+    required int pointsEarned,
+  })
+  onQueueCompletionCelebration;
 
-  const _HabitCard({required this.habit, required this.userId});
+  const _HabitCard({
+    required this.habit,
+    required this.userId,
+    required this.onQueueCompletionCelebration,
+  });
 
   @override
   ConsumerState<_HabitCard> createState() => _HabitCardState();
@@ -606,7 +695,6 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
       error: (_, _) => PartnershipRole.owner,
     );
     final mudTuning = ref.watch(mudTuningProvider);
-    final canLogProgress = viewerRole != PartnershipRole.supporter;
     final recentNudge = partnersAsync.when(
       data: _latestRecentNudge,
       loading: () => null,
@@ -743,6 +831,14 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     final currentStreak = await db.getStreak(habit.habitId);
     final newStreak = currentStreak + 1;
     final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
+    final sharedBonusEarned =
+        partners.isNotEmpty &&
+        partners
+            .where((partner) => partner.role != PartnershipRole.supporter)
+            .every((partner) => partner.hasCompletedToday);
+    final pointsEarned = scoreAwardForCompletion(
+      sharedBonusEarned: sharedBonusEarned,
+    );
 
     // Show transient completion feedback on the ring
     if (mounted) {
@@ -786,22 +882,20 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
         }
       });
 
-      // Push the completion splash screen overlay
-      Navigator.of(this.context).push(
-        PageRouteBuilder(
-          opaque: false,
-          pageBuilder: (_, _, _) {
-            return CompletionSplashScreen(
-              habit: habit,
-              emoji: standardHabitForTitle(habit.title)?.emoji,
-            );
-          },
+      widget.onQueueCompletionCelebration(
+        habit: habit,
+        emoji: standardHabitForTitle(habit.title)?.emoji,
+        celebration: resolveCompletionCelebration(
+          habit: habit,
+          streakCount: newStreak,
+          sharedBonusEarned: sharedBonusEarned,
         ),
+        pointsEarned: pointsEarned,
       );
 
       if (!context.mounted) return;
       // Check for joint completion
-      if (partners.any((p) => p.hasCompletedToday)) {
+      if (sharedBonusEarned) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
@@ -825,6 +919,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
         habitId: Value(habit.habitId),
         actionDate: Value(now),
         status: Value(LogStatus.completed),
+        pointsAwarded: Value(pointsEarned),
         updatedAt: Value(now),
         isSynced: const Value(false),
       ),

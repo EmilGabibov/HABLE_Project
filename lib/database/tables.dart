@@ -20,9 +20,7 @@ enum NotificationEventType {
 }
 
 /// Reminder types for the local slot-based reminder system.
-enum ReminderType {
-  dailyHabit,
-}
+enum ReminderType { dailyHabit }
 
 /// Sync queue action types for outbound mutations.
 enum SyncAction {
@@ -87,6 +85,7 @@ class Logs extends Table {
   TextColumn get habitId => text().references(Habits, #habitId)();
   DateTimeColumn get actionDate => dateTime()();
   TextColumn get status => textEnum<LogStatus>()();
+  IntColumn get pointsAwarded => integer().withDefault(const Constant(0))();
   TextColumn get journalNote => text().nullable()();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
@@ -267,11 +266,13 @@ class NotificationEvents extends Table {
 class ReminderSettings extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get userId => text()();
-  TextColumn get type => textEnum<ReminderType>().withDefault(const Constant('dailyHabit'))();
+  TextColumn get type =>
+      textEnum<ReminderType>().withDefault(const Constant('dailyHabit'))();
   BoolColumn get isEnabled => boolean().withDefault(const Constant(false))();
   IntColumn get hour => integer().withDefault(const Constant(20))();
   IntColumn get minute => integer().withDefault(const Constant(0))();
-  BoolColumn get isPermissionDenied => boolean().withDefault(const Constant(false))();
+  BoolColumn get isPermissionDenied =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 

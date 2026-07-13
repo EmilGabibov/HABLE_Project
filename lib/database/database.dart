@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -87,6 +87,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 14) {
         await m.alterTable(TableMigration(reminderSettings));
+      }
+      if (from < 15) {
+        await m.addColumn(logs, logs.pointsAwarded);
       }
     },
   );
@@ -440,6 +443,15 @@ class AppDatabase extends _$AppDatabase {
   Future<void> insertLog(LogsCompanion log) =>
       into(logs).insert(log, mode: InsertMode.insertOrReplace);
 
+  Future<void> updateLogPoints(String logId, int pointsAwarded) =>
+      (update(logs)..where((l) => l.logId.equals(logId))).write(
+        LogsCompanion(
+          pointsAwarded: Value(pointsAwarded),
+          updatedAt: Value(DateTime.now()),
+          isSynced: const Value(false),
+        ),
+      );
+
   Stream<List<Log>> watchLogsForHabit(String habitId) =>
       (select(logs)
             ..where((l) => l.habitId.equals(habitId))
@@ -459,6 +471,13 @@ class AppDatabase extends _$AppDatabase {
               l.actionDate.isSmallerThanValue(endOfDay),
         ))
         .getSingleOrNull();
+  }
+
+  Future<void> upgradeTodaysCompletionPoints(String habitId, int points) async {
+    final log = await getTodaysLog(habitId);
+    if (log == null || log.status != LogStatus.completed) return;
+    if (log.pointsAwarded >= points) return;
+    await updateLogPoints(log.logId, points);
   }
 
   /// Get consecutive completed days for streak calculation.

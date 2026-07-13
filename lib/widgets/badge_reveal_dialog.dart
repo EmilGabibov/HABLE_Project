@@ -13,8 +13,12 @@ class BadgeRevealDialog extends StatefulWidget {
     required this.onDismiss,
   }) : super(key: key);
 
-  static void show(BuildContext context, String title, String subtitle, VoidCallback onDismiss) {
-    showGeneralDialog(
+  static Future<void> show(
+    BuildContext context,
+    String title,
+    String subtitle,
+  ) {
+    return showGeneralDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black87,
@@ -23,7 +27,7 @@ class BadgeRevealDialog extends StatefulWidget {
         return BadgeRevealDialog(
           title: title,
           subtitle: subtitle,
-          onDismiss: onDismiss,
+          onDismiss: () {},
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -44,13 +48,17 @@ class BadgeRevealDialog extends StatefulWidget {
   _BadgeRevealDialogState createState() => _BadgeRevealDialogState();
 }
 
-class _BadgeRevealDialogState extends State<BadgeRevealDialog> with SingleTickerProviderStateMixin {
+class _BadgeRevealDialogState extends State<BadgeRevealDialog>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3))..forward();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..forward();
   }
 
   @override
@@ -76,7 +84,7 @@ class _BadgeRevealDialogState extends State<BadgeRevealDialog> with SingleTicker
               );
             },
           ),
-          
+
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -108,7 +116,11 @@ class _BadgeRevealDialogState extends State<BadgeRevealDialog> with SingleTicker
                     ),
                   ],
                 ),
-                child: const Icon(Icons.star_rounded, size: 80, color: Colors.white),
+                child: const Icon(
+                  Icons.star_rounded,
+                  size: 80,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 32),
               Text(
@@ -126,10 +138,7 @@ class _BadgeRevealDialogState extends State<BadgeRevealDialog> with SingleTicker
                 child: Text(
                   widget.subtitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
               ),
               const SizedBox(height: 48),
@@ -141,12 +150,18 @@ class _BadgeRevealDialogState extends State<BadgeRevealDialog> with SingleTicker
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text('Awesome!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Awesome!',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -164,25 +179,32 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final random = Random(42); // Fixed seed for consistent spread
     final center = Offset(size.width / 2, size.height / 2);
-    
+
     for (int i = 0; i < 50; i++) {
       final angle = random.nextDouble() * 2 * pi;
       // Explode outwards and fall down slightly
       final distance = random.nextDouble() * 300 * progress + 50;
       final dx = center.dx + cos(angle) * distance;
-      final dy = center.dy + sin(angle) * distance + (progress * progress * 200);
-      
+      final dy =
+          center.dy + sin(angle) * distance + (progress * progress * 200);
+
       final radius = random.nextDouble() * 4 + 2;
       final opacity = (1.0 - progress).clamp(0.0, 1.0);
-      
-      final colors = [Colors.yellow, Colors.orange, Colors.redAccent, Colors.white];
+
+      final colors = [
+        Colors.yellow,
+        Colors.orange,
+        Colors.redAccent,
+        Colors.white,
+      ];
       final color = colors[random.nextInt(colors.length)].withOpacity(opacity);
-      
+
       final paint = Paint()..color = color;
       canvas.drawCircle(Offset(dx, dy), radius, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

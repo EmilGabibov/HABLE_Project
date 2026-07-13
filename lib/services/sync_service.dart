@@ -502,11 +502,19 @@ class SyncService {
             .map((partner) => partner.habitId)
             .toSet();
         final nextPartnerHabitIds = <String>{};
+        final partnerCompletionByHabit = <String, List<PartnerSnapshot>>{};
         for (final partner in partners) {
           final habitId = partner['habit_id']?.toString() ?? '';
           final partnerUserId = partner['partner_id']?.toString() ?? '';
           if (habitId.isEmpty || partnerUserId.isEmpty) continue;
           nextPartnerHabitIds.add(habitId);
+          final role = PartnershipRole.values.firstWhere(
+            (value) => value.name == partner['role']?.toString(),
+            orElse: () => PartnershipRole.partner,
+          );
+          final hasCompletedToday =
+              partner['has_completed_today'] == true ||
+              partner['has_completed_today'] == 1;
 
           await _db.upsertPartnerSnapshot(
             PartnerSnapshotsCompanion(
@@ -514,22 +522,31 @@ class SyncService {
               partnerUserId: Value(partnerUserId),
               username: Value(partner['username']?.toString() ?? 'Friend'),
               avatarUrl: Value(partner['avatar_url']?.toString()),
-              role: Value(
-                PartnershipRole.values.firstWhere(
-                  (value) => value.name == partner['role']?.toString(),
-                  orElse: () => PartnershipRole.partner,
-                ),
-              ),
+              role: Value(role),
               currentDuration: Value(
                 (partner['current_duration'] as num?)?.toInt() ?? 0,
               ),
-              hasCompletedToday: Value(
-                partner['has_completed_today'] == true ||
-                    partner['has_completed_today'] == 1,
-              ),
+              hasCompletedToday: Value(hasCompletedToday),
               updatedAt: Value(DateTime.now()),
             ),
           );
+          partnerCompletionByHabit
+              .putIfAbsent(habitId, () => [])
+              .add(
+                PartnerSnapshot(
+                  habitId: habitId,
+                  partnerUserId: partnerUserId,
+                  username: partner['username']?.toString() ?? 'Friend',
+                  avatarUrl: partner['avatar_url']?.toString(),
+                  role: role,
+                  currentDuration:
+                      (partner['current_duration'] as num?)?.toInt() ?? 0,
+                  hasCompletedToday: hasCompletedToday,
+                  lastNudgeAt: null,
+                  updatedAt: DateTime.now(),
+                  isSynced: true,
+                ),
+              );
 
           // UX Fix: Upsert the shared habit into the local habits table
           // so it shows up on the recipient's home screen.
@@ -572,6 +589,18 @@ class SyncService {
         );
         for (final habitId in revokedSharedHabitIds) {
           await _db.removeHabitLocally(habitId);
+        }
+        for (final entry in partnerCompletionByHabit.entries) {
+          final relevantPartners = entry.value
+              .where((partner) => partner.role != PartnershipRole.supporter)
+              .toList();
+          if (relevantPartners.isEmpty) continue;
+          final everyoneElseCompleted = relevantPartners.every(
+            (partner) => partner.hasCompletedToday,
+          );
+          if (everyoneElseCompleted) {
+            await _db.upgradeTodaysCompletionPoints(entry.key, 10);
+          }
         }
 
         // Persist nudges as notification rows.
