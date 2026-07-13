@@ -1792,7 +1792,7 @@
 **Completion notes:** Completed on 2026-07-13. Replaced the old two-user `e2e/tests/shared_habit.spec.ts` with a three-context harness built around `UserSession` helpers for Alice, Bob, and Charlie. The scenarios now explicitly cover three isolated registrations, dual friendship acceptance, shared-habit invite/accept between owner and partner, nudge send/receive, and a separate friend-profile `Follow` path for the third user so follower/support-style coverage is distinct from owner/partner completion rights. Updated `Developement/qa_web_multi_user_plan.md` and `Developement/qa_testing.md` to describe the three-user contract. Verified the harness parses and enumerates correctly with `npx playwright test --list` (7 tests listed); live execution still depends on a running web app/backend environment.
 
 <a id="expand-offline-and-push-test-coverage-and-fix-discovered-sync-integrity-issues"></a>
-### [ ] Expand Offline And Push Test Coverage And Fix Discovered Sync Integrity Issues
+### [x] Expand Offline And Push Test Coverage And Fix Discovered Sync Integrity Issues
 
 **Raw source:** Offline & Push Test Coverage. Expand the test suite to cover push notifications or offline scenarios (e.g., toggling network offline in Playwright) and run the test and resolve any issue.
 
@@ -1829,7 +1829,7 @@
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`, existing e2e/browser harness
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added focused offline/reconnect coverage in `test/offline_sync_integrity_test.dart` for two current-scope guarantees: queued outbound mutations stay pending after a failed send and replay successfully on the next flush, and reconnect `pullDailySync` snapshots now prune stale pending invitations, incoming friend requests, and nudge notification rows instead of leaving phantom unread badges or invitation banners behind. To support deterministic testing, `SyncService` now accepts an injectable HTTP client/base URL while preserving existing app wiring. Updated `Developement/sys_offline_architecture.md` and `Developement/qa_testing.md` to document the reconciled transient-notification contract and to state explicitly that true remote push delivery remains out of scope for the current local/web harness. Verified with `flutter test test/offline_sync_integrity_test.dart test/notification_center_test.dart test/notification_recap_test.dart`.
 
 <a id="tune-mud-resistance-per-user-with-haptic-calibration-and-lifecycle-persistent-preferences"></a>
 ### [x] Tune Mud Resistance Per User With Haptic Calibration And Lifecycle Persistent Preferences

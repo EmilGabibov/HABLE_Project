@@ -45,6 +45,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Activity Feed Routing:** In Social → Activity, verify notifications are grouped into meaningful sections (`Unread`, `Today`, `Earlier`) instead of one flat list. Tap at least one notification with a home-linked payload and verify it returns to the relevant in-app destination rather than only marking the row as read.
 - **Friend Profile Drilldown:** From a habit card, tap a partner identity and verify it opens the friend's profile. Tap the separate hand/nudge action and verify a `sendNudge` queue item is created for that partner without navigating away. From the friend profile, tap `Follow` on an active habit and verify `HabitFormSheet` opens with the title prefilled; tap encourage and verify it uses the same queued nudge path.
 - **Mud Feel Tuning:** From Profile → Settings, open **Mud feel**, switch between Gentle, Standard, and Intense, and verify the hold duration changes while the ring widget continues consuming only provider-produced scalar values. Disable mud haptics, relaunch the app, and verify the same signed-in user keeps the selected preset and haptic toggle.
+- **Offline Sync Recovery:** Queue at least one outbound mutation while the network/API is unavailable, then restore connectivity and verify the queue drains without dropping later items behind the failed entry. After reconnect, verify transient invitation/request/nudge notifications that are no longer present in `/api/sync/daily` disappear from the local unread badge and invitation surfaces instead of lingering indefinitely.
 
 *(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure for Android hardware.)*
 
@@ -60,6 +61,7 @@ To combat regressions without manual Android ADB passes, there is an automated P
    ```
 This test covers friend requests, shared habit invites, mutual completion holds, nudges, and score validation.
 The current harness also includes a third isolated browser user so invite acceptance, nudge visibility, and friend-profile `Follow` flows can be exercised without reusing one of the partner sessions.
+True remote push delivery is still out of scope for this local/web harness. Current automated notification coverage validates the offline-first local notification/deep-link contract and reconnect reconciliation rather than claiming APNs/FCM/browser push parity.
 
 
 ## 2. ADB Smoke Test Execution Log

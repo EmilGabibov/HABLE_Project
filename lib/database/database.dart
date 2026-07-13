@@ -214,7 +214,8 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
-      if (nextStatus == HabitStatus.abandoned || nextStatus == HabitStatus.finished) {
+      if (nextStatus == HabitStatus.abandoned ||
+          nextStatus == HabitStatus.finished) {
         await enqueueSync(
           SyncQueueCompanion.insert(
             action: SyncAction.updateHabit,
@@ -746,6 +747,20 @@ class AppDatabase extends _$AppDatabase {
   Future<void> insertHabitInvitation(HabitInvitationsCompanion invite) =>
       into(habitInvitations).insert(invite, mode: InsertMode.insertOrReplace);
 
+  Future<void> reconcilePendingHabitInvitations(
+    Set<String> validInvitationIds,
+  ) async {
+    final query = delete(habitInvitations)
+      ..where(
+        (invitation) =>
+            invitation.status.equals('pending') &
+            (validInvitationIds.isEmpty
+                ? const Constant(true)
+                : invitation.invitationId.isNotIn(validInvitationIds)),
+      );
+    await query.go();
+  }
+
   Future<void> updateHabitInvitationStatus(String id, String newStatus) =>
       (update(habitInvitations)..where((i) => i.invitationId.equals(id))).write(
         HabitInvitationsCompanion(status: Value(newStatus)),
@@ -896,6 +911,20 @@ class AppDatabase extends _$AppDatabase {
           ))
           .go();
 
+  Future<void> reconcilePendingIncomingFriendRelationships(
+    Set<String> validUserIds,
+  ) async {
+    final query = delete(friendRelationships)
+      ..where(
+        (relationship) =>
+            relationship.relationshipState.equals('pending_incoming') &
+            (validUserIds.isEmpty
+                ? const Constant(true)
+                : relationship.userId.isNotIn(validUserIds)),
+      );
+    await query.go();
+  }
+
   Stream<List<FriendRelationship>> watchPendingIncomingFriendRelationships() =>
       (select(friendRelationships)
             ..where(
@@ -939,9 +968,7 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<NotificationEvent>> watchNotificationsForUser(String userId) =>
       (select(notificationEvents)
             ..where((n) => n.userId.equals(userId))
-            ..orderBy([
-              (n) => OrderingTerm.desc(n.createdAt),
-            ]))
+            ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
           .watch();
 
   Stream<List<NotificationEvent>> watchUnreadNotificationsForUser(
@@ -986,6 +1013,23 @@ class AppDatabase extends _$AppDatabase {
                 n.expiresAt.isSmallerThanValue(DateTime.now()),
           ))
           .go();
+
+  Future<void> reconcileNotificationEventsForType({
+    required String userId,
+    required NotificationEventType type,
+    required Set<String> validNotificationIds,
+  }) async {
+    final query = delete(notificationEvents)
+      ..where(
+        (notification) =>
+            notification.userId.equals(userId) &
+            notification.type.equalsValue(type) &
+            (validNotificationIds.isEmpty
+                ? const Constant(true)
+                : notification.notificationId.isNotIn(validNotificationIds)),
+      );
+    await query.go();
+  }
 
   // ---------------------------------------------------------------------------
   // Reminder settings operations

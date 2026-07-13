@@ -39,16 +39,22 @@ class SyncService {
   final ConnectivityService _connectivity;
   final FlutterSecureStorage _storage;
   final LocalReminderService? _localReminderService;
+  final http.Client _client;
+  final String _apiBaseUrl;
 
   SyncService({
     required AppDatabase db,
     required ConnectivityService connectivity,
     required FlutterSecureStorage storage,
     LocalReminderService? localReminderService,
+    http.Client? client,
+    String? apiBaseUrlOverride,
   }) : _db = db,
        _connectivity = connectivity,
        _storage = storage,
-       _localReminderService = localReminderService;
+       _localReminderService = localReminderService,
+       _client = client ?? http.Client(),
+       _apiBaseUrl = apiBaseUrlOverride ?? apiBaseUrl;
 
   /// Initialize the sync engine.
   void init() {
@@ -274,8 +280,8 @@ class SyncService {
     final payload = jsonDecode(item.payload) as Map<String, dynamic>;
     if (item.action == SyncAction.sendNudge) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/social/nudge'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/social/nudge'),
           headers: headers,
           body: item.payload,
         );
@@ -291,8 +297,8 @@ class SyncService {
       }
     } else if (item.action == SyncAction.sendPrivateMessage) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/social/private-message'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/social/private-message'),
           headers: headers,
           body: item.payload,
         );
@@ -308,8 +314,8 @@ class SyncService {
       }
     } else if (item.action == SyncAction.acceptInvitation) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/social/habit-invitation/accept'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/social/habit-invitation/accept'),
           headers: headers,
           body: item.payload,
         );
@@ -325,8 +331,8 @@ class SyncService {
       }
     } else if (item.action == SyncAction.declineInvitation) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/social/habit-invitation/decline'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/social/habit-invitation/decline'),
           headers: headers,
           body: item.payload,
         );
@@ -345,8 +351,8 @@ class SyncService {
     } else if (item.action == SyncAction.createHabit ||
         item.action == SyncAction.updateHabit) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/sync/habit'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/sync/habit'),
           headers: headers,
           body: item.payload,
         );
@@ -366,8 +372,8 @@ class SyncService {
       }
     } else if (item.action == SyncAction.logHabit) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/sync/log'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/sync/log'),
           headers: headers,
           body: item.payload,
         );
@@ -387,8 +393,8 @@ class SyncService {
       }
     } else if (item.action == SyncAction.sendHabitInvitation) {
       try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/social/habit-invitation'),
+        final response = await _client.post(
+          Uri.parse('$_apiBaseUrl/api/social/habit-invitation'),
           headers: headers,
           body: item.payload,
         );
@@ -416,8 +422,8 @@ class SyncService {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('$apiBaseUrl/api/sync/daily'),
+      final response = await _client.get(
+        Uri.parse('$_apiBaseUrl/api/sync/daily'),
         headers: headers,
       );
 
@@ -570,6 +576,7 @@ class SyncService {
 
         // Persist nudges as notification rows.
         final List<dynamic> nudges = data['nudges'] ?? [];
+        final activeNudgeNotificationIds = <String>{};
         for (final nudge in nudges) {
           final senderId = nudge['senderId']?.toString() ?? '';
           final rawHabitId =
@@ -600,9 +607,11 @@ class SyncService {
               ? '$senderName nudged you to check-in on $habitName'
               : '$senderName sent you a reminder on a shared habit.';
 
+          final notificationId = 'nudge:$senderId:${habitId ?? 'any'}';
+          activeNudgeNotificationIds.add(notificationId);
           await _upsertNotificationEvent(
             userId: userId,
-            notificationId: 'nudge:$senderId:${habitId ?? 'any'}',
+            notificationId: notificationId,
             type: NotificationEventType.nudge,
             sourceType: 'nudge',
             sourceId: senderId,
@@ -616,6 +625,11 @@ class SyncService {
                 : DateTime.tryParse(timestamp)?.add(const Duration(hours: 24)),
           );
         }
+        await _db.reconcileNotificationEventsForType(
+          userId: userId,
+          type: NotificationEventType.nudge,
+          validNotificationIds: activeNudgeNotificationIds,
+        );
 
         // Persist private messages
         final List<dynamic> messages = data['messages'] ?? [];
@@ -651,10 +665,15 @@ class SyncService {
 
         // Persist habit invitations
         final List<dynamic> invitations = data['invitations'] ?? [];
+        final pendingInvitationIds = <String>{};
+        final invitationNotificationIds = <String>{};
         for (final inv in invitations) {
+          final invitationId = inv['id']?.toString() ?? '';
+          if (invitationId.isEmpty) continue;
+          pendingInvitationIds.add(invitationId);
           await _db.insertHabitInvitation(
             HabitInvitationsCompanion(
-              invitationId: Value(inv['id'].toString()),
+              invitationId: Value(invitationId),
               requesterId: Value(inv['requester_id'].toString()),
               recipientId: Value(userId),
               habitId: Value(inv['habit_id'].toString()),
@@ -669,9 +688,11 @@ class SyncService {
           final requester = requesterId.isEmpty
               ? null
               : await _db.getAcceptedFriend(requesterId);
+          final notificationId = 'habit_invitation:$invitationId';
+          invitationNotificationIds.add(notificationId);
           await _upsertNotificationEvent(
             userId: userId,
-            notificationId: 'habit_invitation:${inv['id']}',
+            notificationId: notificationId,
             type: NotificationEventType.habitInvitation,
             sourceType: 'habit_invitation',
             sourceId: inv['id']?.toString(),
@@ -688,12 +709,21 @@ class SyncService {
                 DateTime.now(),
           );
         }
+        await _db.reconcilePendingHabitInvitations(pendingInvitationIds);
+        await _db.reconcileNotificationEventsForType(
+          userId: userId,
+          type: NotificationEventType.habitInvitation,
+          validNotificationIds: invitationNotificationIds,
+        );
 
         // Persist friend requests as notification rows.
         final List<dynamic> friendRequests = data['friend_requests'] ?? [];
+        final pendingRequesterIds = <String>{};
+        final friendRequestNotificationIds = <String>{};
         for (final request in friendRequests) {
           final requesterId = request['requester_id']?.toString() ?? '';
           if (requesterId.isNotEmpty && requesterId != userId) {
+            pendingRequesterIds.add(requesterId);
             await _db.cacheFriendRelationship(
               userId: requesterId,
               username: request['requester_username']?.toString() ?? 'Friend',
@@ -703,9 +733,12 @@ class SyncService {
             );
           }
 
+          final requestId = request['id']?.toString() ?? '';
+          final notificationId = 'friend_request:$requestId';
+          friendRequestNotificationIds.add(notificationId);
           await _upsertNotificationEvent(
             userId: userId,
-            notificationId: 'friend_request:${request['id']}',
+            notificationId: notificationId,
             type: NotificationEventType.friendRequest,
             sourceType: 'friend_request',
             sourceId: request['id']?.toString(),
@@ -719,6 +752,14 @@ class SyncService {
                 DateTime.now(),
           );
         }
+        await _db.reconcilePendingIncomingFriendRelationships(
+          pendingRequesterIds,
+        );
+        await _db.reconcileNotificationEventsForType(
+          userId: userId,
+          type: NotificationEventType.friendRequest,
+          validNotificationIds: friendRequestNotificationIds,
+        );
 
         final gamification = data['gamification'];
         if (gamification is Map<String, dynamic>) {
@@ -772,6 +813,7 @@ class SyncService {
   }
 
   void dispose() {
+    _client.close();
     _connectivity.dispose();
   }
 
