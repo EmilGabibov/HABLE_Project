@@ -1183,7 +1183,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added a deterministic coarse personalization layer shared by quote and reminder fallback copy. `lib/data/mascot_reminder_copy.dart` now defines `CopyPersonalizationContext`, contextual quote selection, and reminder branches for recent skip, social momentum, streak strength, and early/late timing while preserving stable generic fallback rotation. `lib/services/copy_personalization_service.dart` derives those signals locally from Drift habits/logs/partner snapshots, `lib/providers/quote_provider.dart` now falls back through that resolver when no synced quote exists, and `lib/providers/notification_providers.dart` now schedules and restores daily reminders with context-aware local copy instead of fixed generic strings. Updated `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md` to document the implemented coarse personalization contract and manual verification expectations. Verified with `flutter test test/mascot_reminder_copy_test.dart test/completion_splash_screen_test.dart test/notification_actions_test.dart`.
 
 <a id="audit-and-stabilize-leaderboard-and-score-display-for-final-demo"></a>
 ### [x] Audit And Stabilize Leaderboard And Score Display For Final Demo

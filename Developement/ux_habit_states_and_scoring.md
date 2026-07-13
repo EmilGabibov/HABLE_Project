@@ -43,8 +43,9 @@ Currently, rewards are structured around Levels and Streak Badges derived from p
 ## 4. Encouraging Quotes & Motivation
 
 Quotes are fetched and cached via `QuoteProvider` and displayed prominently on the Home dashboard.
-- **Behavior:** Quotes serve as the emotional anchor for the day. They refresh daily or on empty states. If the quote fetch fails, the app uses a fallback list.
-- **Contextual Quotes (Gap):** Currently, quotes are generally motivational. **Future Work:** Quotes should ideally adapt to the user's specific state (e.g., a "Welcome back" quote after a broken streak, or a "Keep the fire alive" quote on a 10-day streak).
+- **Behavior:** Quotes serve as the emotional anchor for the day. They refresh daily or on empty states. If the synced quote is absent, the app falls back to deterministic local copy.
+- **Implemented Personalization:** The local fallback path now reacts to coarse state buckets only: recent skips, social momentum (recent nudge / partner completion activity), active streak strength, and no-active-habit fresh-start states. Daily reminder copy uses the same coarse context buckets plus early/late timing buckets.
+- **Remaining Gap:** This is still a lightweight local resolver, not a full experimentation or deeply adaptive copy system. Future work can expand locale, quiet-hours policy, or remote experiments without changing the offline-safe fallback contract.
 
 ---
 
@@ -92,6 +93,6 @@ The following items are recognized as missing or deferred and require separate i
 1. **Remove "Skip" Button:** Remove the explicit skip action from the UI; uncompleted habits should simply expire at the end of the day.
 2. **Consolidate "Add Habit" Buttons:** There are currently two Add Habit buttons in the UI. These need to be consolidated into a single, clear call-to-action.
 3. **Streak vs. Progress UI Polish:** Redesign the habit card to elegantly integrate the 🔥 icon with the progress bar without numerical redundancy.
-4. **Contextual Quotes:** Implement logic to fetch specific quotes based on the user's current habit state (broken streak, milestone, etc.).
+4. **Contextual Quotes:** Expand beyond the current coarse local resolver if the product later needs richer streak tiers, locale-specific writing, or server-driven experiments.
 5. **Haptics & Animations:** Implement the proposed haptic feedback and micro-animations for check-ins and streak milestones.
 6. **Seasonal Resets:** (Long-term) Define a policy and UI for seasonal leaderboard resets if cumulative scoring becomes uncompetitive for new users.

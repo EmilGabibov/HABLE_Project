@@ -9,6 +9,7 @@ import '../database/database.dart';
 import '../database/tables.dart';
 import '../services/background_sync_service.dart';
 import '../services/local_reminder_service.dart';
+import '../services/copy_personalization_service.dart';
 import '../data/mascot_reminder_copy.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
@@ -59,6 +60,10 @@ class NotificationActions {
   LocalReminderService get _reminders => ref.read(localReminderServiceProvider);
   BackgroundSyncService get _backgroundSync =>
       ref.read(backgroundSyncServiceProvider);
+
+  Future<CopyPersonalizationContext> _copyContext(String userId) {
+    return loadCopyPersonalizationContext(_db, userId: userId);
+  }
 
   Future<void> markRead(String notificationId) async {
     await _db.markNotificationRead(notificationId);
@@ -114,6 +119,7 @@ class NotificationActions {
 
     final copy = MascotReminderCopyHelper.getCopyForType(
       ReminderType.dailyHabit,
+      context: await _copyContext(userId),
     );
     await _reminders.scheduleReminder(
       notificationId: notificationId,
@@ -172,6 +178,7 @@ class NotificationActions {
         );
         final copy = MascotReminderCopyHelper.getCopyForType(
           ReminderType.dailyHabit,
+          context: await _copyContext(setting.userId),
         );
         await _reminders.scheduleReminder(
           notificationId: notificationId,
@@ -280,14 +287,18 @@ class NotificationActions {
           userId: userId,
           type: ReminderType.dailyHabit,
         );
+        final copy = MascotReminderCopyHelper.getCopyForType(
+          ReminderType.dailyHabit,
+          context: await _copyContext(userId),
+        );
         await _reminders.scheduleReminder(
           notificationId: notificationId,
           userId: userId,
           type: ReminderType.dailyHabit,
           hour: setting.hour,
           minute: setting.minute,
-          title: 'Hable reminder',
-          body: 'Open Hable and check today\'s habits.',
+          title: copy.title,
+          body: copy.body,
           payload: 'home',
         );
         await _backgroundSync.scheduleReminderPrefetch(
