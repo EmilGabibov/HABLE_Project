@@ -55,7 +55,14 @@ void main() {
     // Wait for quote future to resolve
     await tester.pumpAndSettle();
 
-    expect(find.text('"Testing is believing."'), findsOneWidget);
+    final quoteFinder = find.text('"Testing is believing."');
+    final headlineFinder = find.text('Great job!');
+
+    expect(quoteFinder, findsOneWidget);
+    expect(
+      tester.getTopLeft(quoteFinder).dy,
+      lessThan(tester.getTopLeft(headlineFinder).dy),
+    );
   });
 
   testWidgets('CompletionSplashScreen renders a shared milestone variant', (

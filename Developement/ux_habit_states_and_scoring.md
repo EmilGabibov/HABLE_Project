@@ -44,6 +44,7 @@ Currently, rewards are structured around Levels and Streak Badges derived from p
 
 Quotes are fetched and cached via `QuoteProvider` and displayed prominently on the Home dashboard.
 - **Behavior:** Quotes serve as the emotional anchor for the day. They refresh daily or on empty states. If the synced quote is absent, the app falls back to deterministic local copy.
+- **First-run opening:** The first authenticated entry for a user can now pause on a dedicated quote splash before the main shell appears. This splash is storage-gated per user so it acts as a one-time emotional opening rather than a recurring blocker.
 - **Implemented Personalization:** The local fallback path now reacts to coarse state buckets only: recent skips, social momentum (recent nudge / partner completion activity), active streak strength, and no-active-habit fresh-start states. Daily reminder copy uses the same coarse context buckets plus early/late timing buckets.
 - **Remaining Gap:** This is still a lightweight local resolver, not a full experimentation or deeply adaptive copy system. Future work can expand locale, quiet-hours policy, or remote experiments without changing the offline-safe fallback contract.
 
@@ -60,6 +61,7 @@ A core part of the Hable experience is how it feels to interact with habits acro
 ### 5.2 The Check-In Celebration
 - **Research:** Immediate positive reinforcement strengthens the habit loop.
 - **Current UX:** Habit completion now drains through a serialized celebration queue so badge reveals and habit splashes never overlap. The completion splash uses the completed habit's color as the animated backdrop, requires an explicit `Continue` action, and states the local reward plainly: `5 points earned` for a standard completion or `10 points earned` when the shared completion bonus lands.
+- **Quote hierarchy:** When a celebration surface carries a quote, the quote now leads the composition as the first and largest reader-facing element rather than sitting as a footer beneath generic success copy.
 - **History visibility:** Profile → habit history now preserves the per-log local points award as a compact `+5 pts` / `+10 pts` badge so users can verify what that check-in contributed before aggregate score surfaces refresh from sync.
 - **Future polish:** Audio, richer milestone choreography, or broader reward-scene experimentation can still expand from this without changing the serialized overlay contract.
 

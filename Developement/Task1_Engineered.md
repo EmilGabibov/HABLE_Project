@@ -2075,7 +2075,7 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 **Completion notes:** Completed on 2026-07-13. Rebuilt `lib/widgets/habit_form_sheet.dart` into a more guided create/edit surface with a stronger header, icon-plus-title identity row, preset chips, preset-driven intent copy, explicit duration suggestion chips (`21`, `33`, `40`, `66`, `90`), clearer color selection, visible validation, async save state, and differentiated `Create habit` vs `Save changes` CTAs. Friend invite chips now render with avatar emoji via `UserAvatar`, and create mode preserves the existing partner-invite flow while edit mode stays scoped to updating the habit itself. The save path now also correctly flags custom habits in `habitActionsProvider` instead of always sending `isCustom: false`, and standard-habit lookup tolerates leading emoji so custom-title decoration does not break preset inference. Focused verification was added in `test/habit_form_sheet_test.dart` for validation, preset application, partner selection, and edit-mode saves with `flutter test test/habit_form_sheet_test.dart`.
 
 <a id="add-first-run-quote-splash-and-promote-quote-first-typography-across-quote-bearing-celebration-surfaces"></a>
-### [ ] Add First-Run Quote Splash And Promote Quote-First Typography Across Quote-Bearing Celebration Surfaces
+### [x] Add First-Run Quote Splash And Promote Quote-First Typography Across Quote-Bearing Celebration Surfaces
 
 **Raw source:** Work on an initialization splash screen showing the quote of the day with a lovely design when the user starts the app for the first time. Also, on habit splash screens that have quotes, make the quote always display as the first element, large and in a quote style.
 
@@ -2114,4 +2114,4 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added `lib/services/first_run_quote_gate.dart` plus `lib/screens/first_run_quote_screen.dart` and wired `_AppGate` in `lib/main.dart` to show a one-time, per-user quote-first opening screen before the main shell. The gate persists via secure storage, so once dismissed it does not reappear for the same signed-in user. `lib/screens/completion_splash_screen.dart` was also reordered so the quote becomes the first and largest reader-facing element on quote-bearing completion surfaces rather than a footer after the celebration copy. Documentation was updated in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`, and focused verification covered the storage gate plus quote-first completion ordering with `flutter test test/completion_splash_screen_test.dart test/first_run_quote_gate_test.dart test/habit_form_sheet_test.dart`.

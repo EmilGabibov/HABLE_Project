@@ -9,11 +9,14 @@ import 'providers/habit_providers.dart';
 import 'providers/usage_diagnostics_provider.dart';
 import 'providers/sync_provider.dart';
 import 'screens/auth_screen.dart';
+import 'screens/first_run_quote_screen.dart';
 import 'screens/main_navigation_shell.dart';
 import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
 import 'dart:async';
 import 'services/background_sync_service.dart';
+import 'services/client_reset_service.dart';
+import 'services/first_run_quote_gate.dart';
 import 'services/local_reminder_service.dart';
 import 'services/web_version_gate_service.dart';
 
@@ -64,6 +67,9 @@ class _AppGateState extends ConsumerState<_AppGate>
   StreamSubscription<String?>? _payloadSub;
   WebVersionGateAction _webVersionGateAction = WebVersionGateAction.allow;
   String? _webVersionGateMessage;
+  bool _isCheckingFirstRunQuote = false;
+  bool _showFirstRunQuoteSplash = false;
+  String? _firstRunQuoteUserId;
 
   @override
   void initState() {
@@ -71,13 +77,35 @@ class _AppGateState extends ConsumerState<_AppGate>
     WidgetsBinding.instance.addObserver(this);
     // On first load, wait for build to finish then trigger sync if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkWebVersionGate();
-      _checkAndStartSync();
-      _setupNotificationTapHandling();
+      _runStartupGuards();
     });
   }
 
+  Future<void> _runStartupGuards() async {
+    final resetResult = await applyForcedClientResetIfNeeded(
+      database: ref.read(databaseProvider),
+      authNotifier: ref.read(authProvider.notifier),
+    );
+    if (!mounted) return;
+    if (resetResult.didReset) {
+      setState(() {
+        _lastSyncedUserId = null;
+      });
+      return;
+    }
+
+    await _checkWebVersionGate();
+    if (!mounted ||
+        _webVersionGateAction == WebVersionGateAction.refreshing ||
+        _webVersionGateAction == WebVersionGateAction.blocked) {
+      return;
+    }
+    await _checkAndStartSync();
+    await _setupNotificationTapHandling();
+  }
+
   Future<void> _setupNotificationTapHandling() async {
+    if (_payloadSub != null) return;
     final localReminder = ref.read(localReminderServiceProvider);
 
     // Handle initial payload from a cold start
@@ -121,6 +149,32 @@ class _AppGateState extends ConsumerState<_AppGate>
     }
   }
 
+  Future<void> _resolveFirstRunQuoteSplash(String userId) async {
+    if (_isCheckingFirstRunQuote || _firstRunQuoteUserId == userId) return;
+    _isCheckingFirstRunQuote = true;
+    final shouldShow = await shouldShowFirstRunQuoteSplash(
+      storage: ref.read(secureStorageProvider),
+      userId: userId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _firstRunQuoteUserId = userId;
+      _showFirstRunQuoteSplash = shouldShow;
+    });
+    _isCheckingFirstRunQuote = false;
+  }
+
+  Future<void> _dismissFirstRunQuoteSplash(String userId) async {
+    await markFirstRunQuoteSplashSeen(
+      storage: ref.read(secureStorageProvider),
+      userId: userId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _showFirstRunQuoteSplash = false;
+    });
+  }
+
   Future<void> _checkWebVersionGate() async {
     final result = await checkWebVersionGate();
     if (!mounted) return;
@@ -133,8 +187,7 @@ class _AppGateState extends ConsumerState<_AppGate>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkWebVersionGate();
-      _checkAndStartSync();
+      _runStartupGuards();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
@@ -187,6 +240,8 @@ class _AppGateState extends ConsumerState<_AppGate>
         if (mounted) {
           setState(() {
             _lastSyncedUserId = null;
+            _firstRunQuoteUserId = null;
+            _showFirstRunQuoteSplash = false;
           });
         }
       }
@@ -199,7 +254,22 @@ class _AppGateState extends ConsumerState<_AppGate>
     }
 
     return userAsync.when(
-      data: (_) => MainNavigationShell(key: _shellKey, userId: userId),
+      data: (_) {
+        if (_firstRunQuoteUserId != userId) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _resolveFirstRunQuoteSplash(userId);
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (_showFirstRunQuoteSplash) {
+          return FirstRunQuoteScreen(
+            onContinue: () => _dismissFirstRunQuoteSplash(userId),
+          );
+        }
+        return MainNavigationShell(key: _shellKey, userId: userId);
+      },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),

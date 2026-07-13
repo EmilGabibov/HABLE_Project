@@ -141,6 +141,27 @@ class _CompletionSplashScreenState extends ConsumerState<CompletionSplashScreen>
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+                              quoteAsync.when(
+                                data: (quote) => Text(
+                                  '"$quote"',
+                                  key: const Key('completion-splash-quote'),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontStyle: FontStyle.italic,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.35,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                loading: () => const CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                                error: (_, __) => const SizedBox.shrink(),
+                              ),
+                              const SizedBox(height: 28),
                               if (celebration.kicker != null) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -231,23 +252,6 @@ class _CompletionSplashScreenState extends ConsumerState<CompletionSplashScreen>
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 48),
-                              quoteAsync.when(
-                                data: (quote) => Text(
-                                  '"$quote"',
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontStyle: FontStyle.italic,
-                                        height: 1.6,
-                                      ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                loading: () => const CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-                                error: (_, __) => const SizedBox.shrink(),
-                              ),
                               const SizedBox(height: 32),
                               SizedBox(
                                 width: double.infinity,
