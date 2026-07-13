@@ -1873,7 +1873,7 @@
 **Completion notes:** Added a persistent `mudTuningProvider` backed by `SharedPreferences` so each signed-in user/device can keep a bounded `Gentle` / `Standard` / `Intense` mud preset plus a haptics toggle across relaunches. The resistance math still lives in `resistanceProvider`; tuning now modulates only the final coefficient/duration outputs, while `MudLongPressButton` remains presentation-only and consumes the derived scalar values plus a haptic profile flag. Exposed the controls in Profile → Settings via a dedicated **Mud feel** card, threaded the preset into Home and dashboard habit cards, and added focused persistence/regression coverage in `test/mud_tuning_provider_test.dart` and `test/resistance_provider_test.dart`. Verified with `flutter test test/mud_tuning_provider_test.dart test/resistance_provider_test.dart` and `flutter test test/habit_dashboard_screen_test.dart`.
 
 <a id="prepare-mac-app-store-and-standalone-macos-distribution-path"></a>
-### [ ] Prepare Mac App Store And Standalone macOS Distribution Path
+### [x] Prepare Mac App Store And Standalone macOS Distribution Path
 
 **Raw source:** Mac App Store. Set up Mac App Store distribution, and standalone installer.
 
@@ -1909,10 +1909,10 @@
 
 **Dependencies:** macOS build/signing configuration, existing distribution docs in `Developement/`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Replaced the remaining macOS placeholder metadata with Hable-specific values in `macos/Runner/Configs/AppInfo.xcconfig` (`PRODUCT_NAME = Hable`, bundle id `com.hable.app.macos`) and added an operator playbook at `Developement/macos_distribution.md` covering the separate App Store and standalone notarized paths. Smoke-validated the local build path with `flutter build macos --debug` and `flutter build macos --release`, which now emit `build/macos/Build/Products/Release/Hable.app`. Inspected the resulting artifact with `codesign -dvvv --entitlements :- build/macos/Build/Products/Release/Hable.app` and `spctl -a -vv build/macos/Build/Products/Release/Hable.app`; the app is currently ad-hoc signed and rejected by Gatekeeper because this machine has `0 valid identities found`, so App Store export / Developer ID signing / notarization remain operator-only follow-through rather than local secrets-free steps.
 
 <a id="prepare-windows-installers-and-standalone-windows-distribution-path"></a>
-### [ ] Prepare Windows Installers And Standalone Windows Distribution Path
+### [x] Prepare Windows Installers And Standalone Windows Distribution Path
 
 **Raw source:** Windows Installers. Create Windows installer creation, and standalone installer.
 
@@ -1948,4 +1948,4 @@
 
 **Dependencies:** Windows build/package configuration, existing build/distribution docs in `Developement/`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Replaced the default Windows desktop metadata with Hable-specific values in `windows/CMakeLists.txt`, `windows/runner/main.cpp`, and `windows/runner/Runner.rc` so release artifacts resolve to `Hable.exe` with matching product/version strings. Added `windows/installer/Hable.iss` as the installer template and documented the supported installer + portable bundle workflows in `Developement/windows_distribution.md`. A native Windows smoke build was not possible from the current macOS host, so the documented release path explicitly requires a Windows build/signing machine for `flutter build windows --release`, installer compilation, and final code-signing validation.
