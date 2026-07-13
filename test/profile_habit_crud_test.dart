@@ -40,6 +40,7 @@ void main() {
 
       final habitId = await db.createHabitWithSync(
         'Hydration',
+        null,
         21,
         false,
         'FF9CAF88',
@@ -65,7 +66,7 @@ void main() {
       expect(observedHabitLists, isNotEmpty);
       expect(observedHabitLists.last.single.habitId, habitId);
 
-      await db.updateHabitDetails(habitId, 'Hydration+', 30, 'FFB8C5D6');
+      await db.updateHabitDetails(habitId, 'Hydration+', null, 30, 'FFB8C5D6');
 
       await pumpEventQueue();
 

@@ -42,6 +42,7 @@ class LocalReminderService {
     const windowsSettings = WindowsInitializationSettings(
       appName: 'Hable',
       appUserModelId: 'com.hable.app',
+      guid: 'A1B2C3D4-E5F6-7890-1234-567890ABCDEF',
     );
     const initializationSettings = InitializationSettings(
       android: androidSettings,

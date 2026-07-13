@@ -58,6 +58,7 @@ class _OnboardingCompleteScreenState
     final db = ref.read(databaseProvider);
     await db.createHabitWithSync(
       widget.habitTitle,
+      null,
       widget.duration,
       widget.isCustomHabit,
       'FF9CAF88',
