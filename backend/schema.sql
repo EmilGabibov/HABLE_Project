@@ -159,8 +159,8 @@ ON usage_aggregate_buckets(bucket_date, platform, build_channel);
 
 -- Insert some dummy data for local testing
 INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES 
-('local-user-1', 'Alice', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),
-('local-user-2', 'Bob', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob');
+('local-user-1', 'Alice', '🌱'),
+('local-user-2', 'Bob', '🌞');
 
 INSERT OR IGNORE INTO habit_progress (user_id, habit_id, current_duration) VALUES
 ('local-user-2', 'shared-habit-1', 45);

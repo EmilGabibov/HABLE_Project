@@ -13,9 +13,9 @@ import 'screens/main_navigation_shell.dart';
 import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'services/background_sync_service.dart';
 import 'services/local_reminder_service.dart';
+import 'services/web_version_gate_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,6 +62,8 @@ class _AppGateState extends ConsumerState<_AppGate>
   final GlobalKey<MainNavigationShellState> _shellKey =
       GlobalKey<MainNavigationShellState>();
   StreamSubscription<String?>? _payloadSub;
+  WebVersionGateAction _webVersionGateAction = WebVersionGateAction.allow;
+  String? _webVersionGateMessage;
 
   @override
   void initState() {
@@ -69,6 +71,7 @@ class _AppGateState extends ConsumerState<_AppGate>
     WidgetsBinding.instance.addObserver(this);
     // On first load, wait for build to finish then trigger sync if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkWebVersionGate();
       _checkAndStartSync();
       _setupNotificationTapHandling();
     });
@@ -102,30 +105,35 @@ class _AppGateState extends ConsumerState<_AppGate>
 
   Future<void> _checkAndStartSync() async {
     final authState = ref.read(authProvider);
-    if (authState.isAuthenticated && authState.userId != null) {
-      if (_lastSyncedUserId != authState.userId) {
-        ref
-            .read(databaseProvider)
-            .removeSelfFromSocialCaches(authState.userId!);
+    final userId = authState.userId;
+    if (authState.isAuthenticated && userId != null) {
+      if (_lastSyncedUserId != userId) {
+        ref.read(databaseProvider).removeSelfFromSocialCaches(userId);
       }
-      ref
-          .read(foregroundSyncControllerProvider.notifier)
-          .startPolling(authState.userId!);
-      ref
-          .read(foregroundSyncControllerProvider.notifier)
-          .syncNow(authState.userId!);
+      ref.read(foregroundSyncControllerProvider.notifier).startPolling(userId);
+      ref.read(foregroundSyncControllerProvider.notifier).syncNow(userId);
 
       if (mounted) {
         setState(() {
-          _lastSyncedUserId = authState.userId;
+          _lastSyncedUserId = userId;
         });
       }
     }
   }
 
+  Future<void> _checkWebVersionGate() async {
+    final result = await checkWebVersionGate();
+    if (!mounted) return;
+    setState(() {
+      _webVersionGateAction = result.action;
+      _webVersionGateMessage = result.message;
+    });
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _checkWebVersionGate();
       _checkAndStartSync();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
@@ -136,6 +144,28 @@ class _AppGateState extends ConsumerState<_AppGate>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
+    if (_webVersionGateAction != WebVersionGateAction.allow) {
+      final isBlocking = _webVersionGateAction == WebVersionGateAction.blocked;
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isBlocking) const CircularProgressIndicator(),
+                if (!isBlocking) const SizedBox(height: 16),
+                Text(
+                  _webVersionGateMessage ?? 'Updating Hable...',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     if (!authState.isInitialized) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -163,9 +193,13 @@ class _AppGateState extends ConsumerState<_AppGate>
     });
 
     final userAsync = ref.watch(currentUserProvider);
+    final userId = authState.userId;
+    if (userId == null) {
+      return const AuthScreen();
+    }
+
     return userAsync.when(
-      data: (_) =>
-          MainNavigationShell(key: _shellKey, userId: authState.userId!),
+      data: (_) => MainNavigationShell(key: _shellKey, userId: userId),
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),

@@ -11,6 +11,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final calendarState = ref.watch(calendarFeedProvider);
+    final feedUrl = calendarState.feedUrl;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -30,7 +31,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (calendarState.feedUrl != null)
+            if (feedUrl != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -43,9 +44,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                     onTap: calendarState.isLoading
                         ? null
                         : () {
-                            Clipboard.setData(
-                              ClipboardData(text: calendarState.feedUrl!),
-                            );
+                            Clipboard.setData(ClipboardData(text: feedUrl));
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -74,7 +73,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            calendarState.feedUrl!.replaceFirst(
+                            feedUrl.replaceFirst(
                               RegExp(r'https?://[^/]+'),
                               '...',
                             ),

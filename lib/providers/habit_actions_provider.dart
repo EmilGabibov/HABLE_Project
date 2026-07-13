@@ -25,13 +25,14 @@ class HabitActionsController {
     String colorHex, {
     List<String> partnerIds = const [],
   }) async {
-    if (_userId == null) return null;
+    final userId = _userId;
+    if (userId == null) return null;
     final habitId = await _db.createHabitWithSync(
       title,
       targetDuration,
       isCustom,
       colorHex,
-      _userId!,
+      userId,
       partnerIds: partnerIds,
     );
     await _ref.read(syncServiceProvider).flushPending();

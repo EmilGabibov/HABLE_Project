@@ -72,7 +72,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final distributionAsync = ref.watch(logDistributionProvider(widget.userId));
     final historyAsync = ref.watch(pointHistoryProvider(widget.userId));
     final allHabitsAsync = ref.watch(allHabitsProvider(widget.userId));
-    final achievementsAsync = ref.watch(achievementUnlocksProvider(widget.userId));
+    final achievementsAsync = ref.watch(
+      achievementUnlocksProvider(widget.userId),
+    );
 
     return UsageTrackedScreen(
       screenName: 'profile',
@@ -109,7 +111,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => SettingsScreen(userId: widget.userId),
+                                  builder: (_) =>
+                                      SettingsScreen(userId: widget.userId),
                                 ),
                               );
                             },
@@ -126,101 +129,107 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   // User card
                   SliverToBoxAdapter(
                     child: userAsync.when(
-                    data: (user) => Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Stack(
-                                children: [
-                                  UserAvatar(
-                                    avatarUrl: user?.avatarUrl,
-                                    username: user?.username,
-                                    radius: 28,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                      data: (user) => Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Stack(
                                   children: [
-                                    Text(
-                                      user?.username ?? 'User',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleLarge,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '@${user?.username ?? 'user'}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: [
-                                        _InfoPill(
-                                          label: user?.levelName ?? 'Newbie',
-                                          color: AppTheme.sageGreen,
-                                        ),
-                                        _InfoPill(
-                                          label:
-                                              '${user?.totalScore ?? 0} points',
-                                          color: AppTheme.deepCharcoal,
-                                          fillColor: AppTheme.surfaceVariant,
-                                        ),
-                                      ],
+                                    UserAvatar(
+                                      avatarUrl: user?.avatarUrl,
+                                      username: user?.username,
+                                      radius: 28,
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user?.username ?? 'User',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '@${user?.username ?? 'user'}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          _InfoPill(
+                                            label: user?.levelName ?? 'Newbie',
+                                            color: AppTheme.sageGreen,
+                                          ),
+                                          _InfoPill(
+                                            label:
+                                                '${user?.totalScore ?? 0} points',
+                                            color: AppTheme.deepCharcoal,
+                                            fillColor: AppTheme.surfaceVariant,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
                   ),
-                ),
 
-SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _SliverAppBarDelegate(
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: AppTheme.deepCharcoal,
-                      unselectedLabelColor: AppTheme.warmGray,
-                      indicatorColor: AppTheme.sageGreen,
-                      tabs: const [
-                        Tab(text: 'Trophy Room'),
-                        Tab(text: 'Journey'),
-                      ],
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverAppBarDelegate(
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: AppTheme.deepCharcoal,
+                        unselectedLabelColor: AppTheme.warmGray,
+                        indicatorColor: AppTheme.sageGreen,
+                        tabs: const [
+                          Tab(text: 'Trophy Room'),
+                          Tab(text: 'Journey'),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ];
-            },
-            body: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildTrophyRoom(context, userAsync, achievementsAsync),
-                _buildJourney(context, distributionAsync, historyAsync, allHabitsAsync),
-              ],
+                ];
+              },
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildTrophyRoom(context, userAsync, achievementsAsync),
+                  _buildJourney(
+                    context,
+                    distributionAsync,
+                    historyAsync,
+                    allHabitsAsync,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
-
 
   Widget _buildTrophyRoom(
     BuildContext context,
@@ -229,7 +238,6 @@ SliverPersistentHeader(
   ) {
     return CustomScrollView(
       slivers: [
-
         // Achievement badges
         SliverToBoxAdapter(
           child: Padding(
@@ -335,6 +343,9 @@ SliverPersistentHeader(
                     const SizedBox(height: 20),
                     distributionAsync.when(
                       data: (dist) {
+                        final completed = dist['completed'] ?? 0;
+                        final skipped = dist['skipped'] ?? 0;
+                        final overdue = dist['overdue'] ?? 0;
                         final total = dist.values.fold(0, (a, b) => a + b);
                         if (total == 0) {
                           return SizedBox(
@@ -355,9 +366,9 @@ SliverPersistentHeader(
                               centerSpaceRadius: 36,
                               sections: [
                                 PieChartSectionData(
-                                  value: dist['completed']!.toDouble(),
+                                  value: completed.toDouble(),
                                   color: AppTheme.completionGreen,
-                                  title: '${dist['completed']}',
+                                  title: '$completed',
                                   titleStyle: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -366,9 +377,9 @@ SliverPersistentHeader(
                                   radius: 40,
                                 ),
                                 PieChartSectionData(
-                                  value: dist['skipped']!.toDouble(),
+                                  value: skipped.toDouble(),
                                   color: AppTheme.skipAmber,
-                                  title: '${dist['skipped']}',
+                                  title: '$skipped',
                                   titleStyle: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -377,9 +388,9 @@ SliverPersistentHeader(
                                   radius: 40,
                                 ),
                                 PieChartSectionData(
-                                  value: dist['overdue']!.toDouble(),
+                                  value: overdue.toDouble(),
                                   color: AppTheme.overdueRose,
-                                  title: '${dist['overdue']}',
+                                  title: '$overdue',
                                   titleStyle: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -399,7 +410,10 @@ SliverPersistentHeader(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _Legend(color: AppTheme.completionGreen, label: 'Completed'),
+                        _Legend(
+                          color: AppTheme.completionGreen,
+                          label: 'Completed',
+                        ),
                         _Legend(color: AppTheme.skipAmber, label: 'Skipped'),
                         _Legend(color: AppTheme.overdueRose, label: 'Overdue'),
                       ],
@@ -451,7 +465,12 @@ SliverPersistentHeader(
                                   spots: history
                                       .asMap()
                                       .entries
-                                      .map((e) => FlSpot(e.key.toDouble(), e.value.value.toDouble()))
+                                      .map(
+                                        (e) => FlSpot(
+                                          e.key.toDouble(),
+                                          e.value.value.toDouble(),
+                                        ),
+                                      )
                                       .toList(),
                                   isCurved: true,
                                   color: AppTheme.sageGreen,
@@ -459,7 +478,9 @@ SliverPersistentHeader(
                                   dotData: const FlDotData(show: false),
                                   belowBarData: BarAreaData(
                                     show: true,
-                                    color: AppTheme.sageGreen.withValues(alpha: 0.1),
+                                    color: AppTheme.sageGreen.withValues(
+                                      alpha: 0.1,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -533,9 +554,15 @@ SliverPersistentHeader(
               return const SliverToBoxAdapter(child: SizedBox.shrink());
             }
 
-            final active = habits.where((h) => h.status == HabitStatus.active).toList();
-            final abandoned = habits.where((h) => h.status == HabitStatus.abandoned).toList();
-            final finished = habits.where((h) => h.status == HabitStatus.finished).toList();
+            final active = habits
+                .where((h) => h.status == HabitStatus.active)
+                .toList();
+            final abandoned = habits
+                .where((h) => h.status == HabitStatus.abandoned)
+                .toList();
+            final finished = habits
+                .where((h) => h.status == HabitStatus.finished)
+                .toList();
 
             return SliverList(
               delegate: SliverChildListDelegate([
@@ -550,7 +577,9 @@ SliverPersistentHeader(
                       ),
                     ),
                   ),
-                  ...active.map((h) => _HabitListTile(habit: h, isActive: true)),
+                  ...active.map(
+                    (h) => _HabitListTile(habit: h, isActive: true),
+                  ),
                 ],
                 if (finished.isNotEmpty) ...[
                   const Padding(
@@ -563,7 +592,9 @@ SliverPersistentHeader(
                       ),
                     ),
                   ),
-                  ...finished.map((h) => _HabitListTile(habit: h, isActive: false)),
+                  ...finished.map(
+                    (h) => _HabitListTile(habit: h, isActive: false),
+                  ),
                 ],
                 if (abandoned.isNotEmpty) ...[
                   const Padding(
@@ -576,7 +607,9 @@ SliverPersistentHeader(
                       ),
                     ),
                   ),
-                  ...abandoned.map((h) => _HabitListTile(habit: h, isActive: false)),
+                  ...abandoned.map(
+                    (h) => _HabitListTile(habit: h, isActive: false),
+                  ),
                 ],
               ]),
             );
@@ -1248,7 +1281,8 @@ class _DailyReminderCard extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: OutlinedButton.icon(
-                      onPressed: () => ref.read(localReminderServiceProvider).openSettings(),
+                      onPressed: () =>
+                          ref.read(localReminderServiceProvider).openSettings(),
                       icon: const Icon(Icons.settings),
                       label: const Text('Enable in System Settings'),
                       style: OutlinedButton.styleFrom(
@@ -1269,7 +1303,10 @@ class _DailyReminderCard extends ConsumerWidget {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () async {
-                                final initial = TimeOfDay(hour: setting.hour, minute: setting.minute);
+                                final initial = TimeOfDay(
+                                  hour: setting.hour,
+                                  minute: setting.minute,
+                                );
                                 final picked = await showTimePicker(
                                   context: context,
                                   initialTime: initial,
@@ -1283,7 +1320,12 @@ class _DailyReminderCard extends ConsumerWidget {
                                 );
                               },
                               icon: const Icon(Icons.schedule_rounded),
-                              label: Text(_formatReminderTime(setting.hour, setting.minute)),
+                              label: Text(
+                                _formatReminderTime(
+                                  setting.hour,
+                                  setting.minute,
+                                ),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 alignment: Alignment.centerLeft,
                               ),
@@ -1732,9 +1774,8 @@ class _HabitHistorySheet extends ConsumerWidget {
     if (log.status == LogStatus.completed) {
       return 'Completed';
     }
-    return log.journalNote?.trim().isNotEmpty == true
-        ? 'Skipped: ${log.journalNote!.trim()}'
-        : 'Skipped';
+    final note = log.journalNote?.trim();
+    return note?.isNotEmpty == true ? 'Skipped: $note' : 'Skipped';
   }
 
   String _formatHistoryDate(DateTime date) {
@@ -1958,10 +1999,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: AppTheme.surface,
-      child: _tabBar,
-    );
+    return Container(color: AppTheme.surface, child: _tabBar);
   }
 
   @override

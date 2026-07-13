@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -43,15 +44,21 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
       String modifiedUrl = '$url?tz=${Uri.encodeComponent(tz.toString())}';
 
       if (userId != null) {
-        final reminderSettings = await db.getReminderSettings(userId, ReminderType.dailyHabit);
-        final reminderSetting = reminderSettings.where((r) => r.isEnabled).firstOrNull;
+        final reminderSettings = await db.getReminderSettings(
+          userId,
+          ReminderType.dailyHabit,
+        );
+        final reminderSetting = reminderSettings
+            .where((r) => r.isEnabled)
+            .firstOrNull;
         if (reminderSetting != null) {
-          modifiedUrl = '$modifiedUrl&alarmHour=${reminderSetting.hour}&alarmMinute=${reminderSetting.minute}';
+          modifiedUrl =
+              '$modifiedUrl&alarmHour=${reminderSetting.hour}&alarmMinute=${reminderSetting.minute}';
         }
       }
       return modifiedUrl;
     } catch (e) {
-      print('Error appending timezone/alarm to calendar feed URL: $e');
+      debugPrint('Error appending timezone/alarm to calendar feed URL: $e');
       return url;
     }
   }
@@ -65,7 +72,11 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
         return;
       }
 
-      final token = authState.token!;
+      final token = authState.token;
+      if (token == null) {
+        state = state.copyWith(isLoading: false, error: 'Missing auth token');
+        return;
+      }
       final baseUrl = apiBaseUrl;
       final response = await http.get(
         Uri.parse('$baseUrl/api/user/calendar-feed'),
@@ -83,10 +94,7 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
           feedUrl = await _appendLocalSettingsToUrl(feedUrl);
         }
 
-        state = state.copyWith(
-          isLoading: false,
-          feedUrl: feedUrl,
-        );
+        state = state.copyWith(isLoading: false, feedUrl: feedUrl);
       } else {
         state = state.copyWith(
           isLoading: false,
@@ -107,7 +115,11 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
         return;
       }
 
-      final token = authState.token!;
+      final token = authState.token;
+      if (token == null) {
+        state = state.copyWith(isLoading: false, error: 'Missing auth token');
+        return;
+      }
       final baseUrl = apiBaseUrl;
       final response = await http.post(
         Uri.parse('$baseUrl/api/user/calendar-feed/rotate'),
@@ -125,10 +137,7 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
           feedUrl = await _appendLocalSettingsToUrl(feedUrl);
         }
 
-        state = state.copyWith(
-          isLoading: false,
-          feedUrl: feedUrl,
-        );
+        state = state.copyWith(isLoading: false, feedUrl: feedUrl);
       } else {
         state = state.copyWith(
           isLoading: false,

@@ -9,6 +9,75 @@ async function hashPassword(password) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+const defaultAvatarEmojis = ['🌱', '🌞', '🌊', '🍀', '🪴', '🧠', '🧭', '🔥', '⭐', '🌻', '🦊', '👺'];
+function hashString(value) {
+    let hash = 0;
+    for (const char of value) {
+        hash = ((hash * 31) + char.codePointAt(0)) >>> 0;
+    }
+    return hash;
+}
+function defaultAvatarForUsername(username) {
+    return defaultAvatarEmojis[hashString(username.trim().toLowerCase()) % defaultAvatarEmojis.length];
+}
+function normalizeOptionalString(value) {
+    const normalized = String(value ?? '').trim();
+    return normalized.length === 0 ? null : normalized;
+}
+function parseServiceWorkerVersion(scriptContents) {
+    const match = scriptContents.match(/serviceWorkerVersion:\s*["']([^"']+)["']/);
+    return match?.[1] ?? null;
+}
+async function readDeployedWebVersionStatus(requestUrl) {
+    const versionUrl = new URL('/version.json', requestUrl).toString();
+    const bootstrapUrl = new URL('/flutter_bootstrap.js', requestUrl).toString();
+    let currentVersion = null;
+    let currentBuildNumber = null;
+    let currentServiceWorkerVersion = null;
+    try {
+        const response = await fetch(versionUrl, {
+            headers: {
+                'Cache-Control': 'no-store',
+                'Pragma': 'no-cache',
+            },
+        });
+        if (response.ok) {
+            const data = await response.json();
+            currentVersion = normalizeOptionalString(data.version);
+            currentBuildNumber = normalizeOptionalString(data.build_number);
+        }
+    }
+    catch { }
+    try {
+        const response = await fetch(bootstrapUrl, {
+            headers: {
+                'Cache-Control': 'no-store',
+                'Pragma': 'no-cache',
+            },
+        });
+        if (response.ok) {
+            currentServiceWorkerVersion = parseServiceWorkerVersion(await response.text());
+        }
+    }
+    catch { }
+    return {
+        currentVersion,
+        currentBuildNumber,
+        currentServiceWorkerVersion,
+    };
+}
+app.get('/api/app/version-status', async (c) => {
+    const deployed = await readDeployedWebVersionStatus(c.req.url);
+    return c.json({
+        platform: 'web',
+        current_version: deployed.currentVersion,
+        current_build_number: deployed.currentBuildNumber,
+        current_service_worker_version: deployed.currentServiceWorkerVersion,
+        min_supported_version: normalizeOptionalString(c.env.MIN_SUPPORTED_APP_VERSION),
+        min_supported_service_worker_version: normalizeOptionalString(c.env.MIN_SUPPORTED_SERVICE_WORKER_VERSION),
+        force_refresh_on_mismatch: true,
+    });
+});
 // 1. Auth Endpoints
 app.post('/api/auth/register', async (c) => {
     const { username, password } = await c.req.json();
@@ -21,7 +90,7 @@ app.post('/api/auth/register', async (c) => {
         return c.json({ error: 'Username already exists' }, 409);
     }
     const id = crypto.randomUUID();
-    const avatar_url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+    const avatar_url = defaultAvatarForUsername(username);
     const password_hash = await hashPassword(password);
     await c.env.DB.prepare('INSERT INTO users (id, username, password_hash, avatar_url, total_score) VALUES (?, ?, ?, ?, ?)').bind(id, username, password_hash, avatar_url, 0).run();
     const payload = {

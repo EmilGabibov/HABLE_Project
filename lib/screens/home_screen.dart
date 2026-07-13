@@ -225,10 +225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Consumer(
                       builder: (context, ref, _) {
-                        final unreadAsync = ref.watch(
-                          unreadNotificationCountProvider,
-                        );
-                        final unreadCount = unreadAsync.value ?? 0;
+                        ref.watch(unreadNotificationCountProvider);
                         return IconButton(
                           tooltip: 'Open dashboard',
                           onPressed: () {
@@ -911,13 +908,16 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     final cutoff = DateTime.now().subtract(_nudgeVisibilityTtl);
     final nudgedPartners =
         partners
-            .where(
-              (partner) =>
-                  partner.lastNudgeAt != null &&
-                  partner.lastNudgeAt!.isAfter(cutoff),
-            )
+            .where((partner) => partner.lastNudgeAt?.isAfter(cutoff) == true)
             .toList()
-          ..sort((a, b) => b.lastNudgeAt!.compareTo(a.lastNudgeAt!));
+          ..sort((a, b) {
+            final left = a.lastNudgeAt;
+            final right = b.lastNudgeAt;
+            if (left == null && right == null) return 0;
+            if (left == null) return 1;
+            if (right == null) return -1;
+            return right.compareTo(left);
+          });
     return nudgedPartners.isEmpty ? null : nudgedPartners.first;
   }
 
@@ -1001,10 +1001,10 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
       });
 
       // Push the completion splash screen overlay
-      Navigator.of(context).push(
+      Navigator.of(this.context).push(
         PageRouteBuilder(
           opaque: false,
-          pageBuilder: (BuildContext context, _, __) {
+          pageBuilder: (_, _, _) {
             return CompletionSplashScreen(
               habit: habit,
               emoji: standardHabitForTitle(habit.title)?.emoji,

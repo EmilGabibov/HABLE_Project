@@ -17,7 +17,6 @@ import '../providers/quote_provider.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
-import '../theme/app_theme.dart';
 import '../widgets/badge_reveal_dialog.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/skip_bottom_sheet.dart';
@@ -333,13 +332,16 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     final cutoff = DateTime.now().subtract(_dashboardNudgeVisibilityTtl);
     final nudgedPartners =
         partners
-            .where(
-              (partner) =>
-                  partner.lastNudgeAt != null &&
-                  partner.lastNudgeAt!.isAfter(cutoff),
-            )
+            .where((partner) => partner.lastNudgeAt?.isAfter(cutoff) == true)
             .toList()
-          ..sort((a, b) => b.lastNudgeAt!.compareTo(a.lastNudgeAt!));
+          ..sort((a, b) {
+            final left = a.lastNudgeAt;
+            final right = b.lastNudgeAt;
+            if (left == null && right == null) return 0;
+            if (left == null) return 1;
+            if (right == null) return -1;
+            return right.compareTo(left);
+          });
     return nudgedPartners.isEmpty ? null : nudgedPartners.first;
   }
 
@@ -439,10 +441,10 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
         });
       });
 
-      Navigator.of(context).push(
+      Navigator.of(this.context).push(
         PageRouteBuilder(
           opaque: false,
-          pageBuilder: (context, _, __) =>
+          pageBuilder: (_, _, _) =>
               CompletionSplashScreen(habit: habit, emoji: null),
         ),
       );

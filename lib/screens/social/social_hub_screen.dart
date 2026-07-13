@@ -716,10 +716,14 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
                   final entry = flattenedSections[index];
-                  if (entry.sectionTitle != null) {
-                    return _ActivitySectionHeader(title: entry.sectionTitle!);
+                  final sectionTitle = entry.sectionTitle;
+                  if (sectionTitle != null) {
+                    return _ActivitySectionHeader(title: sectionTitle);
                   }
-                  final notification = entry.notification!;
+                  final notification = entry.notification;
+                  if (notification == null) {
+                    return const SizedBox.shrink();
+                  }
                   return _ActivityCard(
                     notification: notification,
                     onTap: () async {
@@ -952,8 +956,9 @@ class _PendingRequestsSection extends StatelessWidget {
               ),
             ),
           ),
-          ...requests.map(
-            (req) => Card(
+          ...requests.map((req) {
+            final requestId = req.requestId;
+            return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: UserAvatar(
@@ -970,10 +975,10 @@ class _PendingRequestsSection extends StatelessWidget {
                   spacing: 8,
                   children: [
                     OutlinedButton(
-                      onPressed: req.requestId == null
+                      onPressed: requestId == null
                           ? null
                           : () => onDecline(
-                              requestId: req.requestId!,
+                              requestId: requestId,
                               requesterId: req.userId,
                               username: req.username,
                               avatarUrl: req.avatarUrl,
@@ -981,10 +986,10 @@ class _PendingRequestsSection extends StatelessWidget {
                       child: const Text('Decline'),
                     ),
                     ElevatedButton(
-                      onPressed: req.requestId == null
+                      onPressed: requestId == null
                           ? null
                           : () => onAccept(
-                              requestId: req.requestId!,
+                              requestId: requestId,
                               requesterId: req.userId,
                               username: req.username,
                               avatarUrl: req.avatarUrl,
@@ -998,8 +1003,8 @@ class _PendingRequestsSection extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-          ),
+            );
+          }),
           const Divider(),
         ],
       ),

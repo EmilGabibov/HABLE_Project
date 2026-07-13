@@ -7,6 +7,8 @@ type Bindings = {
   NUDGES: KVNamespace
   JWT_SECRET: string
   ENVIRONMENT?: string
+  MIN_SUPPORTED_APP_VERSION?: string
+  MIN_SUPPORTED_SERVICE_WORKER_VERSION?: string
   EMAIL_WORKER?: {
     fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
   }
@@ -73,6 +75,71 @@ function isValidEmail(email: string): boolean {
 
 function normalizeAvatar(value: unknown): string {
   return String(value ?? '').trim()
+}
+
+const defaultAvatarEmojis = ['🌱', '🌞', '🌊', '🍀', '🪴', '🧠', '🧭', '🔥', '⭐', '🌻', '🦊', '👺'] as const
+
+function hashString(value: string): number {
+  let hash = 0
+  for (const char of value) {
+    hash = ((hash * 31) + char.codePointAt(0)!) >>> 0
+  }
+  return hash
+}
+
+function defaultAvatarForUsername(username: string): string {
+  return defaultAvatarEmojis[hashString(username.trim().toLowerCase()) % defaultAvatarEmojis.length]
+}
+
+function normalizeOptionalString(value: unknown): string | null {
+  const normalized = String(value ?? '').trim()
+  return normalized.length === 0 ? null : normalized
+}
+
+function parseServiceWorkerVersion(scriptContents: string): string | null {
+  const match = scriptContents.match(/serviceWorkerVersion:\s*["']([^"']+)["']/)
+  return match?.[1] ?? null
+}
+
+async function readDeployedWebVersionStatus(requestUrl: string) {
+  const versionUrl = new URL('/version.json', requestUrl).toString()
+  const bootstrapUrl = new URL('/flutter_bootstrap.js', requestUrl).toString()
+
+  let currentVersion: string | null = null
+  let currentBuildNumber: string | null = null
+  let currentServiceWorkerVersion: string | null = null
+
+  try {
+    const response = await fetch(versionUrl, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache',
+      },
+    })
+    if (response.ok) {
+      const data = await response.json<{ version?: unknown; build_number?: unknown }>()
+      currentVersion = normalizeOptionalString(data.version)
+      currentBuildNumber = normalizeOptionalString(data.build_number)
+    }
+  } catch {}
+
+  try {
+    const response = await fetch(bootstrapUrl, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache',
+      },
+    })
+    if (response.ok) {
+      currentServiceWorkerVersion = parseServiceWorkerVersion(await response.text())
+    }
+  } catch {}
+
+  return {
+    currentVersion,
+    currentBuildNumber,
+    currentServiceWorkerVersion,
+  }
 }
 
 function isAllowedEmojiAvatar(value: string): boolean {
@@ -181,6 +248,22 @@ app.use('/api/*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   maxAge: 600,
 }))
+
+app.get('/api/app/version-status', async (c) => {
+  const deployed = await readDeployedWebVersionStatus(c.req.url)
+
+  return c.json({
+    platform: 'web',
+    current_version: deployed.currentVersion,
+    current_build_number: deployed.currentBuildNumber,
+    current_service_worker_version: deployed.currentServiceWorkerVersion,
+    min_supported_version: normalizeOptionalString(c.env.MIN_SUPPORTED_APP_VERSION),
+    min_supported_service_worker_version: normalizeOptionalString(
+      c.env.MIN_SUPPORTED_SERVICE_WORKER_VERSION,
+    ),
+    force_refresh_on_mismatch: true,
+  })
+})
 
 let ensurePartnershipSchemaPromise: Promise<void> | null = null
 let ensureGamificationSchemaPromise: Promise<void> | null = null
@@ -915,7 +998,7 @@ app.post('/api/auth/register', async (c) => {
   }
 
   const id = crypto.randomUUID();
-  const avatar_url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+  const avatar_url = defaultAvatarForUsername(username)
   const password_hash = await hashPassword(password);
 
   await c.env.DB.prepare(
