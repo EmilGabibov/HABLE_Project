@@ -50,6 +50,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Friend Profile Privacy:** `GET /api/social/user/:id/profile` must stay authenticated and accepted-friend scoped. It may return only safe identity fields and allowed active shared-habit metadata; `Follow` in Flutter pre-fills local habit creation and does not create remote follow state.
 * **In-App Notification:** Sending a nudge should produce card-local queued feedback plus a lightweight snackbar, never an OS-level push notification in this MVP.
 * **Unified Social Notification Stream:** Friend requests, accepted-friend events, private messages, habit invitations, and nudges all fan into the Drift-backed `NotificationEvents` table. The Social → Activity tab presents this as a unified chronological feed. Home's bell icon switches to this tab. The former standalone Notification Center and Inbox surfaces are retired as primary entry points.
+* **Social Reminder Recap:** Coalesced social reminders may summarize both unread `notification_events` and recent `partner_snapshots.has_completed_today` activity so the recap reflects shared-habit check-ins as well as invites/nudges. Background prefetch diagnostics must stay coarse and anonymous: only allowlisted freshness counters such as `prefetch_on_time`, `prefetch_missed`, `prefetch_recap_ready`, `prefetch_recap_stale`, and `prefetch_recap_empty`.
 
 ## 4. The Daily Quote Engine
 

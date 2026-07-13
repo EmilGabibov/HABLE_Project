@@ -1630,7 +1630,7 @@
 **Completion notes:** Completed on 2026-07-13. Confirmed the existing Drift reminder schema already supported multiple rows per reminder family, then fixed the remaining single-reminder assumptions in scheduling. `LocalReminderService` now derives a stable per-row notification ID and cancels legacy slot/hash IDs during transition, `BackgroundSyncService` now keys reminder prefetch work per reminder row instead of per user, and `notification_providers.dart` now add/update/remove/restore reminders without overwriting sibling schedules. Added focused tests in `test/notification_actions_test.dart` plus expanded ID coverage in `test/notification_id_slot_test.dart`; targeted tests pass.
 
 <a id="deepen-social-reminder-prefetch-with-richer-recaps-platform-tuning-and-bounded-telemetry"></a>
-### [ ] Deepen Social Reminder Prefetch With Richer Recaps Platform Tuning And Bounded Telemetry
+### [x] Deepen Social Reminder Prefetch With Richer Recaps Platform Tuning And Bounded Telemetry
 
 **Raw source:** Advanced Background Prefetch. Implement richer social recap assembly, OS-specific background execution tuning, notification coalescing, or analytics/telemetry around missed prefetch windows.
 
@@ -1668,7 +1668,7 @@
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added a reusable `SocialRecapPlan` path in `lib/services/sync_service.dart` so coalesced recaps can include recent partner check-ins from `partner_snapshots` in addition to unread nudges, invites, friend requests, and friend-accepted events while preserving prior single-event and grouped-nudge behavior. The background prefetch worker now records bounded anonymous freshness outcomes (`prefetch_recap_ready`, `prefetch_recap_stale`, `prefetch_recap_empty`) after `pullDailySync`, and `UsageDiagnosticsService` now explicitly allowlists those metrics. Expanded regression coverage in `test/notification_recap_test.dart` and `test/usage_diagnostics_service_test.dart`; targeted tests pass.
 
 <a id="build-dedicated-tablet-and-grid-habit-dashboards-with-reusable-habit-tile-foundation"></a>
 ### [ ] Build Dedicated Tablet And Grid Habit Dashboards With Reusable Habit Tile Foundation

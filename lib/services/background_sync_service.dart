@@ -74,11 +74,9 @@ void callbackDispatcher() {
           targetTime = targetTime.subtract(const Duration(days: 1));
         }
 
-        if (now.isAfter(targetTime)) {
-          await diagnostics.recordBackgroundEvent('prefetch_missed');
-        } else {
-          await diagnostics.recordBackgroundEvent('prefetch_on_time');
-        }
+        await diagnostics.recordBackgroundEvent(
+          now.isAfter(targetTime) ? 'prefetch_missed' : 'prefetch_on_time',
+        );
 
         // Chain the next task for tomorrow
         final bgService = BackgroundSyncService();
@@ -93,6 +91,17 @@ void callbackDispatcher() {
 
       // Perform a minimal background sync
       await syncService.pullDailySync(userId);
+
+      if (reminderId != null && reminderTypeName != null) {
+        final recapPlan = await syncService.buildSocialRecapPlan(userId);
+        if (recapPlan == null) {
+          await diagnostics.recordBackgroundEvent('prefetch_recap_empty');
+        } else if (recapPlan.isStaleAt(DateTime.now())) {
+          await diagnostics.recordBackgroundEvent('prefetch_recap_stale');
+        } else {
+          await diagnostics.recordBackgroundEvent('prefetch_recap_ready');
+        }
+      }
 
       // Dispose resources
       diagnostics.dispose();

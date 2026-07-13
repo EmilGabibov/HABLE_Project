@@ -11,6 +11,27 @@ import '../database/tables.dart';
 import 'connectivity_service.dart';
 import 'local_reminder_service.dart';
 
+class SocialRecapPlan {
+  const SocialRecapPlan({
+    required this.title,
+    required this.body,
+    required this.payload,
+    required this.latestActivityAt,
+  });
+
+  final String title;
+  final String body;
+  final String payload;
+  final DateTime latestActivityAt;
+
+  bool isStaleAt(
+    DateTime now, {
+    Duration staleAfter = const Duration(hours: 6),
+  }) {
+    return now.difference(latestActivityAt) > staleAfter;
+  }
+}
+
 /// Background sync service that processes the outbound queue
 /// and pulls inbound data from Cloudflare Workers.
 class SyncService {
@@ -67,30 +88,39 @@ class SyncService {
     }
   }
 
-  /// Evaluates unread notifications to build a recap payload and schedules/updates the reminder.
-  Future<void> coalesceAndScheduleSocialRecap(String userId) async {
-    if (_localReminderService == null || !_localReminderService.supportsScheduling) return;
-
+  Future<SocialRecapPlan?> buildSocialRecapPlan(String userId) async {
     final unread = await _db.getUnreadNotificationsForUser(userId);
-
     final socialTypes = {
       NotificationEventType.nudge,
       NotificationEventType.habitInvitation,
       NotificationEventType.friendRequest,
       NotificationEventType.friendAccepted,
     };
-    final socialUnread = unread.where((n) => socialTypes.contains(n.type)).toList();
+    final socialUnread = unread
+        .where((n) => socialTypes.contains(n.type))
+        .toList();
+    final nudges = socialUnread
+        .where((n) => n.type == NotificationEventType.nudge)
+        .toList();
+    final invites = socialUnread
+        .where((n) => n.type == NotificationEventType.habitInvitation)
+        .toList();
+    final friendRequests = socialUnread
+        .where((n) => n.type == NotificationEventType.friendRequest)
+        .toList();
+    final newFriends = socialUnread
+        .where((n) => n.type == NotificationEventType.friendAccepted)
+        .toList();
+    final partnerCheckIns = await _recentPartnerCheckIns();
 
-    if (socialUnread.isEmpty) return;
+    if (socialUnread.isEmpty && partnerCheckIns.isEmpty) {
+      return null;
+    }
 
-    const title = 'Social Recap';
-    String body;
-    String payload;
-
-    final nudges = socialUnread.where((n) => n.type == NotificationEventType.nudge).toList();
-    final invites = socialUnread.where((n) => n.type == NotificationEventType.habitInvitation).toList();
-
-    Future<String> formatUserNames(List<String> sourceIds, String actionVerb) async {
+    Future<String> formatUserNames(
+      List<String> sourceIds,
+      String actionVerb,
+    ) async {
       final ids = sourceIds.toSet().toList();
       final names = <String>[];
       for (final id in ids) {
@@ -103,28 +133,102 @@ class SyncService {
       }
       if (names.isEmpty) return 'You have new ${actionVerb}s.';
       if (names.length == 1) return '${names[0]} $actionVerb you.';
-      if (names.length == 2) return '${names[0]} and ${names[1]} $actionVerb you.';
+      if (names.length == 2)
+        return '${names[0]} and ${names[1]} $actionVerb you.';
       return '${names[0]}, ${names[1]}, and ${names.length - 2} other${names.length - 2 > 1 ? 's' : ''} $actionVerb you.';
     }
+
+    String summarizePartnerCheckIns(List<PartnerSnapshot> snapshots) {
+      if (snapshots.length == 1) {
+        return '${snapshots.first.username} checked in on a shared habit today.';
+      }
+      return '${snapshots.length} friends checked in on shared habits today.';
+    }
+
+    String summarizeCount(int count, String singular, {String? plural}) {
+      final label = count == 1 ? singular : (plural ?? '${singular}s');
+      return '$count $label';
+    }
+
+    final latestActivityAt = [
+      ...socialUnread.map((event) => event.createdAt),
+      ...partnerCheckIns.map((snapshot) => snapshot.updatedAt),
+    ].reduce((latest, value) => value.isAfter(latest) ? value : latest);
+
+    const title = 'Social Recap';
+    String body;
+    String payload;
 
     if (socialUnread.length == 1) {
       body = socialUnread.first.body;
       payload = socialUnread.first.actionPayloadJson ?? '{"route": "social"}';
+    } else if (socialUnread.isEmpty && partnerCheckIns.isNotEmpty) {
+      body = summarizePartnerCheckIns(partnerCheckIns);
+      payload = '{"route": "social"}';
+    } else if (partnerCheckIns.isNotEmpty) {
+      final parts = <String>[
+        summarizeCount(partnerCheckIns.length, 'friend checked in'),
+      ];
+      if (nudges.isNotEmpty) {
+        parts.add(summarizeCount(nudges.length, 'nudge'));
+      }
+      if (invites.isNotEmpty) {
+        parts.add(summarizeCount(invites.length, 'invite'));
+      }
+      if (friendRequests.isNotEmpty) {
+        parts.add(summarizeCount(friendRequests.length, 'friend request'));
+      }
+      if (newFriends.isNotEmpty) {
+        parts.add(summarizeCount(newFriends.length, 'new friend'));
+      }
+      body = _joinRecapParts(parts);
+      payload = '{"route": "social"}';
     } else if (nudges.isNotEmpty && invites.isNotEmpty) {
-      body = 'You have ${nudges.length} nudge${nudges.length == 1 ? '' : 's'} and ${invites.length} invite${invites.length == 1 ? '' : 's'}.';
+      body =
+          'You have ${nudges.length} nudge${nudges.length == 1 ? '' : 's'} and ${invites.length} invite${invites.length == 1 ? '' : 's'}.';
+      payload = '{"route": "social"}';
+    } else if (nudges.length > 1 &&
+        invites.isEmpty &&
+        friendRequests.isEmpty &&
+        newFriends.isEmpty) {
+      body = 'You have ${nudges.length} new nudges from friends.';
       payload = '{"route": "social"}';
     } else if (nudges.isNotEmpty) {
-      final sourceIds = nudges.map((n) => n.sourceId).whereType<String>().toList();
+      final sourceIds = nudges
+          .map((n) => n.sourceId)
+          .whereType<String>()
+          .toList();
       body = await formatUserNames(sourceIds, 'nudged');
       payload = '{"route": "social"}';
     } else if (invites.isNotEmpty) {
-      final sourceIds = invites.map((n) => n.sourceId).whereType<String>().toList();
+      final sourceIds = invites
+          .map((n) => n.sourceId)
+          .whereType<String>()
+          .toList();
       body = await formatUserNames(sourceIds, 'invited');
       payload = '{"route": "social"}';
     } else {
-      body = 'You have ${socialUnread.length} new social interaction${socialUnread.length == 1 ? '' : 's'}.';
+      body =
+          'You have ${socialUnread.length} new social interaction${socialUnread.length == 1 ? '' : 's'}.';
       payload = '{"route": "social"}';
     }
+
+    return SocialRecapPlan(
+      title: title,
+      body: body,
+      payload: payload,
+      latestActivityAt: latestActivityAt,
+    );
+  }
+
+  /// Evaluates local social state to build a recap payload and schedules it.
+  Future<void> coalesceAndScheduleSocialRecap(String userId) async {
+    if (_localReminderService == null ||
+        !_localReminderService.supportsScheduling)
+      return;
+
+    final recapPlan = await buildSocialRecapPlan(userId);
+    if (recapPlan == null) return;
 
     final now = DateTime.now();
     final scheduleMinute = now.minute + 1 >= 60 ? 0 : now.minute + 1;
@@ -133,14 +237,35 @@ class SyncService {
     await _localReminderService.scheduleReminder(
       notificationId: 299, // Social recap
       userId: userId,
-      type: ReminderType.dailyHabit, // Reusing slot type for now, but explicit ID
+      type:
+          ReminderType.dailyHabit, // Reusing slot type for now, but explicit ID
       hour: scheduleHour,
       minute: scheduleMinute,
-      title: title,
-      body: body,
-      payload: payload,
+      title: recapPlan.title,
+      body: recapPlan.body,
+      payload: recapPlan.payload,
     );
-    debugPrint('[SyncService] Scheduled social recap: $nudges nudges, $invites invites → "$body"');
+    debugPrint('[SyncService] Scheduled social recap → "${recapPlan.body}"');
+  }
+
+  Future<List<PartnerSnapshot>> _recentPartnerCheckIns() async {
+    final cutoff = DateTime.now().subtract(const Duration(days: 1));
+    return (await (_db.select(_db.partnerSnapshots)
+          ..where(
+            (snapshot) =>
+                snapshot.hasCompletedToday.equals(true) &
+                snapshot.updatedAt.isBiggerOrEqualValue(cutoff),
+          )
+          ..orderBy([(snapshot) => OrderingTerm.desc(snapshot.updatedAt)]))
+        .get());
+  }
+
+  String _joinRecapParts(List<String> parts) {
+    if (parts.isEmpty) return 'You have new social activity.';
+    if (parts.length == 1) return '${parts.first}.';
+    if (parts.length == 2) return '${parts[0]} and ${parts[1]}.';
+    final head = parts.sublist(0, parts.length - 1).join(', ');
+    return '$head, and ${parts.last}.';
   }
 
   /// Send a mutation payload to the Cloudflare Worker.
@@ -469,9 +594,9 @@ class SyncService {
             habitName = habit?.title;
           }
           if (timestamp != null) actionPayload['timestamp'] = timestamp;
-          
+
           final senderName = friend?.username ?? 'A friend';
-          final bodyText = habitName != null 
+          final bodyText = habitName != null
               ? '$senderName nudged you to check-in on $habitName'
               : '$senderName sent you a reminder on a shared habit.';
 

@@ -106,5 +106,47 @@ void main() {
         await db.close();
       },
     );
+
+    test('records bounded prefetch recap telemetry metrics', () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final service = UsageDiagnosticsService(
+        db: db,
+        client: MockClient((_) async => http.Response('{}', 200)),
+        apiBaseUrl: 'http://127.0.0.1:8787',
+        localCollectionEnabled: true,
+        remoteUploadEnabled: false,
+        buildChannel: 'debug',
+      );
+
+      await service.recordBackgroundEvent('prefetch_recap_ready');
+      await service.recordBackgroundEvent('prefetch_recap_stale');
+      await service.recordBackgroundEvent('prefetch_recap_empty');
+
+      final rows = await db.getUsageAggregateBuckets();
+      expect(
+        rows
+            .where((row) => row.metricName == 'prefetch_recap_ready')
+            .single
+            .count,
+        1,
+      );
+      expect(
+        rows
+            .where((row) => row.metricName == 'prefetch_recap_stale')
+            .single
+            .count,
+        1,
+      );
+      expect(
+        rows
+            .where((row) => row.metricName == 'prefetch_recap_empty')
+            .single
+            .count,
+        1,
+      );
+
+      service.dispose();
+      await db.close();
+    });
   });
 }

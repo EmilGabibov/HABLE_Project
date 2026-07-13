@@ -27,6 +27,9 @@ const allowedUsageMetricNames = <String>{
   'screen_visible_ms',
   'prefetch_on_time',
   'prefetch_missed',
+  'prefetch_recap_ready',
+  'prefetch_recap_stale',
+  'prefetch_recap_empty',
 };
 
 class UsageDiagnosticsService {
@@ -83,7 +86,7 @@ class UsageDiagnosticsService {
   Future<void> recordBackgroundEvent(String metricName) async {
     if (_disposed || !_localCollectionEnabled) return;
     if (!allowedUsageMetricNames.contains(metricName)) return;
-    
+
     await _incrementBucket(
       screenName: 'app', // Attach background events to the 'app' pseudo-screen
       metricName: metricName,
