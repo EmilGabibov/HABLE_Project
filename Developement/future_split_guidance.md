@@ -37,6 +37,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* platform build integrity tasks, Android signing/package identity tasks.
   - *User perspective:* Installing Hable from each platform feels official and low-friction.
 
+- **Realtime Transport Accelerator Implementation:** Following the new architecture design, implement the signal-only WebSockets/SSE on the Cloudflare Worker and Flutter client as a dedicated infrastructure task. Do not try to rewrite the full sync loop in one go; keep the Drift invalidation pattern.
+  - *Source tasks:* `Split Realtime Or Push Delivery Architecture Beyond Foreground Polling`.
+  - *User perspective:* Shared actions and nudges sync instantly when the app is open without battery-draining full-payload sockets.
+
 ## Priority 2: Social Product Depth and Multi-User Scale
 *These items grow Hable beyond the current accepted-friend + shared-habit MVP.*
 

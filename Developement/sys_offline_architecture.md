@@ -59,3 +59,13 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
 
 * **Optimistic UI:** The user must never see a "syncing" spinner block their actions. All actions are assumed successful locally.
 * **Last Write Wins:** If a user logs a habit on two offline devices, the backend Cloudflare Worker must resolve conflicts by accepting the payload with the most recent `updated_at` timestamp.
+
+## 5. Beyond Foreground Polling: Realtime Transport Accelerator
+
+As social activity (nudges, shared-habit completions) grows, foreground polling and lifecycle triggers become insufficient. Hable introduces a **Realtime Transport Accelerator** without breaking the local-first Drift architecture:
+
+* **Signal-Only WebSockets:** When the app is in the foreground, it establishes a lightweight WebSocket (or SSE) connection to the Cloudflare Worker. This socket receives *invalidation signals* only (e.g., `{"event": "nudge_received", "user_id": "..."}`), not full payloads.
+* **Preserving Local Truth:** Upon receiving an invalidation signal, the Flutter sync engine immediately triggers the existing `/api/sync/daily` poll. The incoming data is normalized into Drift rows as usual. The UI never reads directly from the socket; it only reads the updated Drift providers.
+* **Push-Triggered Refresh:** For background states, backend-triggered FCM/APNs silent push notifications act as the same invalidation signal, waking the sync engine to pull updates before the user opens the app.
+* **Targeted Freshness:** Realtime signals are strictly reserved for high-urgency social actions (nudges, accepted friend requests, shared-habit completions, direct messages) and prominent gamification changes (top-3 leaderboard shifts).
+* **Diagnostics & Fallback:** The sync service monitors socket health. If the socket disconnects, the app seamlessly falls back to periodic foreground polling. Telemetry tracks connection uptime to distinguish "socket dead" from "no new events."

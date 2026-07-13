@@ -2502,7 +2502,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion notes:** 2026-07-13: Removed the `HabitEnvironmentVisualizer` from `home_screen.dart` entirely, while preserving it in `social_hub_screen.dart`. Reconfigured the top quote/encouragement block's padding and typography in `HomeScreen` to enlarge the quote and emoji sizes (changed to `titleMedium` / `bodyLarge` with larger font sizes and generous padding) so it stands clearly as the primary entry point and header, restoring the quote-first hierarchy without 3D distraction.
 
 <a id="split-realtime-or-push-delivery-architecture-beyond-foreground-polling"></a>
-### [ ] Split Realtime Or Push Delivery Architecture Beyond Foreground Polling
+### [x] Split Realtime Or Push Delivery Architecture Beyond Foreground Polling
 
 **Raw source:** Realtime or Push Delivery Architecture: If foreground polling becomes insufficient, split push/WebSocket delivery, richer sync telemetry, or leaderboard-specific caching into separate backend/client tasks.
 
@@ -2537,7 +2537,7 @@ The revision should explicitly describe why these surfaces may update at differe
 - Clear fallback behavior exists when live delivery is unavailable or disconnected.
 - Relevant docs are updated and any narrower subtracks are split out explicitly.
 
-**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+**Completion notes:** Completed on 2026-07-13. Added Section 5 "Beyond Foreground Polling: Realtime Transport Accelerator" to `Developement/sys_offline_architecture.md`. Designed the architecture to use signal-only WebSockets/SSE that trigger the existing `/api/sync/daily` poll instead of carrying full payloads, maintaining Drift as the single source of truth and avoiding "socket-first" complexity. Added implementation of this transport to `Developement/future_split_guidance.md` as a priority 1 hard task.
 
 **Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
