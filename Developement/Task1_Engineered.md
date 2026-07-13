@@ -2033,7 +2033,7 @@
 **Completion notes:** Completed on 2026-07-13. Reworked `lib/widgets/habit_partner_row.dart` so partner avatars now carry a single miniature ring container around the avatar instead of a detached corner dot. The ring palette is shared across collapsed and expanded partner views, with completed partners now using the current habit color, nudged partners using a tinted habit-color ring, supporters staying lavender, and pending partners keeping a muted neutral ring. Updated `test/habit_partner_row_test.dart` to assert the revised ring contract and the completed-state habit-color mapping, and refreshed the manual QA wording in `Developement/qa_testing.md` so the verification language now matches the mini-ring surface. Focused verification: `flutter test test/habit_partner_row_test.dart`.
 
 <a id="complete-habit-creation-form-as-a-cohesive-onboarding-style-create-edit-surface"></a>
-### [ ] Complete Habit Creation Form As A Cohesive Onboarding-Style Create/Edit Surface
+### [x] Complete Habit Creation Form As A Cohesive Onboarding-Style Create/Edit Surface
 
 **Raw source:** Complete the habit creation form, the form is not complete yet. no custom emoji, no other suggestions for time deuration (e.g. 21, 33, 40, the science proven ones). no description for the habit card and its creation form.
 reorder correctly, the emoji at left (emoji picker appears by click), and at the right the name field, the template chips, the description field, and the duration field. and others... reorder and make it complete and elegant. don't forget to show friend emoji next to their name.
@@ -2072,7 +2072,7 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Rebuilt `lib/widgets/habit_form_sheet.dart` into a more guided create/edit surface with a stronger header, icon-plus-title identity row, preset chips, preset-driven intent copy, explicit duration suggestion chips (`21`, `33`, `40`, `66`, `90`), clearer color selection, visible validation, async save state, and differentiated `Create habit` vs `Save changes` CTAs. Friend invite chips now render with avatar emoji via `UserAvatar`, and create mode preserves the existing partner-invite flow while edit mode stays scoped to updating the habit itself. The save path now also correctly flags custom habits in `habitActionsProvider` instead of always sending `isCustom: false`, and standard-habit lookup tolerates leading emoji so custom-title decoration does not break preset inference. Focused verification was added in `test/habit_form_sheet_test.dart` for validation, preset application, partner selection, and edit-mode saves with `flutter test test/habit_form_sheet_test.dart`.
 
 <a id="add-first-run-quote-splash-and-promote-quote-first-typography-across-quote-bearing-celebration-surfaces"></a>
 ### [ ] Add First-Run Quote Splash And Promote Quote-First Typography Across Quote-Bearing Celebration Surfaces

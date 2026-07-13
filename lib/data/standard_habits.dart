@@ -56,11 +56,24 @@ const standardHabits = [
 ];
 
 StandardHabit? standardHabitForTitle(String title) {
-  final normalized = title.trim().toLowerCase();
+  final normalized = _normalizeHabitTitle(title);
   for (final habit in standardHabits) {
-    if (habit.title.trim().toLowerCase() == normalized) {
+    if (_normalizeHabitTitle(habit.title) == normalized) {
       return habit;
     }
   }
   return null;
+}
+
+String _normalizeHabitTitle(String title) {
+  return title
+      .replaceFirst(
+        RegExp(
+          r'^\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*',
+          unicode: true,
+        ),
+        '',
+      )
+      .trim()
+      .toLowerCase();
 }

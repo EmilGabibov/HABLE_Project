@@ -8,9 +8,33 @@ import '../providers/auth_provider.dart';
 import 'database_provider.dart';
 import 'sync_provider.dart';
 
-final habitActionsProvider = Provider((ref) => HabitActionsController(ref));
+final habitActionsProvider = Provider<HabitActions>(
+  (ref) => HabitActionsController(ref),
+);
 
-class HabitActionsController {
+abstract class HabitActions {
+  Future<String?> createHabit(
+    String title,
+    int targetDuration,
+    bool isCustom,
+    String colorHex, {
+    List<String> partnerIds = const [],
+  });
+
+  Future<void> updateHabit(
+    String habitId,
+    String title,
+    int targetDuration,
+    String colorHex,
+  );
+
+  Future<void> archiveHabit(String habitId);
+  Future<void> restoreHabit(String habitId);
+  Future<void> rerunHabit(String habitId);
+  Future<void> deleteHabit(String habitId);
+}
+
+class HabitActionsController implements HabitActions {
   final Ref _ref;
 
   HabitActionsController(this._ref);

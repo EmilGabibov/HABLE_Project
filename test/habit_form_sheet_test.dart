@@ -1,0 +1,223 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hable/database/database.dart';
+import 'package:hable/database/tables.dart' show HabitStatus;
+import 'package:hable/providers/habit_actions_provider.dart';
+import 'package:hable/providers/social_providers.dart';
+import 'package:hable/theme/app_theme.dart';
+import 'package:hable/widgets/habit_form_sheet.dart';
+
+class _FakeHabitActions implements HabitActions {
+  String? createdTitle;
+  int? createdDuration;
+  bool? createdIsCustom;
+  String? createdColor;
+  List<String>? createdPartnerIds;
+
+  String? updatedHabitId;
+  String? updatedTitle;
+  int? updatedDuration;
+  String? updatedColor;
+
+  @override
+  Future<void> archiveHabit(String habitId) async {}
+
+  @override
+  Future<String?> createHabit(
+    String title,
+    int targetDuration,
+    bool isCustom,
+    String colorHex, {
+    List<String> partnerIds = const [],
+  }) async {
+    createdTitle = title;
+    createdDuration = targetDuration;
+    createdIsCustom = isCustom;
+    createdColor = colorHex;
+    createdPartnerIds = partnerIds;
+    return 'habit-1';
+  }
+
+  @override
+  Future<void> deleteHabit(String habitId) async {}
+
+  @override
+  Future<void> rerunHabit(String habitId) async {}
+
+  @override
+  Future<void> restoreHabit(String habitId) async {}
+
+  @override
+  Future<void> updateHabit(
+    String habitId,
+    String title,
+    int targetDuration,
+    String colorHex,
+  ) async {
+    updatedHabitId = habitId;
+    updatedTitle = title;
+    updatedDuration = targetDuration;
+    updatedColor = colorHex;
+  }
+}
+
+AcceptedFriend _friend(String id, String name, String avatar) {
+  return AcceptedFriend(
+    friendUserId: id,
+    username: name,
+    avatarUrl: avatar,
+    updatedAt: DateTime(2026),
+    isSynced: true,
+  );
+}
+
+Habit _habit() {
+  return Habit(
+    habitId: 'habit-1',
+    userId: 'user-1',
+    title: 'Reading',
+    isCustom: false,
+    targetDuration: 33,
+    currentDuration: 33,
+    status: HabitStatus.active,
+    colorHex: 'FFA5B4FC',
+    updatedAt: DateTime(2026),
+    createdAt: DateTime(2026),
+    isSynced: true,
+  );
+}
+
+Widget _buildSheet({
+  Habit? existingHabit,
+  String? prefilledTitle,
+  required HabitActions actions,
+  List<AcceptedFriend> friends = const [],
+}) {
+  return ProviderScope(
+    overrides: [
+      habitActionsProvider.overrideWithValue(actions),
+      acceptedFriendsProvider.overrideWith((ref) => Stream.value(friends)),
+    ],
+    child: MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: Scaffold(
+        body: HabitFormSheet(
+          existingHabit: existingHabit,
+          prefilledTitle: prefilledTitle,
+        ),
+      ),
+    ),
+  );
+}
+
+void main() {
+  testWidgets('HabitFormSheet shows visible validation in create mode', (
+    tester,
+  ) async {
+    final actions = _FakeHabitActions();
+
+    await tester.pumpWidget(_buildSheet(actions: actions));
+
+    await tester.enterText(find.byKey(const Key('habit-form-title')), '');
+    await tester.enterText(find.byKey(const Key('habit-form-duration')), '0');
+    await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
+    await tester.tap(find.byKey(const Key('habit-form-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Create habit'), findsOneWidget);
+    expect(find.text('Give this habit a clear name.'), findsOneWidget);
+    expect(find.text('Duration must be at least 1 day.'), findsOneWidget);
+    expect(actions.createdTitle, isNull);
+  });
+
+  testWidgets('HabitFormSheet applies preset copy and duration suggestions', (
+    tester,
+  ) async {
+    final actions = _FakeHabitActions();
+
+    await tester.pumpWidget(_buildSheet(actions: actions));
+
+    await tester.tap(find.byKey(const Key('preset-Hydration')));
+    await tester.pumpAndSettle();
+
+    final titleField = tester.widget<TextFormField>(
+      find.byKey(const Key('habit-form-title')),
+    );
+    final durationField = tester.widget<TextFormField>(
+      find.byKey(const Key('habit-form-duration')),
+    );
+
+    expect(titleField.controller!.text, 'Hydration');
+    expect(durationField.controller!.text, '21');
+    expect(find.text('Drink 8 glasses of water daily'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('duration-40')));
+    await tester.tap(find.byKey(const Key('duration-40')));
+    await tester.pump();
+
+    final updatedDurationField = tester.widget<TextFormField>(
+      find.byKey(const Key('habit-form-duration')),
+    );
+    expect(updatedDurationField.controller!.text, '40');
+  });
+
+  testWidgets('HabitFormSheet creates habit with selected partners', (
+    tester,
+  ) async {
+    final actions = _FakeHabitActions();
+
+    await tester.pumpWidget(
+      _buildSheet(
+        actions: actions,
+        friends: [_friend('friend-1', 'Mina', '🦊')],
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('habit-form-title')),
+      'Evening Walk',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('friend-friend-1')));
+    await tester.tap(find.byKey(const Key('friend-friend-1')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
+    await tester.tap(find.byKey(const Key('habit-form-save')));
+    await tester.pumpAndSettle();
+
+    expect(actions.createdTitle, 'Evening Walk');
+    expect(actions.createdDuration, 21);
+    expect(actions.createdIsCustom, isTrue);
+    expect(actions.createdPartnerIds, ['friend-1']);
+    expect(find.text('Mina'), findsNothing);
+  });
+
+  testWidgets('HabitFormSheet updates existing habit in edit mode', (
+    tester,
+  ) async {
+    final actions = _FakeHabitActions();
+
+    await tester.pumpWidget(
+      _buildSheet(existingHabit: _habit(), actions: actions),
+    );
+
+    expect(find.text('Save changes'), findsOneWidget);
+    expect(find.text('Invite partners'), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const Key('habit-form-title')),
+      'Deep Reading',
+    );
+    await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
+    await tester.tap(find.byKey(const Key('habit-form-save')));
+    await tester.pumpAndSettle();
+
+    expect(actions.updatedHabitId, 'habit-1');
+    expect(actions.updatedTitle, 'Deep Reading');
+    expect(actions.updatedDuration, 33);
+  });
+}

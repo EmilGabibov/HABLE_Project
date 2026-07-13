@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../data/standard_habits.dart';
 import '../database/database.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/social_providers.dart';
 import '../theme/app_theme.dart';
 import 'skeletons.dart';
-import '../data/standard_habits.dart';
 import 'usage_tracked_screen.dart';
+import 'user_avatar.dart';
 
 const List<String> _pastelColors = [
-  'FF9CAF88', // Sage Green
-  'FFB8C5D6', // Serene Blue
-  'FFE2C2B3', // Warm Terracotta
-  'FFD1C1D7', // Soft Lavender
-  'FFF0E6D2', // Oat Milk
-  'FFF4D1AE', // Peachy Sand
-  'FFC3DBC5', // Mint Frost
-  'FFD6B9B9', // Dusty Rose
-  'FFE4D3A2', // Muted Mustard
+  'FF9CAF88',
+  'FFB8C5D6',
+  'FFE2C2B3',
+  'FFD1C1D7',
+  'FFF0E6D2',
+  'FFF4D1AE',
+  'FFC3DBC5',
+  'FFD6B9B9',
+  'FFE4D3A2',
+];
+
+const List<int> _durationSuggestions = [21, 33, 40, 66, 90];
+const List<String> _emojiChoices = [
+  '✨',
+  '🌱',
+  '💧',
+  '📖',
+  '🧘',
+  '🏃',
+  '😴',
+  '📝',
+  '🎯',
+  '🔥',
+  '🍎',
+  '🎨',
 ];
 
 class HabitFormSheet extends ConsumerStatefulWidget {
@@ -36,7 +54,7 @@ class HabitFormSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => UsageTrackedScreen(
         screenName: 'habit_form',
@@ -58,23 +76,42 @@ class HabitFormSheet extends ConsumerStatefulWidget {
 }
 
 class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
-  late TextEditingController _titleController;
-  late TextEditingController _durationController;
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _durationController;
   late String _selectedColor;
-  final Set<String> _selectedPartners = {};
+  final Set<String> _selectedPartners = <String>{};
+  StandardHabit? _selectedPreset;
+  late String _selectedEmoji;
+  bool _shouldPersistCustomEmoji = false;
+  bool _hasAttemptedSubmit = false;
+  bool _isSaving = false;
+  String? _submissionError;
+
+  bool get _isEditing => widget.existingHabit != null;
+  bool get _isCreateFlow => !_isEditing;
 
   @override
   void initState() {
     super.initState();
+    final startingTitle =
+        widget.existingHabit?.title ?? widget.prefilledTitle ?? '';
+    _selectedPreset = standardHabitForTitle(startingTitle);
+    final startingEmoji = _extractLeadingEmoji(startingTitle);
+    _selectedEmoji = startingEmoji ?? _selectedPreset?.emoji ?? '✨';
+    _shouldPersistCustomEmoji = startingEmoji != null;
     _titleController = TextEditingController(
-      text: widget.existingHabit?.title ?? widget.prefilledTitle ?? '',
+      text: _stripLeadingEmoji(startingTitle),
     );
     _durationController = TextEditingController(
       text: widget.existingHabit != null
           ? widget.existingHabit!.targetDuration.toString()
-          : '21',
+          : (_selectedPreset?.defaultDurationDays ?? 21).toString(),
     );
-    _selectedColor = widget.existingHabit?.colorHex ?? _pastelColors[0];
+    _selectedColor =
+        widget.existingHabit?.colorHex ??
+        _selectedPreset?.colorHex ??
+        _pastelColors.first;
   }
 
   @override
@@ -84,244 +121,618 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     super.dispose();
   }
 
-  Future<void> _saveHabit() async {
-    final title = _titleController.text.trim();
-    final durationDays = int.tryParse(_durationController.text) ?? 21;
-    if (title.isEmpty) return;
-    if (durationDays < 1) return;
+  Future<void> _showEmojiPicker() async {
+    final emoji = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose an icon',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Custom habits can keep this icon with the title.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: _emojiChoices
+                      .map(
+                        (emoji) => InkWell(
+                          onTap: () => Navigator.of(context).pop(emoji),
+                          borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              emoji,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
 
-    if (widget.existingHabit == null) {
-      await ref
-          .read(habitActionsProvider)
-          .createHabit(
-            title,
-            durationDays,
-            false,
-            _selectedColor,
-            partnerIds: _selectedPartners.toList(),
-          );
-    } else {
-      await ref
-          .read(habitActionsProvider)
-          .updateHabit(
-            widget.existingHabit!.habitId,
-            title,
-            durationDays,
-            _selectedColor,
-          );
+    if (emoji == null) return;
+    setState(() {
+      _selectedEmoji = emoji;
+      _shouldPersistCustomEmoji = true;
+    });
+  }
+
+  void _applyPreset(StandardHabit preset) {
+    setState(() {
+      _selectedPreset = preset;
+      _selectedEmoji = preset.emoji;
+      _titleController.text = preset.title;
+      _durationController.text = preset.defaultDurationDays.toString();
+      if (preset.colorHex != null) {
+        _selectedColor = preset.colorHex!;
+      }
+      _submissionError = null;
+    });
+  }
+
+  Future<void> _saveHabit() async {
+    setState(() {
+      _hasAttemptedSubmit = true;
+      _submissionError = null;
+    });
+    if (!_formKey.currentState!.validate()) return;
+
+    final cleanTitle = _titleController.text.trim();
+    final normalizedTitle = _stripLeadingEmoji(cleanTitle);
+    final matchedPreset = standardHabitForTitle(normalizedTitle);
+    final durationDays = int.parse(_durationController.text.trim());
+    final persistedTitle = matchedPreset == null && _shouldPersistCustomEmoji
+        ? '${_selectedEmoji.trim()} $normalizedTitle'.trim()
+        : normalizedTitle;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final actions = ref.read(habitActionsProvider);
+      if (_isCreateFlow) {
+        await actions.createHabit(
+          persistedTitle,
+          durationDays,
+          matchedPreset == null,
+          _selectedColor,
+          partnerIds: _selectedPartners.toList(),
+        );
+      } else {
+        await actions.updateHabit(
+          widget.existingHabit!.habitId,
+          persistedTitle,
+          durationDays,
+          _selectedColor,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _submissionError = 'Could not save this habit yet. Please try again.';
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_submissionError!)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
-    if (!mounted) return;
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final presetDescription =
+        _selectedPreset?.subtitle ??
+        'Name the behavior clearly so future you can understand it at a glance.';
+
     return SafeArea(
       top: false,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.existingHabit == null ? 'New Habit' : 'Edit Habit',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _hasAttemptedSubmit
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 24),
+                _buildIdentityRow(context),
+                if (_isCreateFlow) ...[
+                  const SizedBox(height: 24),
+                  _buildPresetSection(context),
                 ],
-              ),
-              const SizedBox(height: 24),
-              if (widget.existingHabit == null) ...[
-                Text(
-                  'Quick Select',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: standardHabits.map((preset) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ActionChip(
-                          avatar: Text(preset.emoji),
-                          label: Text(preset.title),
-                          onPressed: () {
-                            setState(() {
-                              _titleController.text = preset.title;
-                              _durationController.text = preset
-                                  .defaultDurationDays
-                                  .toString();
-                              if (preset.colorHex != null) {
-                                _selectedColor = preset.colorHex!;
-                              }
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Habit Title',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Challenge Duration (days)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('Color', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _pastelColors.map((hex) {
-                  final color = _hexToColor(hex);
-                  final isSelected = hex == _selectedColor;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedColor = hex),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.deepCharcoal
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check,
-                              color: AppTheme.deepCharcoal,
-                              size: 20,
-                            )
-                          : null,
-                    ),
-                  );
-                }).toList(),
-              ),
-              if (widget.existingHabit == null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Invite Partners',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 12),
-                Consumer(
-                  builder: (context, ref, child) {
-                    final friendsAsync = ref.watch(acceptedFriendsProvider);
-                    return friendsAsync.when(
-                      data: (friends) {
-                        if (friends.isEmpty) {
-                          return Text(
-                            'No friends found. Add friends from the Social tab first.',
-                            style: TextStyle(
-                              color: AppTheme.deepCharcoal.withValues(
-                                alpha: 0.6,
-                              ),
-                            ),
-                          );
-                        }
-                        return Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: friends.map((f) {
-                            final isSelected = _selectedPartners.contains(
-                              f.friendUserId,
-                            );
-                            return FilterChip(
-                              label: Text(f.username),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedPartners.add(f.friendUserId);
-                                  } else {
-                                    _selectedPartners.remove(f.friendUserId);
-                                  }
-                                });
-                              },
-                              selectedColor: AppTheme.sageGreen.withValues(
-                                alpha: 0.3,
-                              ),
-                              checkmarkColor: AppTheme.deepCharcoal,
-                            );
-                          }).toList(),
-                        );
-                      },
-                      loading: () => const Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          HableSkeletonBlock(width: 82, height: 36),
-                          HableSkeletonBlock(width: 96, height: 36),
-                          HableSkeletonBlock(width: 74, height: 36),
-                        ],
-                      ),
-                      error: (err, _) => Text('Error: $err'),
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _saveHabit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.deepCharcoal,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'Save',
-                    style: const TextStyle(
-                      fontSize: 16,
+                const SizedBox(height: 20),
+                _buildDescriptionCard(context, presetDescription),
+                const SizedBox(height: 20),
+                _buildDurationSection(context),
+                const SizedBox(height: 20),
+                _buildColorSection(context),
+                if (_isCreateFlow) ...[
+                  const SizedBox(height: 20),
+                  _buildPartnersSection(context),
+                ],
+                if (_submissionError != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _submissionError!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.overdueRose,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                ],
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    key: const Key('habit-form-save'),
+                    onPressed: _isSaving ? null : _saveHabit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.deepCharcoal,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            _isCreateFlow ? 'Create habit' : 'Save changes',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isCreateFlow
+                    ? 'Build a habit worth repeating'
+                    : 'Refine this habit',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _isCreateFlow
+                    ? 'Choose a pattern, tune the duration, and invite the right people before you commit.'
+                    : 'Adjust the title, timeline, and color without breaking the habit you already started.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.warmGray,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIdentityRow(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          key: const Key('habit-form-emoji-picker'),
+          onTap: _showEmojiPicker,
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            width: 72,
+            height: 72,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _hexToColor(_selectedColor).withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: _hexToColor(_selectedColor).withValues(alpha: 0.28),
+              ),
+            ),
+            child: Text(_selectedEmoji, style: const TextStyle(fontSize: 34)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: TextFormField(
+            key: const Key('habit-form-title'),
+            controller: _titleController,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: 'Habit name',
+              hintText: 'Morning pages, no phone after 10, daily walk...',
+              helperText:
+                  'Tap the icon to the left to personalize custom habits.',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            onChanged: (value) {
+              final matchedPreset = standardHabitForTitle(value);
+              if (matchedPreset == null) return;
+              setState(() {
+                _selectedPreset = matchedPreset;
+                _selectedEmoji = matchedPreset.emoji;
+              });
+            },
+            validator: (value) {
+              final title = value?.trim() ?? '';
+              if (title.isEmpty) return 'Give this habit a clear name.';
+              if (title.length < 3) return 'Use at least 3 characters.';
+              return null;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPresetSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Start from a proven pattern',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Pick a template to preload the title, duration, color, and cue copy.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: standardHabits.map((preset) {
+            final selected =
+                _selectedPreset?.title.toLowerCase() ==
+                preset.title.toLowerCase();
+            return ChoiceChip(
+              key: Key('preset-${preset.title}'),
+              avatar: Text(preset.emoji),
+              label: Text(preset.title),
+              selected: selected,
+              onSelected: (_) => _applyPreset(preset),
+              selectedColor: _hexToColor(
+                preset.colorHex ?? _selectedColor,
+              ).withValues(alpha: 0.18),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDescriptionCard(BuildContext context, String description) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Intent',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppTheme.warmGray,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            key: const Key('habit-form-description'),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.deepCharcoal,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDurationSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Duration',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Popular challenge lengths help users commit to a finite promise.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _durationSuggestions.map((days) {
+            final selected = _durationController.text.trim() == '$days';
+            return ChoiceChip(
+              key: Key('duration-$days'),
+              label: Text('$days days'),
+              selected: selected,
+              onSelected: (_) {
+                setState(() {
+                  _durationController.text = '$days';
+                });
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          key: const Key('habit-form-duration'),
+          controller: _durationController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Custom number of days',
+            hintText: '21',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+          ),
+          validator: (value) {
+            final parsed = int.tryParse(value?.trim() ?? '');
+            if (parsed == null) return 'Enter a number of days.';
+            if (parsed < 1) return 'Duration must be at least 1 day.';
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColorSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ring color',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Choose the color this habit will carry across its card and celebrations.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _pastelColors.map((hex) {
+            final color = _hexToColor(hex);
+            final selected = hex == _selectedColor;
+            return InkWell(
+              key: Key('color-$hex'),
+              onTap: () => setState(() => _selectedColor = hex),
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected
+                        ? AppTheme.deepCharcoal
+                        : Colors.transparent,
+                    width: 2.5,
+                  ),
+                ),
+                child: selected
+                    ? const Icon(
+                        Icons.check,
+                        size: 18,
+                        color: AppTheme.deepCharcoal,
+                      )
+                    : null,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartnersSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Invite partners',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Shared habits can start with friends who already follow you.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        Consumer(
+          builder: (context, ref, child) {
+            final friendsAsync = ref.watch(acceptedFriendsProvider);
+            return friendsAsync.when(
+              data: (friends) {
+                if (friends.isEmpty) {
+                  return Text(
+                    'No friends found. Add friends from the Social tab first.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+                  );
+                }
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: friends.map((friend) {
+                    final selected = _selectedPartners.contains(
+                      friend.friendUserId,
+                    );
+                    return FilterChip(
+                      key: Key('friend-${friend.friendUserId}'),
+                      selected: selected,
+                      onSelected: (value) {
+                        setState(() {
+                          if (value) {
+                            _selectedPartners.add(friend.friendUserId);
+                          } else {
+                            _selectedPartners.remove(friend.friendUserId);
+                          }
+                        });
+                      },
+                      avatar: UserAvatar(
+                        avatarUrl: friend.avatarUrl,
+                        username: friend.username,
+                        radius: 10,
+                        backgroundColor: Colors.white,
+                      ),
+                      label: Text(friend.username),
+                      selectedColor: AppTheme.sageGreen.withValues(alpha: 0.24),
+                      checkmarkColor: AppTheme.deepCharcoal,
+                    );
+                  }).toList(),
+                );
+              },
+              loading: () => const Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  HableSkeletonBlock(width: 82, height: 36),
+                  HableSkeletonBlock(width: 96, height: 36),
+                  HableSkeletonBlock(width: 74, height: 36),
+                ],
+              ),
+              error: (err, _) => Text('Error: $err'),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Color _hexToColor(String hexString) {
     final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    if (hexString.length == 6 || hexString.length == 7) {
+      buffer.write('ff');
+    }
     buffer.write(hexString.replaceFirst('#', ''));
     return Color(int.parse(buffer.toString(), radix: 16));
   }
+}
+
+String _stripLeadingEmoji(String title) {
+  return title
+      .replaceFirst(
+        RegExp(
+          r'^\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*',
+          unicode: true,
+        ),
+        '',
+      )
+      .trim();
+}
+
+String? _extractLeadingEmoji(String title) {
+  final match = RegExp(
+    r'^\s*([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+)',
+    unicode: true,
+  ).firstMatch(title);
+  return match?.group(1);
 }
