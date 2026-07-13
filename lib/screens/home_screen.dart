@@ -53,18 +53,31 @@ class HomeScreen extends ConsumerStatefulWidget {
   /// Called when the user taps the notification bell.
   /// The shell wires this to switch to the Social → Activity tab.
   final VoidCallback? onOpenActivity;
+  final String? focusedHabitId;
+  final int focusRequestId;
 
-  const HomeScreen({super.key, required this.userId, this.onOpenActivity});
+  const HomeScreen({
+    super.key,
+    required this.userId,
+    this.onOpenActivity,
+    this.focusedHabitId,
+    this.focusRequestId = 0,
+  });
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final Map<String, GlobalKey> _habitCardKeys = {};
+
   @override
   void initState() {
     super.initState();
     _pullDailySync();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusRequestedHabit();
+    });
   }
 
   @override
@@ -73,6 +86,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (oldWidget.userId != widget.userId) {
       _pullDailySync();
     }
+    if (oldWidget.focusRequestId != widget.focusRequestId ||
+        oldWidget.focusedHabitId != widget.focusedHabitId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusRequestedHabit();
+      });
+    }
   }
 
   void _pullDailySync() {
@@ -80,6 +99,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (!mounted) return;
       ref.read(syncServiceProvider).pullDailySync(widget.userId);
     });
+  }
+
+  GlobalKey _habitKey(String habitId) {
+    return _habitCardKeys.putIfAbsent(habitId, GlobalKey.new);
+  }
+
+  void _focusRequestedHabit() {
+    final habitId = widget.focusedHabitId;
+    if (!mounted || habitId == null || habitId.isEmpty) return;
+    final targetContext = _habitCardKeys[habitId]?.currentContext;
+    if (targetContext == null) return;
+    Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+      alignment: 0.2,
+    );
   }
 
   @override
@@ -387,8 +423,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 childAspectRatio: 0.85, // Adjust for tile proportions
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                    _HabitCard(habit: habits[index], userId: widget.userId),
+                (context, index) => KeyedSubtree(
+                  key: _habitKey(habits[index].habitId),
+                  child: _HabitCard(
+                    habit: habits[index],
+                    userId: widget.userId,
+                  ),
+                ),
                 childCount: habits.length,
               ),
             ),

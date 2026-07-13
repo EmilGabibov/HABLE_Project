@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hable/l10n/app_localizations.dart';
 
@@ -10,6 +11,73 @@ import 'social/social_hub_screen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/local_reminder_service.dart';
+
+class NotificationNavigationDecision {
+  const NotificationNavigationDecision({
+    required this.tabIndex,
+    this.socialSubTab,
+    this.homeHabitId,
+  });
+
+  final int tabIndex;
+  final int? socialSubTab;
+  final String? homeHabitId;
+}
+
+NotificationNavigationDecision? resolveNotificationNavigation({
+  String? actionRoute,
+  String? actionPayloadJson,
+  Map<String, dynamic>? actionPayload,
+}) {
+  Map<String, dynamic>? payload = actionPayload;
+  if (payload == null &&
+      actionPayloadJson != null &&
+      actionPayloadJson.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(actionPayloadJson);
+      if (decoded is Map<String, dynamic>) {
+        payload = decoded;
+      }
+    } catch (_) {
+      payload = null;
+    }
+  }
+
+  switch (actionRoute) {
+    case 'profile':
+      return const NotificationNavigationDecision(tabIndex: 2);
+    case 'social_friends':
+    case 'social_requests':
+      return const NotificationNavigationDecision(tabIndex: 1, socialSubTab: 0);
+    case 'social_inbox':
+    case 'social':
+      final subTab = payload?['subTab'];
+      return NotificationNavigationDecision(
+        tabIndex: 1,
+        socialSubTab: subTab is int ? subTab : 1,
+      );
+    case 'home':
+      return NotificationNavigationDecision(
+        tabIndex: 0,
+        homeHabitId: payload?['habit_id']?.toString(),
+      );
+    default:
+      if (payload?['route']?.toString() == 'social') {
+        final subTab = payload?['subTab'];
+        return NotificationNavigationDecision(
+          tabIndex: 1,
+          socialSubTab: subTab is int ? subTab : 1,
+        );
+      }
+      if (payload?['route']?.toString() == 'home') {
+        return NotificationNavigationDecision(
+          tabIndex: 0,
+          homeHabitId: payload?['habit_id']?.toString(),
+        );
+      }
+      return null;
+  }
+}
 
 /// Authenticated three-tab navigation shell for Hable.
 ///
@@ -23,7 +91,8 @@ class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key, required this.userId});
 
   @override
-  ConsumerState<MainNavigationShell> createState() => MainNavigationShellState();
+  ConsumerState<MainNavigationShell> createState() =>
+      MainNavigationShellState();
 }
 
 class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
@@ -31,22 +100,23 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   late final PageController _pageController;
   late final List<Widget?> _destinations = List<Widget?>.filled(3, null);
   StreamSubscription<String?>? _payloadSubscription;
+  String? _homeFocusHabitId;
+  int _homeFocusRequestId = 0;
+
+  String? get debugHomeFocusHabitId => _homeFocusHabitId;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
-    
-    _payloadSubscription = ref.read(localReminderServiceProvider).onPayloadTapped.listen((payload) {
-      if (!mounted || payload == null) return;
-      if (payload == 'profile') {
-        switchToTab(2);
-      } else if (payload == 'home') {
-        switchToTab(0);
-      } else if (payload == 'social') {
-        switchToTab(1);
-      }
-    });
+
+    _payloadSubscription = ref
+        .read(localReminderServiceProvider)
+        .onPayloadTapped
+        .listen((payload) {
+          if (!mounted || payload == null) return;
+          handleNotificationPayload(payload);
+        });
   }
 
   @override
@@ -59,7 +129,7 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   /// Key for the Social tab so the shell can request an internal tab switch.
   final _socialKey = GlobalKey<SocialHubScreenState>();
 
-  void switchToTab(int index, {int? socialSubTab}) {
+  void switchToTab(int index, {int? socialSubTab, String? homeHabitId}) {
     if (_selectedIndex != index) {
       setState(() => _selectedIndex = index);
       _pageController.animateToPage(
@@ -74,6 +144,56 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         _socialKey.currentState?.switchToTab(socialSubTab);
       });
     }
+    if (index == 0 && homeHabitId != null) {
+      setState(() {
+        _homeFocusHabitId = homeHabitId;
+        _homeFocusRequestId += 1;
+      });
+    }
+  }
+
+  void handleNotificationPayload(String payload) {
+    if (payload == 'profile') {
+      switchToTab(2);
+      return;
+    }
+    if (payload == 'home') {
+      switchToTab(0);
+      return;
+    }
+    if (payload == 'social') {
+      switchToTab(1, socialSubTab: 1);
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic>) return;
+      handleNotificationRoute(
+        actionRoute: decoded['route']?.toString(),
+        actionPayload: decoded,
+      );
+    } catch (_) {
+      // Ignore malformed payloads.
+    }
+  }
+
+  void handleNotificationRoute({
+    String? actionRoute,
+    String? actionPayloadJson,
+    Map<String, dynamic>? actionPayload,
+  }) {
+    final decision = resolveNotificationNavigation(
+      actionRoute: actionRoute,
+      actionPayloadJson: actionPayloadJson,
+      actionPayload: actionPayload,
+    );
+    if (decision == null) return;
+    switchToTab(
+      decision.tabIndex,
+      socialSubTab: decision.socialSubTab,
+      homeHabitId: decision.homeHabitId,
+    );
   }
 
   @override
@@ -99,15 +219,17 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 child: _destinations[0] ??= HomeScreen(
                   userId: widget.userId,
                   onOpenActivity: () => switchToTab(1, socialSubTab: 1),
+                  focusedHabitId: _homeFocusHabitId,
+                  focusRequestId: _homeFocusRequestId,
                 ),
               ),
               _KeepAlivePage(
-                child: _destinations[1] ??= SocialHubScreen(
-                  key: _socialKey,
-                ),
+                child: _destinations[1] ??= SocialHubScreen(key: _socialKey),
               ),
               _KeepAlivePage(
-                child: _destinations[2] ??= ProfileScreen(userId: widget.userId),
+                child: _destinations[2] ??= ProfileScreen(
+                  userId: widget.userId,
+                ),
               ),
             ],
           ),
@@ -120,14 +242,14 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 labelTextStyle: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
                     return Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.sageGreen,
-                        );
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.sageGreen,
+                    );
                   }
                   return Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.warmGray,
-                      );
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.warmGray,
+                  );
                 }),
               ),
               child: NavigationBar(
@@ -153,7 +275,8 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.socialTabTitle ?? 'Social',
-                    tooltip: loc?.socialTabTitle ?? 'Social — friends & partners',
+                    tooltip:
+                        loc?.socialTabTitle ?? 'Social — friends & partners',
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.person_outline_rounded),
@@ -162,7 +285,8 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.profileTabTitle ?? 'Profile',
-                    tooltip: loc?.profileTabTitle ?? 'Profile — history & settings',
+                    tooltip:
+                        loc?.profileTabTitle ?? 'Profile — history & settings',
                   ),
                 ],
               ),
@@ -194,4 +318,3 @@ class _KeepAlivePageState extends State<_KeepAlivePage>
     return widget.child;
   }
 }
-

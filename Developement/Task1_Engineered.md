@@ -1712,7 +1712,7 @@
 **Completion notes:** Completed on 2026-07-13. Added a dedicated `HabitDashboardScreen` reachable from Home via a new grid-view entry point, keeping Home as the focused daily check-in surface while giving larger screens a separate dashboard experience. The new screen reuses the shared `lib/widgets/habit_card.dart` foundation for interactive tiles, adds an adaptive summary card/rail, and defines explicit responsive breakpoints through `HabitDashboardScreen.columnsForWidth()` for 1/2/3/4-column layouts. Added focused layout-contract coverage in `test/habit_dashboard_screen_test.dart`; targeted tests pass.
 
 <a id="upgrade-notification-inbox-ux-with-focus-grouping-and-platform-specific-actions"></a>
-### [ ] Upgrade Notification Inbox UX With Focus Grouping And Platform-Specific Actions
+### [x] Upgrade Notification Inbox UX With Focus Grouping And Platform-Specific Actions
 
 **Raw source:** Notification Inbox UX. Build richer habit-card auto-scroll/focus behavior, grouped notification inbox UX, or platform-specific notification categories/actions.
 
@@ -1750,7 +1750,7 @@
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Upgraded Social → Activity from a flat feed into grouped sections via `buildActivitySections()` (`Unread`, `Today`, `Earlier`) and wired row taps through payload-aware routing instead of read-only behavior. `MainNavigationShell` now resolves notification destinations centrally, including a home habit-focus path that passes `habit_id` through to `HomeScreen`, and `HomeScreen` now keeps keyed habit tiles so a routed habit can be scrolled into view when possible. Added focused verification in `test/social_activity_sections_test.dart` and `test/notification_route_resolution_test.dart`; targeted tests pass.
 
 <a id="expand-multi-user-playwright-coverage-to-three-player-social-invite-nudge-and-follow-flows"></a>
 ### [ ] Expand Multi-User Playwright Coverage To Three-Player Social Invite Nudge And Follow Flows

@@ -64,29 +64,31 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
     });
 
-    testWidgets('Social tab shows 3 sub-tabs (Friends, Activity, Leaderboard)',
-        (tester) async {
-      final harness = await _buildHarness();
-      addTearDown(harness.db.close);
+    testWidgets(
+      'Social tab shows 3 sub-tabs (Friends, Activity, Leaderboard)',
+      (tester) async {
+        final harness = await _buildHarness();
+        addTearDown(harness.db.close);
 
-      await tester.pumpWidget(harness.widget);
-      await tester.pump();
+        await tester.pumpWidget(harness.widget);
+        await tester.pump();
 
-      // Switch to Social tab.
-      await tester.tap(find.text('Social'));
-      await tester.pump(const Duration(milliseconds: 500));
+        // Switch to Social tab.
+        await tester.tap(find.text('Social'));
+        await tester.pump(const Duration(milliseconds: 500));
 
-      // Verify the 3 internal tabs exist.
-      expect(find.text('Friends'), findsAtLeast(1));
-      expect(find.text('Activity'), findsOneWidget);
-      expect(find.text('Leaderboard'), findsOneWidget);
+        // Verify the 3 internal tabs exist.
+        expect(find.text('Friends'), findsAtLeast(1));
+        expect(find.text('Activity'), findsOneWidget);
+        expect(find.text('Leaderboard'), findsOneWidget);
 
-      // Find Friends is now a header icon, not a tab.
-      expect(find.byTooltip('Find friends'), findsOneWidget);
+        // Find Friends is now a header icon, not a tab.
+        expect(find.byTooltip('Find friends'), findsOneWidget);
 
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(milliseconds: 1));
-    });
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 1));
+      },
+    );
 
     testWidgets('Profile tab shows settings gear', (tester) async {
       final harness = await _buildHarness();

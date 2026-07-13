@@ -20,7 +20,48 @@ import '../../widgets/user_avatar.dart';
 import '../../widgets/leaderboard_card.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/usage_tracked_screen.dart';
+import '../main_navigation_shell.dart';
 import '../profile_screen.dart';
+
+class ActivitySection {
+  const ActivitySection({required this.title, required this.items});
+
+  final String title;
+  final List<NotificationEvent> items;
+}
+
+List<ActivitySection> buildActivitySections(
+  List<NotificationEvent> notifications, {
+  DateTime? now,
+}) {
+  final reference = now ?? DateTime.now();
+  final startOfToday = DateTime(reference.year, reference.month, reference.day);
+
+  final unread = notifications
+      .where((notification) => notification.readAt == null)
+      .toList();
+  final read = notifications
+      .where((notification) => notification.readAt != null)
+      .toList();
+  final todayRead = read
+      .where((notification) => notification.createdAt.isAfter(startOfToday))
+      .toList();
+  final earlier = read
+      .where((notification) => !notification.createdAt.isAfter(startOfToday))
+      .toList();
+
+  final sections = <ActivitySection>[];
+  if (unread.isNotEmpty) {
+    sections.add(ActivitySection(title: 'Unread', items: unread));
+  }
+  if (todayRead.isNotEmpty) {
+    sections.add(ActivitySection(title: 'Today', items: todayRead));
+  }
+  if (earlier.isNotEmpty) {
+    sections.add(ActivitySection(title: 'Earlier', items: earlier));
+  }
+  return sections;
+}
 
 // ---------------------------------------------------------------------------
 // Providers (unchanged — kept at file top per project convention)
@@ -477,7 +518,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               TabBar(
                 controller: _tabController,
                 tabs: [
-                  Tab(icon: const Icon(Icons.favorite_rounded), text: loc?.friendsTabTitle ?? 'Friends'),
+                  Tab(
+                    icon: const Icon(Icons.favorite_rounded),
+                    text: loc?.friendsTabTitle ?? 'Friends',
+                  ),
                   Tab(
                     icon: const Icon(Icons.notifications_rounded),
                     text: loc?.activityTabTitle ?? 'Activity',
@@ -646,6 +690,8 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 'Nudges, friend requests, invites, and messages from friends will appear here.',
           );
         }
+        final sections = buildActivitySections(notifications);
+        final flattenedSections = _flattenActivitySections(sections);
         return Column(
           children: [
             // "Mark all read" action bar.
@@ -666,16 +712,21 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                itemCount: notifications.length,
+                itemCount: flattenedSections.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
-                  final notification = notifications[index];
+                  final entry = flattenedSections[index];
+                  if (entry.sectionTitle != null) {
+                    return _ActivitySectionHeader(title: entry.sectionTitle!);
+                  }
+                  final notification = entry.notification!;
                   return _ActivityCard(
                     notification: notification,
                     onTap: () async {
                       if (notification.readAt == null) {
                         await actions.markRead(notification.notificationId);
                       }
+                      _openNotificationTarget(notification);
                     },
                   );
                 },
@@ -689,6 +740,28 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
         padding: const EdgeInsets.only(top: 32.0),
         child: Text('Error: $e', textAlign: TextAlign.center),
       ),
+    );
+  }
+
+  List<_ActivityListEntry> _flattenActivitySections(
+    List<ActivitySection> sections,
+  ) {
+    final entries = <_ActivityListEntry>[];
+    for (final section in sections) {
+      entries.add(_ActivityListEntry.section(section.title));
+      for (final notification in section.items) {
+        entries.add(_ActivityListEntry.notification(notification));
+      }
+    }
+    return entries;
+  }
+
+  void _openNotificationTarget(NotificationEvent notification) {
+    final shell = context.findAncestorStateOfType<MainNavigationShellState>();
+    if (shell == null) return;
+    shell.handleNotificationRoute(
+      actionRoute: notification.actionRoute,
+      actionPayloadJson: notification.actionPayloadJson,
     );
   }
 
@@ -935,6 +1008,37 @@ class _PendingRequestsSection extends StatelessWidget {
 }
 
 /// A single notification/activity card in the Activity tab.
+class _ActivityListEntry {
+  const _ActivityListEntry._({this.sectionTitle, this.notification});
+
+  const _ActivityListEntry.section(String title) : this._(sectionTitle: title);
+  const _ActivityListEntry.notification(NotificationEvent notification)
+    : this._(notification: notification);
+
+  final String? sectionTitle;
+  final NotificationEvent? notification;
+}
+
+class _ActivitySectionHeader extends StatelessWidget {
+  const _ActivitySectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: AppTheme.sageGreen,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
 class _ActivityCard extends StatelessWidget {
   final NotificationEvent notification;
   final VoidCallback onTap;

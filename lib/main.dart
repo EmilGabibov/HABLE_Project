@@ -19,7 +19,7 @@ import 'services/local_reminder_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await BackgroundSyncService().initialize();
 
   runApp(const ProviderScope(child: HableApp()));
@@ -41,9 +41,7 @@ class HableApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', ''),
-      ],
+      supportedLocales: const [Locale('en', '')],
       navigatorObservers: [usageRouteObserver],
       home: const _AppGate(),
     );
@@ -58,9 +56,11 @@ class _AppGate extends ConsumerStatefulWidget {
   ConsumerState<_AppGate> createState() => _AppGateState();
 }
 
-class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver {
+class _AppGateState extends ConsumerState<_AppGate>
+    with WidgetsBindingObserver {
   String? _lastSyncedUserId;
-  final GlobalKey<MainNavigationShellState> _shellKey = GlobalKey<MainNavigationShellState>();
+  final GlobalKey<MainNavigationShellState> _shellKey =
+      GlobalKey<MainNavigationShellState>();
   StreamSubscription<String?>? _payloadSub;
 
   @override
@@ -76,7 +76,7 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
 
   Future<void> _setupNotificationTapHandling() async {
     final localReminder = ref.read(localReminderServiceProvider);
-    
+
     // Handle initial payload from a cold start
     final initialPayload = await localReminder.getInitialPayload();
     if (initialPayload != null) {
@@ -90,19 +90,7 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
   }
 
   void _handlePayload(String payloadStr) {
-    if (payloadStr == 'home') {
-      _shellKey.currentState?.switchToTab(0);
-      return;
-    }
-    
-    try {
-      final payload = jsonDecode(payloadStr) as Map<String, dynamic>;
-      if (payload['route'] == 'social') {
-        _shellKey.currentState?.switchToTab(1, socialSubTab: 1);
-      }
-    } catch (_) {
-      // Ignore parsing errors for simple payloads
-    }
+    _shellKey.currentState?.handleNotificationPayload(payloadStr);
   }
 
   @override
@@ -116,11 +104,17 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated && authState.userId != null) {
       if (_lastSyncedUserId != authState.userId) {
-        ref.read(databaseProvider).removeSelfFromSocialCaches(authState.userId!);
+        ref
+            .read(databaseProvider)
+            .removeSelfFromSocialCaches(authState.userId!);
       }
-      ref.read(foregroundSyncControllerProvider.notifier).startPolling(authState.userId!);
-      ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
-      
+      ref
+          .read(foregroundSyncControllerProvider.notifier)
+          .startPolling(authState.userId!);
+      ref
+          .read(foregroundSyncControllerProvider.notifier)
+          .syncNow(authState.userId!);
+
       if (mounted) {
         setState(() {
           _lastSyncedUserId = authState.userId;
@@ -133,7 +127,8 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkAndStartSync();
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
     }
   }
@@ -152,21 +147,25 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
 
     // Ensure polling is active when authState updates from unauthenticated to authenticated
     ref.listen(authProvider, (previous, next) {
-      if ((previous == null || !previous.isAuthenticated) && next.isAuthenticated && next.userId != null) {
-         _checkAndStartSync();
-      } else if ((previous != null && previous.isAuthenticated) && !next.isAuthenticated) {
-          ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
-          if (mounted) {
-            setState(() {
-              _lastSyncedUserId = null;
-            });
-          }
-       }
-     });
+      if ((previous == null || !previous.isAuthenticated) &&
+          next.isAuthenticated &&
+          next.userId != null) {
+        _checkAndStartSync();
+      } else if ((previous != null && previous.isAuthenticated) &&
+          !next.isAuthenticated) {
+        ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
+        if (mounted) {
+          setState(() {
+            _lastSyncedUserId = null;
+          });
+        }
+      }
+    });
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
-      data: (_) => MainNavigationShell(key: _shellKey, userId: authState.userId!),
+      data: (_) =>
+          MainNavigationShell(key: _shellKey, userId: authState.userId!),
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
