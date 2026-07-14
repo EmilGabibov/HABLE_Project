@@ -79,6 +79,173 @@
 
 ## Remaining Tasks
 
+<a id="simplify-habit-creation-copy-and-introduce-anchored-duration-selection-without-rewriting-mud-progression"></a>
+### [x] Simplify Habit Creation Copy And Introduce Anchored Duration Selection Without Rewriting Mud Progression
+
+**Raw source:** revise the habit creator modal texts; too much subtitles, it's confusing.
+- good to turn the duration to a slide with some dedicated sections with anchors for science proven habit creation duration (21, ..., 40 ,...). the default value is 21 days, begiining should be 1, and end is lifetime. (a futture for future which allows yourself (no partner) TO TRACK unlimited duration. (the mud calculation in here should be interval (not too hard at begining, but dynamic like a real life, simple calculation) . also there is a limitation to use this and it is to have at least completed one long duration (21 day) then you're ok. consider a proper amount of events generating for calendar subscription; not to long to make it very heavy, also not shorter than our highest anchors (proven duration).
+
+**Issue:** The current `HabitFormSheet` uses several explanatory subtitles and a raw numeric duration field. That gives flexibility, but it also creates copy density and makes duration selection feel more like a form than a guided commitment decision. The issue also mixes a much larger product request around lifetime habits, mud-progression changes, and calendar-event generation limits.
+
+**Triage:**
+- *Should exist:* Yes.
+- *Smallest safe scope:* Reduce copy noise in the creation sheet and replace the duration input emphasis with a clearer anchored-selection experience centered on finite challenge lengths.
+- *Skipped scope:* Do not implement unlimited/lifetime habits, a new mud algorithm, or a broad calendar-subscription expansion in this task.
+- *Boundaries:* Preserve the existing finite-duration habit engine and the current mud-resistance contract. Any future lifetime mode must be engineered separately because it affects scoring, reminders, calendar generation, analytics, and the resistance model.
+
+**Action:** Redesign the `HabitFormSheet` language hierarchy so the modal reads faster and shows less subtitle/helper clutter. Rework duration selection into an anchored slider-style control that starts at `1` day, defaults to `21`, highlights trusted challenge anchors such as `21/33/40`, and still allows bounded custom finite durations where needed. Keep the save path and habit engine finite-duration-based for now.
+
+**Hable perspective:** This is a form-clarity and onboarding-quality task inside the shared `HabitFormSheet`. It should make commitment setup feel lighter without weakening the existing Hable model of finite challenges, accepted-friend invites, and the documented mud-resistance progression.
+
+**Implementation scope:**
+- Flutter UI: simplify title/body/helper copy density in `lib/widgets/habit_form_sheet.dart`.
+- Localization: update the habit-form strings in `lib/l10n/*.arb` so the new hierarchy is intentional across supported languages.
+- Duration UX: replace the plain numeric field with an anchored control for finite durations, with `21` days as the default.
+- Validation: keep the minimum `1`-day floor and make the finite-only duration model explicit.
+- QA: verify create/edit flows, localization overflow, slider behavior, and habit save correctness.
+
+**Scalability considerations:** Scalability impact is none expected for the copy cleanup itself. The main long-term scaling risk sits in any future lifetime mode because it would affect calendar event generation volume, mud progression semantics, and ongoing sync/storage growth.
+
+**Future split guidance:** If the team later wants true lifetime habits, post-21 unlock rules, revised mud intervals for open-ended habits, or calendar-subscription batching limits for very long plans, those should be split into separate engineered tasks after the form UX cleanup lands.
+
+**Edge cases:** Editing an existing habit with a non-anchor duration, localization expansion making the slider labels wrap, very short `1`- to `3`-day habits, preserving partner selection while duration changes, and keeping the finite-only duration choice readable without reopening lifetime-scope product decisions.
+
+**Acceptance criteria:**
+- The create/edit habit sheet has less explanatory copy and a clearer information hierarchy.
+- Duration selection defaults to `21` days and visibly highlights anchored finite challenge lengths.
+- Users can still create valid finite-duration habits starting at `1` day.
+- Existing habit save/update behavior remains correct.
+- Mud-resistance math and unlimited/lifetime mode remain unchanged in this task.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/ai_agent_contract.md`
+
+**Completion notes:** Files touched: `lib/widgets/habit_form_sheet.dart`, `lib/l10n/app_en.arb`, `lib/l10n/app_de.arb`, `lib/l10n/app_fa.arb`, `lib/l10n/app_ru.arb`, `lib/l10n/app_ta.arb`, `lib/l10n/app_ur.arb`, `lib/l10n/app_localizations.dart`, `lib/l10n/app_localizations_en.dart`, `lib/l10n/app_localizations_de.dart`, `lib/l10n/app_localizations_fa.dart`, `lib/l10n/app_localizations_ru.dart`, `lib/l10n/app_localizations_ta.dart`, `lib/l10n/app_localizations_ur.dart`, `test/habit_form_sheet_test.dart`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`, `Developement/Task0_Raw.md`, and `Developement/Task1_Engineered.md`. Behavior verified: the habit form now uses a shorter create/edit intro, removes the extra section subtitle clutter, replaces the raw duration text field with a finite-duration slider that starts at `1`, defaults to `21`, preserves the `21/33/40` anchors, and still supports non-anchor durations when editing or dragging. Mud progression, lifetime habits, and calendar-expansion logic remain unchanged and explicitly deferred. Verification passed with `flutter gen-l10n`, `dart format lib/widgets/habit_form_sheet.dart test/habit_form_sheet_test.dart`, `flutter analyze lib/widgets/habit_form_sheet.dart test/habit_form_sheet_test.dart`, `flutter test --no-pub test/habit_form_sheet_test.dart`, and `node scripts/archive-completed-tasks.mjs` (reported `No completed task blocks were eligible for archiving.`). Dependency docs `Developement/ux_mud_and_animations.md` and `Developement/qa_testing.md` were verified and updated to match the shipped finite-duration form contract; `Developement/sys_schema_and_logic.md` was reviewed and required no change for this UI-only finite-duration update. Completed At: 2026-07-14 12:38 CEST
+
+<a id="surface-accepted-friends-active-habit-summaries-with-privacy-scoped-friend-profiles"></a>
+### [x] Surface Accepted Friends' Active Habit Summaries With Privacy-Scoped Friend Profiles
+
+**Raw source:** issue report: Users are not able to see their friends' active habits; every user have a set of data available on server:
+- public: username, profilePicture (emoji)
+- friends:
+  - username, profilePicture (emoji), active habits, lifetime score, acheivements (list of names, or ids (for programming perspective) which includes your mutual habits(partnersd-up with eachother, and also with others).
+
+**Issue:** The current social flow already supports accepted-friend identity, leaderboard score, and friend-profile drilldown, but accepted friends still cannot reliably see a privacy-safe active-habit summary on the friend profile. The backend currently scopes friend-profile habits to the viewer's existing partnership rows and omits backend-owned achievements entirely, which leaves the social graph feeling empty even after friendship has been established.
+
+**Triage:**
+- *Should exist:* Yes.
+- *Smallest safe scope:* Extend the accepted-friend profile payload and Flutter friend-profile screen so accepted friends can see safe active-habit summaries, lifetime score, and compact backend-owned achievements.
+- *Skipped scope:* Do not add a public activity feed, per-check-in history sharing, journal visibility, unrestricted third-party social graph visibility, or editable access to another user's habits.
+- *Boundaries:* The backend remains the source of truth for visibility. Search results stay identity-only. The profile may expose only safe friend-scoped fields; no private journal text, raw logs, or hidden metadata may leak through the profile payload.
+
+**Action:** Update `GET /api/social/user/:id/profile` so an accepted friend receives the target user's safe active-habit summaries plus compact achievement metadata and level/lifetime-score fields. Render those results in the existing Flutter friend-profile screen with explicit empty, loading, and failure states. Keep the follow-prefill and encourage/nudge actions intact while ensuring they operate only on the approved safe payload.
+
+**Hable perspective:** This task strengthens the Social and friend-profile drilldown without turning Hable into a public feed. The intended product behavior is that accepted friends can see enough active progress to feel social accountability, while the app still stays offline-first, Drift-backed, and privacy-scoped.
+
+**Implementation scope:**
+- Backend: extend `backend/src/index.ts` friend-profile route to return safe active-habit summary fields for accepted friends, plus compact backend-owned achievements and existing score/level metadata.
+- Flutter state: update `friendProfileProvider` data parsing to include achievements while preserving safe auth/error handling.
+- Flutter UI: update `ProfileScreen` friend-profile rendering to surface achievements and the richer active-habit summary without introducing editable actions or private data leaks.
+- QA/tests: cover accepted-friend access, non-friend denial, empty active habits, achievement visibility, and privacy boundaries.
+
+**Scalability considerations:** Keep the friend-profile payload bounded to active habits and compact achievement ids/names. Avoid unbounded historical logs or large nested social graphs, and keep backend queries indexed around friend and habit ownership lookups.
+
+**Future split guidance:** If Hable later needs friend activity feeds, richer achievement drilldown, configurable profile privacy, or visibility into friends-of-friends, those should be separate tasks. This task should stay limited to accepted-friend profiles.
+
+**Edge cases:** Accepted friend with no active habits, accepted friend with many active habits, archived habits, stale local state after unfriend/revoke, offline reopen after a successful profile fetch, and habits shared with others where only safe summary fields may be shown.
+
+**Acceptance criteria:**
+- Accepted friends can open a friend profile and see safe active-habit summaries, lifetime score, and compact backend-owned achievements.
+- Search results and non-friends do not receive habit metadata or achievements.
+- Friend profiles remain free of journal text, raw logs, and non-approved private fields.
+- The Flutter screen shows explicit loading, empty, and denied/failure states.
+- The related development docs and QA guidance are updated to match the shipped behavior.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/ai_agent_contract.md`
+
+**Completion notes:** Files touched: `backend/src/index.ts`, `lib/providers/social_providers.dart`, `lib/screens/profile_screen.dart`, `test/friend_profile_screen_test.dart`, `Developement/sys_social_and_analytics.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/Task0_Raw.md`, and `Developement/Task1_Engineered.md`. Behavior verified: accepted-friend profiles now return safe active habits from the target user's active habit list instead of only pre-shared partnership rows, include compact backend-owned achievements in the payload, and keep lifetime score/level metadata intact; Flutter friend profiles now render those safe habit summaries with progress/role context plus an achievements section without exposing journal text or raw logs. Verification passed with `npx tsc --noEmit`, `flutter analyze lib/providers/social_providers.dart lib/screens/profile_screen.dart test/friend_profile_screen_test.dart`, and `flutter test test/friend_profile_screen_test.dart`. Dependency docs `Developement/sys_social_and_analytics.md`, `Developement/sys_schema_and_logic.md`, and `Developement/qa_testing.md` were verified and updated to match the shipped friend-profile contract. Completed At: 2026-07-14 12:20 CEST
+
+<a id="make-friend-search-result-actions-stateful-revocable-and-abuse-resistant"></a>
+### [x] Make Friend Search Result Actions Stateful, Revocable, And Abuse-Resistant
+
+**Raw source:** in search modal, the buttons and status should be dynamic; the add button should change state to request sent (able to click again to cancel the request). consider the abusing, but be genrase.
+
+**Issue:** The Find Friends sheet already receives privacy-safe `relationship_state` from the backend, but the row CTA is still mostly static. Sending a request does not turn the result row into a clearly revocable pending state inside the same search session, which makes the UI feel laggy and forces users to infer whether the action worked.
+
+**Triage:**
+- *Should exist:* Yes.
+- *Smallest safe scope:* Make the search result row stateful for `none`, `pending_outgoing`, `pending_incoming`, `accepted`, and `self`, with inline cancellation for outgoing requests and row-level in-flight guards.
+- *Skipped scope:* Do not redesign the Social tab, add realtime transport, or move accept/decline into the search sheet.
+- *Boundaries:* Reuse the existing friend-request send/revoke backend routes and keep search payloads privacy-limited to identity plus relationship state.
+
+**Action:** Update the Find Friends search-result row so it optimistically transitions between `none` and `pending_outgoing` in place, lets the user revoke a pending outgoing request from the same row, and disables repeat taps while network actions are in flight. Keep `pending_incoming`, `accepted`, and `self` as non-destructive informational states, while still reconciling local UI with the backend-authored relationship state.
+
+**Hable perspective:** This is a Social Hub refinement, not a new social system. The row should feel immediate and calm, use the existing Drift `friend_relationships` cache for local truth during the session, and keep abuse bounded through in-flight locks plus the backend’s idempotent request handling.
+
+**Implementation scope:**
+- Flutter UI: update `_SearchResultTile` in `lib/screens/social/social_hub_screen.dart` to own temporary row state and render dynamic CTA variants instead of a passive pending chip.
+- Flutter actions: have the existing send/revoke handlers return the authoritative next state so the row can transition without waiting for a full search refresh.
+- Local cache: continue writing the resulting relationship state to Drift so later reads stay coherent.
+- QA/tests: cover send -> pending, pending revoke -> none, accepted/self informational states, and disabled repeat taps during in-flight actions.
+
+**Scalability considerations:** Scalability impact is none expected. The main risk is duplicate tap spam or stale rows after remote state changes, so row-level loading locks and backend idempotency are sufficient for this scope.
+
+**Future split guidance:** If the team later wants inline accept/decline in search, server-driven cool-down messaging, or live cross-device row updates, those should be separate tasks.
+
+**Edge cases:** Self rows, duplicate sends from multiple devices, request accepted elsewhere while the search sheet is open, revoke failure after optimistic transition, empty query reset, and stale cached relationship state after unfriend.
+
+**Acceptance criteria:**
+- Search rows clearly distinguish `self`, `accepted`, `pending_outgoing`, `pending_incoming`, and `none`.
+- Sending a request immediately turns the row into a pending outgoing state in the same search session.
+- Pending outgoing requests can be cancelled from the same row.
+- Repeat taps are blocked while the send/revoke action is in flight.
+- The related social docs and QA guidance match the shipped search behavior.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/ai_agent_contract.md`
+
+**Completion notes:** Files touched: `lib/screens/social/social_hub_screen.dart`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`, `Developement/Task0_Raw.md`, and `Developement/Task1_Engineered.md`. Behavior verified: the Find Friends search row now owns temporary in-session relationship state, sending a friend request transitions the row into `pending_outgoing` immediately using the backend-returned relationship state, that pending outgoing row can be revoked from the same search result via the existing `/api/social/friend-request/revoke` flow, and repeat taps are blocked while the send/revoke action is in flight. Informational `self`, `accepted`, and `pending_incoming` states remain non-destructive. Verification passed with `flutter analyze lib/screens/social/social_hub_screen.dart`. Dependency docs `Developement/sys_social_and_analytics.md` and `Developement/qa_testing.md` were verified and updated to match the shipped search-row behavior. Completed At: 2026-07-14 12:26 CEST
+
+<a id="stop-repetitive-macos-keychain-prompts-while-preserving-safe-auth-session-storage"></a>
+### [x] Stop Repetitive macOS Keychain Prompts While Preserving Safe Auth Session Storage
+
+**Raw source:** on MacOS after during signing in, app prompts system consistantly for using autofill data: Hable wants to use your confidential information stored in "flutter_secure_storage_service" in your keychain.
+- its disturbing, because it keeps asking again and again, no matter you allow or deny!
+- good to be able to use system passwords, but in a propper safe way for user. not abusing way.
+
+**Issue:** The macOS auth/session path currently falls back to a local SharedPreferences session snapshot, but after restoring from that snapshot it immediately attempts to write credentials back into secure storage. Foreground sync also keeps reading the auth token from secure storage on repeated polls. On macOS, that combination can retrigger keychain prompts even after the user has already denied or dismissed them.
+
+**Triage:**
+- *Should exist:* Yes.
+- *Smallest safe scope:* Eliminate the repeated keychain prompt loop by removing unnecessary secure-storage rewrite/read churn while preserving safe token persistence for successful sessions.
+- *Skipped scope:* Do not add biometric unlock, password-manager integration, or a larger auth-system rewrite in this task.
+- *Boundaries:* Hable must never store raw passwords locally. macOS fallback behavior may use the existing local session snapshot for continuity, but must avoid repeated background keychain access when that access has already failed or been denied.
+
+**Action:** Tighten macOS auth persistence so snapshot-based restore does not immediately write credentials back into secure storage, and foreground sync uses the in-memory authenticated token instead of re-reading the keychain on every poll. If secure storage fails during the current session, stop retrying writes for that session rather than continuing to poke the keychain.
+
+**Hable perspective:** This is a desktop auth-quality fix inside the offline-first shell. The goal is to keep login and restart flows respectful on macOS while still preserving JWT-backed session storage where the keychain is available.
+
+**Implementation scope:**
+- Auth state: update `lib/providers/auth_provider.dart` to avoid write-back after snapshot restore and to stop repeated secure-storage writes after a failure in the same session.
+- Sync path: update foreground `SyncService` wiring so authenticated in-app polling can use the already-loaded token in memory instead of repeatedly hitting secure storage.
+- Tests: add focused auth/session and sync tests to lock the new behavior.
+- Docs/QA: update macOS auth/session guidance to reflect the bounded snapshot/secure-storage behavior.
+
+**Scalability considerations:** Scalability impact is none expected. This is about repeated local auth persistence behavior, not throughput.
+
+**Future split guidance:** If Hable later wants explicit desktop privacy settings, biometric unlock, or a user-visible “reconnect keychain” recovery flow, those should be separate tasks after the prompt loop is fixed.
+
+**Edge cases:** Keychain denied on startup, keychain denied during login write, snapshot-only restore, logout after snapshot restore, repeated foreground sync polling, and app relaunch after a prior denied session.
+
+**Acceptance criteria:**
+- macOS snapshot restore no longer causes an immediate secure-storage write-back loop.
+- Foreground sync can use the loaded auth token without repeatedly re-reading keychain state.
+- A secure-storage failure in the current session does not trigger repeated write attempts.
+- No raw password is stored locally.
+- The auth/session docs and QA guidance match the shipped behavior.
+
+**Dependencies:** `Developement/sys_authentication.md`, `Developement/qa_testing.md`, `Developement/macos_distribution.md`, `Developement/ai_agent_contract.md`
+
+**Completion notes:** Files touched: `lib/providers/auth_provider.dart`, `lib/providers/sync_provider.dart`, `lib/services/sync_service.dart`, `test/auth_session_test.dart`, `test/offline_sync_integrity_test.dart`, `Developement/sys_authentication.md`, `Developement/qa_testing.md`, `Developement/Task0_Raw.md`, and `Developement/Task1_Engineered.md`. Behavior verified: macOS snapshot-based auth restore no longer writes credentials straight back into secure storage after a keychain read failure, per-session secure-storage failures now stop further write attempts instead of repeatedly poking keychain, and foreground sync can reuse the already-loaded in-memory auth token instead of re-reading secure storage on every auth-header build. Verification passed with `dart analyze lib/providers/auth_provider.dart lib/providers/sync_provider.dart lib/services/sync_service.dart test/auth_session_test.dart test/offline_sync_integrity_test.dart`, `flutter test test/auth_session_test.dart`, and `flutter test test/offline_sync_integrity_test.dart`. Dependency docs `Developement/sys_authentication.md` and `Developement/qa_testing.md` were verified and updated to match the shipped macOS auth/session behavior. Completed At: 2026-07-14 12:33 CEST
+
 <a id="prepare-the-primary-android-build-for-online-presentation-readiness"></a>
 ### [ ] Prepare The Primary Android Build For Online Presentation Readiness
 

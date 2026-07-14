@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart' show HabitStatus;
+import 'package:hable/l10n/app_localizations.dart';
 import 'package:hable/providers/habit_actions_provider.dart';
 import 'package:hable/providers/social_providers.dart';
 import 'package:hable/theme/app_theme.dart';
@@ -110,6 +111,8 @@ Widget _buildSheet({
     ],
     child: MaterialApp(
       theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: HabitFormSheet(
           existingHabit: existingHabit,
@@ -129,14 +132,18 @@ void main() {
     await tester.pumpWidget(_buildSheet(actions: actions));
 
     await tester.enterText(find.byKey(const Key('habit-form-title')), '');
-    await tester.enterText(find.byKey(const Key('habit-form-duration')), '0');
     await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
     await tester.tap(find.byKey(const Key('habit-form-save')));
     await tester.pumpAndSettle();
 
+    final durationSlider = tester.widget<Slider>(
+      find.byKey(const Key('habit-form-duration-slider')),
+    );
+
     expect(find.text('Create habit'), findsOneWidget);
     expect(find.text('Give this habit a clear name.'), findsOneWidget);
-    expect(find.text('Duration must be at least 1 day.'), findsOneWidget);
+    expect(durationSlider.min, 1);
+    expect(durationSlider.value, 21);
     expect(actions.createdTitle, isNull);
   });
 
@@ -153,12 +160,9 @@ void main() {
     final titleField = tester.widget<TextFormField>(
       find.byKey(const Key('habit-form-title')),
     );
-    final durationField = tester.widget<TextFormField>(
-      find.byKey(const Key('habit-form-duration')),
-    );
 
     expect(titleField.controller!.text, 'Hydration');
-    expect(durationField.controller!.text, '21');
+    expect(find.text('21 days'), findsWidgets);
     final descriptionField = tester.widget<TextFormField>(
       find.byKey(const Key('habit-form-description')),
     );
@@ -170,10 +174,10 @@ void main() {
     await tester.tap(find.byKey(const Key('duration-40')));
     await tester.pump();
 
-    final updatedDurationField = tester.widget<TextFormField>(
-      find.byKey(const Key('habit-form-duration')),
+    final durationValue = tester.widget<Text>(
+      find.byKey(const Key('habit-form-duration-value')),
     );
-    expect(updatedDurationField.controller!.text, '40');
+    expect(durationValue.data, '40 days');
   });
 
   testWidgets('HabitFormSheet creates habit with selected partners', (

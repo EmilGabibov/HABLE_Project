@@ -197,14 +197,14 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   // Friend request network actions
   // ---------------------------------------------------------------------------
 
-  Future<void> _sendFriendRequest(
+  Future<String?> _sendFriendRequest(
     String targetUserId,
     String username, {
     String? avatarUrl,
   }) async {
     final auth = ref.read(authProvider);
-    if (auth.token == null) return;
-    if (auth.userId == targetUserId) return; // Defensive self-guard
+    if (auth.token == null) return null;
+    if (auth.userId == targetUserId) return null; // Defensive self-guard
 
     try {
       final loc = AppLocalizations.of(context)!;
@@ -245,6 +245,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             context,
           ).showSnackBar(SnackBar(content: Text(message)));
         }
+        return relationshipState;
       } else {
         throw AppException(
           AppError.fromResponse(
@@ -269,6 +270,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           ),
         );
       }
+      return null;
     }
   }
 
@@ -408,13 +410,13 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     }
   }
 
-  Future<void> _revokeFriendship({
+  Future<String?> _revokeFriendship({
     required String friendUserId,
     required String username,
     String? avatarUrl,
   }) async {
     final auth = ref.read(authProvider);
-    if (auth.token == null) return;
+    if (auth.token == null) return null;
     final loc = AppLocalizations.of(context)!;
 
     try {
@@ -443,6 +445,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             SnackBar(content: Text(loc.socialFriendRemoved(username))),
           );
         }
+        return 'none';
       } else {
         throw AppException(
           AppError.fromResponse(
@@ -466,6 +469,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           ),
         );
       }
+      return null;
     }
   }
 
@@ -989,7 +993,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _FindFriendsSheet(onSendRequest: _sendFriendRequest),
+      builder: (_) => _FindFriendsSheet(
+        onSendRequest: _sendFriendRequest,
+        onRevokeRequest: _revokeFriendship,
+      ),
     );
   }
 }
@@ -1228,14 +1235,23 @@ class _ActivityCard extends StatelessWidget {
 
 /// Bottom sheet for finding and adding new friends.
 class _FindFriendsSheet extends ConsumerStatefulWidget {
-  final Future<void> Function(
+  final Future<String?> Function(
     String userId,
     String username, {
     String? avatarUrl,
   })
   onSendRequest;
+  final Future<String?> Function({
+    required String friendUserId,
+    required String username,
+    String? avatarUrl,
+  })
+  onRevokeRequest;
 
-  const _FindFriendsSheet({required this.onSendRequest});
+  const _FindFriendsSheet({
+    required this.onSendRequest,
+    required this.onRevokeRequest,
+  });
 
   @override
   ConsumerState<_FindFriendsSheet> createState() => _FindFriendsSheetState();
@@ -1329,6 +1345,7 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                                   return _SearchResultTile(
                                     user: user,
                                     onSendRequest: widget.onSendRequest,
+                                    onRevokeRequest: widget.onRevokeRequest,
                                   );
                                 },
                               );
@@ -1362,26 +1379,94 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
 }
 
 /// A single search result tile in the Find Friends sheet.
-class _SearchResultTile extends ConsumerWidget {
+class _SearchResultTile extends ConsumerStatefulWidget {
   final dynamic user;
-  final Future<void> Function(
+  final Future<String?> Function(
     String userId,
     String username, {
     String? avatarUrl,
   })
   onSendRequest;
+  final Future<String?> Function({
+    required String friendUserId,
+    required String username,
+    String? avatarUrl,
+  })
+  onRevokeRequest;
 
-  const _SearchResultTile({required this.user, required this.onSendRequest});
+  const _SearchResultTile({
+    required this.user,
+    required this.onSendRequest,
+    required this.onRevokeRequest,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SearchResultTile> createState() => _SearchResultTileState();
+}
+
+class _SearchResultTileState extends ConsumerState<_SearchResultTile> {
+  late String _state;
+  bool _isActing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _state = widget.user['relationship_state']?.toString() ?? 'none';
+  }
+
+  @override
+  void didUpdateWidget(covariant _SearchResultTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final incomingState =
+        widget.user['relationship_state']?.toString() ?? 'none';
+    if (!_isActing && incomingState != _state) {
+      _state = incomingState;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final currentUserId = ref.watch(authProvider).userId;
+    final user = widget.user;
     final userId = (user['user_id'] ?? user['id'])?.toString() ?? '';
     final username = user['username']?.toString() ?? loc.homeFriendFallback;
     final avatarUrl = user['avatar_url']?.toString();
-    final state = user['relationship_state']?.toString() ?? 'none';
     final isSelf = userId == currentUserId;
+
+    Future<void> sendRequest() async {
+      if (_isActing || userId.isEmpty) return;
+      setState(() => _isActing = true);
+      final nextState = await widget.onSendRequest(
+        userId,
+        username,
+        avatarUrl: avatarUrl,
+      );
+      if (!mounted) return;
+      setState(() {
+        if (nextState != null && nextState.isNotEmpty) {
+          _state = nextState;
+        }
+        _isActing = false;
+      });
+    }
+
+    Future<void> revokeRequest() async {
+      if (_isActing || userId.isEmpty) return;
+      setState(() => _isActing = true);
+      final nextState = await widget.onRevokeRequest(
+        friendUserId: userId,
+        username: username,
+        avatarUrl: avatarUrl,
+      );
+      if (!mounted) return;
+      setState(() {
+        if (nextState != null && nextState.isNotEmpty) {
+          _state = nextState;
+        }
+        _isActing = false;
+      });
+    }
 
     return ListTile(
       leading: UserAvatar(avatarUrl: avatarUrl, username: username, radius: 20),
@@ -1389,7 +1474,7 @@ class _SearchResultTile extends ConsumerWidget {
       subtitle: Text(
         isSelf
             ? loc.commonYou
-            : switch (state) {
+            : switch (_state) {
                 'accepted' => loc.socialRelationshipAcceptedFriend,
                 'pending_outgoing' => loc.socialRelationshipRequestSent,
                 'pending_incoming' => loc.socialRelationshipWaiting,
@@ -1398,25 +1483,38 @@ class _SearchResultTile extends ConsumerWidget {
       ),
       trailing: isSelf
           ? Chip(label: Text(loc.commonYou))
-          : switch (state) {
+          : switch (_state) {
               'accepted' => Chip(
                 avatar: const Icon(Icons.check_rounded, size: 16),
                 label: Text(loc.socialChipFriends),
               ),
-              'pending_outgoing' => Chip(label: Text(loc.socialChipRequested)),
+              'pending_outgoing' => OutlinedButton.icon(
+                onPressed: _isActing ? null : revokeRequest,
+                icon: _isActing
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.close_rounded, size: 16),
+                label: Text(loc.socialChipRequested),
+              ),
               'pending_incoming' => Chip(
                 label: Text(loc.socialChipRespondInFriends),
               ),
               _ => IconButton(
                 tooltip: loc.socialSendFriendRequestTooltip,
-                icon: const Icon(
-                  Icons.person_add_rounded,
-                  color: AppTheme.sageGreen,
-                ),
-                onPressed: userId.isEmpty
-                    ? null
-                    : () =>
-                          onSendRequest(userId, username, avatarUrl: avatarUrl),
+                icon: _isActing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.person_add_rounded,
+                        color: AppTheme.sageGreen,
+                      ),
+                onPressed: userId.isEmpty || _isActing ? null : sendRequest,
               ),
             },
     );

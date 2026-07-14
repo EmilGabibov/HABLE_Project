@@ -448,11 +448,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get habitFormCreateBody =>
-      'Choose a pattern, tune the duration, and invite the right people before you commit.';
+      'Pick a name, choose a finite challenge length, and start cleanly.';
 
   @override
   String get habitFormEditBody =>
-      'Adjust the title, timeline, and color without breaking the habit you already started.';
+      'Adjust the title, timeline, and color without resetting your progress.';
 
   @override
   String get habitFormNameLabel => 'Habit name';
@@ -498,7 +498,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get habitFormDurationBody =>
-      'Popular challenge lengths help users commit to a finite promise.';
+      'Default is 21 days. Use anchors for the usual milestones or slide for any finite plan.';
 
   @override
   String habitFormDurationChip(int days) {

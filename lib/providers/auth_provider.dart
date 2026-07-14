@@ -73,6 +73,7 @@ class AuthNotifier extends Notifier<AuthState> {
   static const String _sessionTokenKey = 'session_token_snapshot';
   static const String _sessionUserIdKey = 'session_user_id_snapshot';
   static const String _sessionUsernameKey = 'session_username_snapshot';
+  bool _secureStorageUsable = true;
 
   String _networkErrorMessage(
     Object error, {
@@ -120,6 +121,7 @@ class AuthNotifier extends Notifier<AuthState> {
       userId = await _storage.read(key: _userIdKey);
       username = await _storage.read(key: _usernameKey);
     } catch (error) {
+      _secureStorageUsable = false;
       debugPrint('Failed to read auth from secure storage: $error');
     }
     final snapshot = defaultTargetPlatform == TargetPlatform.macOS
@@ -131,11 +133,6 @@ class AuthNotifier extends Notifier<AuthState> {
     final restoredUsername = username ?? snapshot['username'];
 
     if (restoredToken != null && restoredUserId != null) {
-      unawaited(_persistAuthToSecureStorage(
-        restoredToken,
-        restoredUserId,
-        restoredUsername ?? '',
-      ));
       state = state.copyWith(
         token: restoredToken,
         userId: restoredUserId,
@@ -757,11 +754,13 @@ class AuthNotifier extends Notifier<AuthState> {
     String userId,
     String username,
   ) async {
+    if (!_secureStorageUsable) return;
     try {
       await _storage.write(key: _tokenKey, value: token);
       await _storage.write(key: _userIdKey, value: userId);
       await _storage.write(key: _usernameKey, value: username);
     } catch (error) {
+      _secureStorageUsable = false;
       debugPrint('Failed to persist auth in secure storage: $error');
     }
   }

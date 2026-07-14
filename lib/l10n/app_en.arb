@@ -218,8 +218,8 @@
   "habitFormSaveChangesButton": "Save changes",
   "habitFormCreateTitle": "Build a habit worth repeating",
   "habitFormEditTitle": "Refine this habit",
-  "habitFormCreateBody": "Choose a pattern, tune the duration, and invite the right people before you commit.",
-  "habitFormEditBody": "Adjust the title, timeline, and color without breaking the habit you already started.",
+  "habitFormCreateBody": "Pick a name, choose a finite challenge length, and start cleanly.",
+  "habitFormEditBody": "Adjust the title, timeline, and color without resetting your progress.",
   "habitFormNameLabel": "Habit name",
   "habitFormNameHint": "Morning pages, no phone after 10, daily walk...",
   "habitFormNameHelper": "Tap the icon to the left to personalize custom habits.",
@@ -232,7 +232,7 @@
   "habitFormDescriptionHelper": "This can surface on the primary habit card.",
   "habitFormDescriptionErrorLong": "Keep the description under 160 characters.",
   "habitFormDurationTitle": "Duration",
-  "habitFormDurationBody": "Popular challenge lengths help users commit to a finite promise.",
+  "habitFormDurationBody": "Default is 21 days. Use anchors for the usual milestones or slide for any finite plan.",
   "habitFormDurationChip": "{days} days",
   "@habitFormDurationChip": {
     "placeholders": {

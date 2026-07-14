@@ -1460,6 +1460,7 @@ app.use('/api/sync/*', async (c, next) => {
 app.get('/api/social/user/:id/profile', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
   await ensureHabitDescriptionSchema(c.env)
+  await ensureGamificationSchema(c.env)
   const payload = c.get('jwtPayload')
   const viewerUserId = payload.id
   const targetUserId = c.req.param('id')
@@ -1474,8 +1475,19 @@ app.get('/api/social/user/:id/profile', async (c) => {
   let activeHabits: unknown[] = []
   if (viewerUserId === targetUserId) {
     const result = await c.env.DB.prepare(`
-      SELECT h.id, h.title, h.description, h.target_duration, h.color_hex, hp.current_duration, 'owner' as role
+      SELECT
+        h.id,
+        h.title,
+        h.description,
+        h.target_duration,
+        h.color_hex,
+        hp.current_duration,
+        COALESCE(self_role.role, 'owner') as role
       FROM habits h
+      LEFT JOIN partnerships self_role
+        ON self_role.habit_id = h.id
+       AND self_role.user_id = h.user_id
+       AND self_role.partner_id = h.user_id
       LEFT JOIN habit_progress hp ON hp.habit_id = h.id AND hp.user_id = h.user_id
       WHERE h.user_id = ? AND h.status = 'active'
     `).bind(targetUserId).all()
@@ -1487,30 +1499,40 @@ app.get('/api/social/user/:id/profile', async (c) => {
     }
 
     const result = await c.env.DB.prepare(`
-      SELECT DISTINCT
+      SELECT
         h.id,
         h.title,
         h.description,
         h.target_duration,
         h.color_hex,
         hp.current_duration,
-        p.role
+        COALESCE(self_role.role, 'owner') as role
       FROM habits h
-      JOIN partnerships p
-        ON p.habit_id = h.id
-       AND p.user_id = ?
-       AND p.partner_id = ?
+      LEFT JOIN partnerships self_role
+        ON self_role.habit_id = h.id
+       AND self_role.user_id = h.user_id
+       AND self_role.partner_id = h.user_id
       LEFT JOIN habit_progress hp
         ON hp.habit_id = h.id
        AND hp.user_id = h.user_id
-      WHERE h.status = 'active'
-    `).bind(viewerUserId, targetUserId).all()
+      WHERE h.user_id = ? AND h.status = 'active'
+      ORDER BY h.updated_at DESC, h.created_at DESC
+    `).bind(targetUserId).all()
     activeHabits = result.results ?? []
   }
 
+  const { results: achievements } = await c.env.DB.prepare(`
+    SELECT achievement_id, unlocked_at, source_event_id
+    FROM user_achievements
+    WHERE user_id = ?
+    ORDER BY unlocked_at DESC
+    LIMIT 12
+  `).bind(targetUserId).all()
+
   return c.json({
     user: userWithLevel,
-    habits: activeHabits
+    habits: activeHabits,
+    achievements: achievements ?? [],
   })
 })
 

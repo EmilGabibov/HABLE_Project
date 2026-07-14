@@ -698,6 +698,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 data: (data) {
                   final user = data.user;
                   final habits = data.habits;
+                  final achievements = data.achievements;
 
                   return SliverList(
                     delegate: SliverChildListDelegate([
@@ -784,6 +785,70 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           (h) => _FriendHabitListTile(
                             habitData: h,
                             friendUserId: widget.userId,
+                          ),
+                        ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                        child: Text(
+                          l10n.profileAchievementsTitle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.sageGreen,
+                          ),
+                        ),
+                      ),
+                      if (achievements.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                          child: Text(
+                            l10n.profileFirstBadgeHint,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppTheme.warmGray),
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: achievements.map<Widget>((rawAchievement) {
+                              final achievement =
+                                  Map<String, dynamic>.from(
+                                    rawAchievement as Map? ?? const {},
+                                  );
+                              final achievementId =
+                                  achievement['achievement_id']?.toString() ??
+                                  '';
+                              final unlockedAt =
+                                  achievement['unlocked_at']?.toString();
+                              final chip = Chip(
+                                avatar: const Icon(
+                                  Icons.workspace_premium_rounded,
+                                  size: 18,
+                                  color: AppTheme.sageGreen,
+                                ),
+                                label: Text(
+                                  achievementId.isEmpty
+                                      ? l10n.dashboardAchievementUnlocked
+                                      : _achievementLabel(
+                                          l10n,
+                                          achievementId,
+                                        ),
+                                ),
+                                backgroundColor: AppTheme.surfaceVariant,
+                                side: BorderSide(
+                                  color: AppTheme.sageGreen.withValues(
+                                    alpha: 0.18,
+                                  ),
+                                ),
+                              );
+                              if (unlockedAt == null || unlockedAt.isEmpty) {
+                                return chip;
+                              }
+                              return Tooltip(message: unlockedAt, child: chip);
+                            }).toList(),
                           ),
                         ),
                     ]),
@@ -1604,15 +1669,20 @@ class _FriendHabitListTile extends ConsumerWidget {
     final description = habitData['description'] as String?;
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
+    final currentDuration = (habitData['current_duration'] as num?)?.toInt() ?? 0;
+    final role = _partnershipRoleFromWire(habitData['role']?.toString());
     final habitColor = _tileColor(habitData['color_hex'] as String?);
     final habitMeta = standardHabitForTitle(title);
     final viewerUserId = ref.watch(authProvider).userId;
+    final progressLabel = currentDuration > 0
+        ? loc.habitDayProgress(currentDuration.clamp(1, duration), duration)
+        : loc.profileDayChallenge(duration);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: HabitCardShell(
         semanticsLabel:
-            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${loc.profileDayChallenge(duration)}. ${loc.profileFriendHabitBody}',
+            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} $progressLabel. ${_roleLabel(loc, role)}. ${loc.profileFriendHabitBody}',
         title: title,
         subtitle: description,
         minHeight: 220,
@@ -1643,8 +1713,16 @@ class _FriendHabitListTile extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              loc.profileDayChallenge(duration),
+              progressLabel,
               style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _roleLabel(loc, role),
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1652,7 +1730,7 @@ class _FriendHabitListTile extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -2178,6 +2256,18 @@ String _roleLabel(AppLocalizations loc, PartnershipRole role) {
       return loc.profileRolePartnerView;
     case PartnershipRole.supporter:
       return loc.profileRoleSupporterView;
+  }
+}
+
+PartnershipRole _partnershipRoleFromWire(String? role) {
+  switch (role) {
+    case 'partner':
+      return PartnershipRole.partner;
+    case 'supporter':
+      return PartnershipRole.supporter;
+    case 'owner':
+    default:
+      return PartnershipRole.owner;
   }
 }
 

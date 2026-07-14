@@ -20,7 +20,7 @@ Authentication state is managed globally by the `authProvider` (`NotifierProvide
 - `token`, `userId`, `username`: Core session identifiers stored in memory.
 
 ### Session Lifecycle Hooks
-- **Startup (`build()` & `_loadStoredAuth`):** Reads the JWT and `userId` from `flutter_secure_storage`. If found, it populates `AuthState` and asynchronously triggers the restoration of local reminders via `localReminderServiceProvider`.
+- **Startup (`build()` & `_loadStoredAuth`):** Reads the JWT and `userId` from `flutter_secure_storage`. On macOS, if secure storage is unavailable or denied, the app may fall back to the local session snapshot for continuity, but it must not immediately write the restored snapshot back into secure storage in the same startup pass. Once auth state is restored, local reminders are asynchronously reloaded via `localReminderServiceProvider`.
 - **Logout:** Clears all keys from secure storage, cancels pending local reminders, and resets the `AuthState`.
 
 ## 3. Local Persistence and Security
@@ -30,6 +30,8 @@ The following keys are stored securely on the host device (Keychain on iOS/macOS
 - `jwt_token`: The Bearer token.
 - `user_id`: The canonical UUID.
 - `username`: The user's handle.
+
+On macOS, secure storage failures should be treated as bounded per-session failures. The app may continue using the already-restored in-memory/session-snapshot credentials for the current session, but it should avoid repeated background re-read or write attempts that would retrigger keychain prompts.
 
 ### Drift Database (`Users` Table)
 The local database acts as the offline source of truth. The `_ensureUserInDb` method handles upserting the user profile when they log in or register.

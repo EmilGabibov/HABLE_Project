@@ -73,7 +73,12 @@ final habitPartnersProvider =
 class FriendProfileData {
   final Map<String, dynamic> user;
   final List<dynamic> habits;
-  FriendProfileData({required this.user, required this.habits});
+  final List<dynamic> achievements;
+  FriendProfileData({
+    required this.user,
+    required this.habits,
+    required this.achievements,
+  });
 }
 
 final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((
@@ -97,7 +102,13 @@ final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((
   );
   if (res.statusCode == 200) {
     final data = jsonDecode(res.body);
-    return FriendProfileData(user: data['user'], habits: data['habits']);
+    return FriendProfileData(
+      user: Map<String, dynamic>.from(data['user'] as Map? ?? const {}),
+      habits: List<dynamic>.from(data['habits'] as List? ?? const []),
+      achievements: List<dynamic>.from(
+        data['achievements'] as List? ?? const [],
+      ),
+    );
   }
   throw AppException(
     AppError.fromResponse(

@@ -38,6 +38,7 @@ class SyncService {
   final AppDatabase _db;
   final ConnectivityService _connectivity;
   final FlutterSecureStorage _storage;
+  final Future<String?> Function()? _tokenProvider;
   final LocalReminderService? _localReminderService;
   final http.Client _client;
   final String _apiBaseUrl;
@@ -46,12 +47,14 @@ class SyncService {
     required AppDatabase db,
     required ConnectivityService connectivity,
     required FlutterSecureStorage storage,
+    Future<String?> Function()? tokenProvider,
     LocalReminderService? localReminderService,
     http.Client? client,
     String? apiBaseUrlOverride,
   }) : _db = db,
        _connectivity = connectivity,
        _storage = storage,
+       _tokenProvider = tokenProvider,
        _localReminderService = localReminderService,
        _client = client ?? http.Client(),
        _apiBaseUrl = apiBaseUrlOverride ?? apiBaseUrl;
@@ -67,7 +70,10 @@ class SyncService {
   /// Get the standard auth headers
   Future<Map<String, String>> _getAuthHeaders() async {
     final headers = {'Content-Type': 'application/json'};
-    final token = await _storage.read(key: 'jwt_token');
+    final token =
+        _tokenProvider != null
+            ? await _tokenProvider()
+            : await _storage.read(key: 'jwt_token');
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }

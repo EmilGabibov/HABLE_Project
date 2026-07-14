@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/connectivity_service.dart';
 import '../services/local_reminder_service.dart';
 import '../services/sync_service.dart';
+import 'auth_provider.dart';
 import 'database_provider.dart';
 import 'habit_providers.dart';
 import 'notification_providers.dart';
@@ -24,6 +25,7 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     db: db,
     connectivity: connectivity,
     storage: storage,
+    tokenProvider: () async => ref.read(authProvider).token,
     localReminderService: localReminderService,
   );
   service.init();

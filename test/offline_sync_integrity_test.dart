@@ -198,6 +198,33 @@ void main() {
       expect(await db.getTodaysQuote(), isNull);
     },
   );
+
+  test(
+    'daily sync can use an injected token provider without reading secure storage',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(
+        <String, String>{},
+      );
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        tokenProvider: () async => 'in-memory-token',
+        client: MockClient((request) async {
+          expect(request.headers['Authorization'], 'Bearer in-memory-token');
+          return http.Response(jsonEncode(_dailySyncPayload()), 200);
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync('user-1');
+    },
+  );
 }
 
 Map<String, dynamic> _dailySyncPayload({

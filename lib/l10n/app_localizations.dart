@@ -907,13 +907,13 @@ abstract class AppLocalizations {
   /// No description provided for @habitFormCreateBody.
   ///
   /// In en, this message translates to:
-  /// **'Choose a pattern, tune the duration, and invite the right people before you commit.'**
+  /// **'Pick a name, choose a finite challenge length, and start cleanly.'**
   String get habitFormCreateBody;
 
   /// No description provided for @habitFormEditBody.
   ///
   /// In en, this message translates to:
-  /// **'Adjust the title, timeline, and color without breaking the habit you already started.'**
+  /// **'Adjust the title, timeline, and color without resetting your progress.'**
   String get habitFormEditBody;
 
   /// No description provided for @habitFormNameLabel.
@@ -991,7 +991,7 @@ abstract class AppLocalizations {
   /// No description provided for @habitFormDurationBody.
   ///
   /// In en, this message translates to:
-  /// **'Popular challenge lengths help users commit to a finite promise.'**
+  /// **'Default is 21 days. Use anchors for the usual milestones or slide for any finite plan.'**
   String get habitFormDurationBody;
 
   /// No description provided for @habitFormDurationChip.

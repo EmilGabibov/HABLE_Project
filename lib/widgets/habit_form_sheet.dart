@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -93,6 +95,12 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
 
   bool get _isEditing => widget.existingHabit != null;
   bool get _isCreateFlow => !_isEditing;
+  int get _selectedDurationDays =>
+      int.tryParse(_durationController.text.trim()) ??
+      _selectedPreset?.defaultDurationDays ??
+      21;
+  int get _durationSliderUpperBound =>
+      math.max(90, math.max(_selectedDurationDays, _durationSuggestions.last));
 
   @override
   void initState() {
@@ -443,7 +451,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             decoration: InputDecoration(
               labelText: loc.habitFormNameLabel,
               hintText: loc.habitFormNameHint,
-              helperText: loc.habitFormNameHelper,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -478,13 +485,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          loc.habitFormPresetBody,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -521,13 +521,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 6),
-        Text(
-          loc.habitFormDescriptionBody,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
-        ),
         const SizedBox(height: 12),
         TextFormField(
           key: const Key('habit-form-description'),
@@ -536,7 +529,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           maxLines: 3,
           decoration: InputDecoration(
             hintText: description,
-            helperText: loc.habitFormDescriptionHelper,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
           ),
           validator: (value) {
@@ -553,6 +545,8 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
 
   Widget _buildDurationSection(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final selectedDuration = _selectedDurationDays;
+    final sliderUpperBound = _durationSliderUpperBound;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -568,6 +562,35 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  loc.habitFormDurationTitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.warmGray,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                loc.habitFormDurationChip(selectedDuration),
+                key: const Key('habit-form-duration-value'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -588,21 +611,47 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           }).toList(),
         ),
         const SizedBox(height: 12),
-        TextFormField(
-          key: const Key('habit-form-duration'),
-          controller: _durationController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: loc.habitFormCustomDaysLabel,
-            hintText: '21',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: AppTheme.deepCharcoal,
+            inactiveTrackColor: AppTheme.warmGray.withValues(alpha: 0.24),
+            thumbColor: AppTheme.deepCharcoal,
+            overlayColor: AppTheme.deepCharcoal.withValues(alpha: 0.12),
+            trackHeight: 5,
           ),
-          validator: (value) {
-            final parsed = int.tryParse(value?.trim() ?? '');
-            if (parsed == null) return loc.habitFormDurationErrorInvalid;
-            if (parsed < 1) return loc.habitFormDurationErrorMin;
-            return null;
-          },
+          child: Slider(
+            key: const Key('habit-form-duration-slider'),
+            min: 1,
+            max: sliderUpperBound.toDouble(),
+            divisions: sliderUpperBound - 1,
+            value: selectedDuration.clamp(1, sliderUpperBound).toDouble(),
+            label: loc.habitFormDurationChip(selectedDuration),
+            onChanged: (value) {
+              setState(() {
+                _durationController.text = value.round().toString();
+              });
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Text(
+                '1',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
+              ),
+              const Spacer(),
+              Text(
+                '$sliderUpperBound',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -618,13 +667,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          loc.habitFormColorBody,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -675,13 +717,6 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          loc.habitFormPartnersBody,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
         ),
         const SizedBox(height: 12),
         Consumer(
