@@ -12,8 +12,7 @@ Future<T?> showHableContextMenu<T>({
   required List<HableMenuItem<T>> items,
   String? title,
 }) async {
-  if (defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.android) {
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
     return _showBottomSheet(context, items, title);
   } else {
     return _showDesktopMenu(context, position, items, title);
