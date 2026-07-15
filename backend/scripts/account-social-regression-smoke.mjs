@@ -112,6 +112,23 @@ async function inviteAndAccept(ownerToken, recipientToken, habitId, targetUserId
   );
 }
 
+async function inviteAndDecline(ownerToken, recipientToken, habitId, targetUserId) {
+  const invitation = await expectResponse(
+    `invite then decline ${targetUserId}`,
+    await post('/api/social/habit-invitation', ownerToken, {
+      habit_id: habitId,
+      target_user_id: targetUserId,
+    }),
+  );
+  await expectResponse(
+    'decline habit invitation',
+    await post('/api/social/habit-invitation/decline', recipientToken, {
+      invitation_id: invitation.invitation_id,
+    }),
+  );
+  return invitation.invitation_id;
+}
+
 async function run() {
   console.log(`Running account/social regression smoke against ${baseUrl}`);
   const alice = await register(`regressa${runId}`);
@@ -174,6 +191,27 @@ async function run() {
   const habitId = `regression-nudge-${runId}`;
   await createHabit(alice.token, habitId, 'Regression Nudge Habit');
   await inviteAndAccept(alice.token, bob.token, habitId, bob.user_id);
+
+  const declinedHabitId = `regression-decline-${runId}`;
+  await createHabit(alice.token, declinedHabitId, 'Regression Decline Habit');
+  const declinedInvitationId = await inviteAndDecline(
+    alice.token,
+    bob.token,
+    declinedHabitId,
+    bob.user_id,
+  );
+
+  const bobInvitesAfterDecline = await expectResponse(
+    'recipient daily sync after declining habit invitation',
+    await get('/api/sync/daily', bob.token),
+  );
+  assert(
+    !bobInvitesAfterDecline.invitations.some(
+      (invitation) => invitation.id === declinedInvitationId,
+    ),
+    'Declined habit invitation remained pending in daily sync',
+    bobInvitesAfterDecline.invitations,
+  );
 
   await expectResponse(
     'habit-scoped nudge',

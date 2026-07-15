@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
 import 'package:hable/models/daily_quote.dart';
+import 'package:hable/providers/social_providers.dart';
 import 'package:hable/services/connectivity_service.dart';
 import 'package:hable/services/sync_service.dart';
 import 'package:http/http.dart' as http;
@@ -86,6 +87,85 @@ void main() {
       expect(await db.getPendingInvitations(), isEmpty);
       expect(await db.watchPendingIncomingFriendRelationships().first, isEmpty);
       expect(await db.getUnreadNotificationsForUser(userId), isEmpty);
+    },
+  );
+
+  test(
+    'a stale daily sync does not resurrect a locally resolved habit invitation',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      const userId = 'user-1';
+      const invitationId = 'invite-1';
+      final pendingPayload = _dailySyncPayload(
+        invitations: [
+          {
+            'id': invitationId,
+            'requester_id': 'friend-1',
+            'habit_id': 'habit-1',
+            'status': 'pending',
+            'created_at': '2026-07-13T09:00:00.000Z',
+          },
+        ],
+      );
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient((request) async {
+          if (request.url.path == '/api/sync/daily') {
+            return http.Response(jsonEncode(pendingPayload), 200);
+          }
+          if (request.url.path == '/api/social/habit-invitation/accept') {
+            return http.Response('{}', 200);
+          }
+          throw StateError('Unexpected request: ${request.url}');
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync(userId);
+      expect(await db.getPendingInvitations(), hasLength(1));
+
+      await enqueueAcceptInvitation(db: db, invitationId: invitationId);
+      expect(await db.getPendingInvitations(), isEmpty);
+
+      // Simulate a response that was already in flight when the user tapped.
+      await syncService.pullDailySync(userId);
+      expect(await db.getPendingInvitations(), isEmpty);
+
+      await syncService.flushPending();
+      expect(await db.getPendingSyncItems(), isEmpty);
+    },
+  );
+
+  test(
+    'a stale daily sync does not resurrect a locally declined invite',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      const invitationId = 'invite-declined';
+      final pendingInvite = HabitInvitationsCompanion.insert(
+        invitationId: invitationId,
+        requesterId: 'friend-1',
+        recipientId: 'user-1',
+        habitId: 'habit-1',
+      );
+      await db.insertHabitInvitation(pendingInvite);
+      await enqueueDeclineInvitation(db: db, invitationId: invitationId);
+
+      await db.insertHabitInvitation(pendingInvite);
+
+      expect(await db.getPendingInvitations(), isEmpty);
+      expect(await db.getPendingSyncItems(), hasLength(1));
+      expect(
+        (await db.getPendingSyncItems()).single.action,
+        SyncAction.declineInvitation,
+      );
     },
   );
 

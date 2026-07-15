@@ -816,8 +816,28 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<PrivateMessage>> watchPrivateMessages() =>
       select(privateMessages).watch();
 
-  Future<void> insertHabitInvitation(HabitInvitationsCompanion invite) =>
-      into(habitInvitations).insert(invite, mode: InsertMode.insertOrReplace);
+  Future<void> insertHabitInvitation(HabitInvitationsCompanion invite) async {
+    final invitationId = invite.invitationId.value;
+    final incomingStatus = invite.status.present
+        ? invite.status.value
+        : 'pending';
+    final existing = await (select(
+      habitInvitations,
+    )..where((row) => row.invitationId.equals(invitationId))).getSingleOrNull();
+
+    // An accept/decline is an optimistic, queued local decision. A daily-sync
+    // response started before that decision reached the Worker can still carry
+    // the old pending row; do not let it resurrect the banner.
+    if (incomingStatus == 'pending' &&
+        existing != null &&
+        existing.status != 'pending') {
+      return;
+    }
+
+    await into(
+      habitInvitations,
+    ).insert(invite, mode: InsertMode.insertOrReplace);
+  }
 
   Future<void> reconcilePendingHabitInvitations(
     Set<String> validInvitationIds,
