@@ -1,6 +1,9 @@
 # Miscellaneous
 *.class
 *.lock
+!pubspec.lock
+!backend/package-lock.json
+!e2e/package-lock.json
 *.log
 *.pyc
 *.swp
@@ -124,3 +127,7 @@ app.*.symbols
 # Backend
 backend/.wrangler/
 .env
+.env.*
+!.env.example
+node_modules/
+.wrangler
