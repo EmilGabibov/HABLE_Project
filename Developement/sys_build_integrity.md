@@ -105,6 +105,13 @@ Instead of relying on fragile local `.env` files for production builds, the CI/C
 * **Cloudflare Credentials:** Stored securely as repository secrets to enable automatic Wrangler publishing and Pages deployments.
 * **Signing Keys:** Android keystores are base64-encoded as GitHub Secrets and injected during the release build matrix job.
 
+### Backend Toolchain Dependency Updates
+The backend Cloudflare toolchain keeps `wrangler` and
+`@cloudflare/workers-types` in the Dependabot `cloudflare-worker-toolchain`
+group. Review these updates together because Wrangler major releases can require
+matching Workers type ranges, and split PRs can fail `npm ci` before backend
+type-checking begins.
+
 ### Excluded Scope (Future Splits)
 The following are intentionally excluded from this foundational automation matrix and remain manual or handled by future split tracks:
 1. Automated App Store Connect or Google Play Console submission.

@@ -6,6 +6,10 @@ Quick reference for all build, install, and deploy shell commands across platfor
 Backend tooling uses Wrangler 4, which requires Node.js 22 or newer. Verify with
 `node --version` before running the commands below.
 
+Wrangler and `@cloudflare/workers-types` are coupled in the backend toolchain.
+Dependabot groups them as `cloudflare-worker-toolchain`; update or review them
+together so peer dependency ranges stay aligned.
+
 Initialize the local Doppler project for backend secrets:
 ```bash
 cd /Flutter/hable/backend && npm run setup:doppler

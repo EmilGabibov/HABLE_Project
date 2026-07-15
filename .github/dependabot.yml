@@ -8,6 +8,11 @@ updates:
     directory: "/backend"
     schedule:
       interval: monthly
+    groups:
+      cloudflare-worker-toolchain:
+        patterns:
+          - "wrangler"
+          - "@cloudflare/workers-types"
   - package-ecosystem: npm
     directory: "/e2e"
     schedule:
