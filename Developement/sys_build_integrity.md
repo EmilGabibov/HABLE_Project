@@ -82,6 +82,7 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 ### iOS
 - **Constraints:** iOS builds depend on CocoaPods and Xcode. `sql_wasm` does not apply here; it uses the native `sqlite3` plugin.
 - **Verification Commands:** `flutter build ios --release --no-codesign --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production` and the matching `friend` command. `--no-codesign` verifies compilation only; it does not prove archive identity or distribution signing.
+- **Preflight/smoke:** Run `scripts/ios_smoke.sh --preflight-only --runtime 'iOS 26.5'` and then the same script for `primary` and `friend` with one explicit simulator UDID and environment. The script fails closed on missing runtimes or destinations and records bounded startup evidence; loading/error, retry/reconnect, logout, and relaunch remain named fixture checkpoints.
 - **Evidence:** Record Xcode version, installed platform/simulator runtimes, eligible destination, flavor identity, and `pod install` output when dependencies change. No eligible destination is `blocked`, not `pass`.
 
 ### macOS

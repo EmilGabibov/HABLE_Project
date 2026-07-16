@@ -208,9 +208,30 @@ flutter build ios --release --no-codesign --flavor friend -t lib/main.dart \
 
 *(Note: For iOS, `flutter run --release` is the most reliable way to compile and transfer the app to your device over USB in one step. If you only want to install an already-built iOS app without running it, you can simply use `flutter install`.)*
 
-Run `xcrun simctl list runtimes` and `xcodebuild -version` first. A compile
-attempt with no eligible runtime/destination is `blocked`, not a passing iOS
-gate; see [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167).
+Run the fail-closed preflight before either flavor. It pins the reusable iOS
+26.5 simulator fixture, reports Xcode/runtime/destination identifiers, and
+fails rather than selecting a generic or ineligible destination:
+```bash
+scripts/ios_smoke.sh --preflight-only --runtime 'iOS 26.5'
+```
+If the runtime is missing, install the supported platform through Xcode and
+rerun the preflight:
+```bash
+xcodebuild -downloadPlatform iOS
+```
+When preflight passes, build/install/launch each flavor with an explicit
+environment and the same simulator UDID. The runner writes one bounded
+metadata file and one startup screenshot per run:
+```bash
+scripts/ios_smoke.sh --flavor primary --env production --mode release \
+  --device <simulator-udid>
+scripts/ios_smoke.sh --flavor friend --env production --mode release \
+  --device <simulator-udid>
+```
+For each launched flavor, manually exercise loading/error, retry/reconnect,
+logout, and relaunch in the fixture and record those checkpoints beside the
+generated evidence. A missing runtime or ineligible device remains `BLOCKED`,
+not a passing iOS gate; see [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167).
 
 ## macOS
 ### Clean
