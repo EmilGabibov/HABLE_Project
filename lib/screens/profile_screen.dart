@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show HabitStatus, LogStatus, PartnershipRole;
+import '../models/history_display.dart';
 import '../data/standard_habits.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/habit_providers.dart';
@@ -2372,13 +2373,14 @@ class _HabitHistorySheet extends ConsumerWidget {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final log = logs[index];
+                      final points = historyPointsForLog(log);
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(_historyLabel(loc, log)),
                         subtitle: Text(
                           _formatHistoryDate(context, log.actionDate),
                         ),
-                        trailing: log.pointsAwarded > 0
+                        trailing: points != null
                             ? Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -2391,7 +2393,7 @@ class _HabitHistorySheet extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
-                                  loc.profilePointsAwarded(log.pointsAwarded),
+                                  loc.profilePointsAwarded(points),
                                   style: Theme.of(context).textTheme.labelMedium
                                       ?.copyWith(
                                         color: AppTheme.sageGreen,

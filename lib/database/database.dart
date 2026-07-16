@@ -484,10 +484,12 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
+  /// Keeps the Profile history sheet bounded while retaining recent context.
   Stream<List<Log>> watchLogsForHabit(String habitId) =>
       (select(logs)
             ..where((l) => l.habitId.equals(habitId))
-            ..orderBy([(l) => OrderingTerm.desc(l.actionDate)]))
+            ..orderBy([(l) => OrderingTerm.desc(l.actionDate)])
+            ..limit(120))
           .watch();
 
   /// Count logs for today to determine if the habit was already acted on.
