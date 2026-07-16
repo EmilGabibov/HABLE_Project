@@ -408,6 +408,108 @@ class SyncService {
     }
   }
 
+  Future<void> _reconcileOwnedState(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    final ownedHabits = data['owned_habits'];
+    if (ownedHabits is List) {
+      for (final rawHabit in ownedHabits) {
+        if (rawHabit is! Map) continue;
+        final habitId = rawHabit['habit_id']?.toString() ?? '';
+        if (habitId.isEmpty) continue;
+        final serverUpdatedAt = DateTime.tryParse(
+          rawHabit['updated_at']?.toString() ?? '',
+        );
+        final localHabit = await _db.getHabit(habitId);
+        if (localHabit != null &&
+            !localHabit.isSynced &&
+            serverUpdatedAt != null &&
+            localHabit.updatedAt.isAfter(serverUpdatedAt)) {
+          continue;
+        }
+
+        final targetDuration =
+            (rawHabit['target_duration'] as num?)?.toInt() ?? 0;
+        final status = HabitStatus.values.firstWhere(
+          (value) => value.name == rawHabit['status']?.toString(),
+          orElse: () => HabitStatus.active,
+        );
+        final createdAt = DateTime.tryParse(
+          rawHabit['created_at']?.toString() ?? '',
+        );
+        final remainingDays =
+            (rawHabit['remaining_days'] as num?)?.toInt() ?? targetDuration;
+
+        await _db
+            .into(_db.habits)
+            .insertOnConflictUpdate(
+              HabitsCompanion(
+                habitId: Value(habitId),
+                userId: Value(userId),
+                title: Value(rawHabit['title']?.toString() ?? 'Habit'),
+                description: Value(rawHabit['description']?.toString()),
+                isCustom: Value(localHabit?.isCustom ?? false),
+                targetDuration: Value(targetDuration),
+                currentDuration: Value(remainingDays.clamp(0, targetDuration)),
+                status: Value(status),
+                colorHex: Value(
+                  rawHabit['color_hex']?.toString() ??
+                      localHabit?.colorHex ??
+                      'FF9CAF88',
+                ),
+                createdAt: createdAt == null
+                    ? const Value.absent()
+                    : Value(createdAt),
+                updatedAt: serverUpdatedAt == null
+                    ? Value(DateTime.now())
+                    : Value(serverUpdatedAt),
+                isSynced: const Value(true),
+              ),
+            );
+      }
+    }
+
+    final ownedLogs = data['owned_logs'];
+    if (ownedLogs is! List) return;
+    for (final rawLog in ownedLogs) {
+      if (rawLog is! Map) continue;
+      final logId = rawLog['log_id']?.toString() ?? '';
+      final habitId = rawLog['habit_id']?.toString() ?? '';
+      final actionDate = DateTime.tryParse(
+        rawLog['logged_at']?.toString() ?? '',
+      );
+      if (logId.isEmpty || habitId.isEmpty || actionDate == null) continue;
+      final status = LogStatus.values.firstWhere(
+        (value) => value.name == rawLog['status']?.toString(),
+        orElse: () => LogStatus.skipped,
+      );
+      final localLog = await (_db.select(
+        _db.logs,
+      )..where((log) => log.logId.equals(logId))).getSingleOrNull();
+      if (localLog != null && !localLog.isSynced) continue;
+
+      await _db
+          .into(_db.logs)
+          .insertOnConflictUpdate(
+            LogsCompanion(
+              logId: Value(logId),
+              habitId: Value(habitId),
+              actionDate: Value(actionDate),
+              status: Value(status),
+              pointsAwarded: Value(
+                (rawLog['points_awarded'] as num?)?.toInt() ??
+                    localLog?.pointsAwarded ??
+                    0,
+              ),
+              journalNote: Value(localLog?.journalNote),
+              updatedAt: Value(actionDate),
+              isSynced: const Value(true),
+            ),
+          );
+    }
+  }
+
   /// Pull inbound social data and persist into Drift for offline-first access.
   Future<void> pullDailySync(String userId) async {
     final headers = await _getAuthHeaders();
@@ -431,6 +533,7 @@ class SyncService {
         if (syncedQuote != null) {
           await _db.cacheQuote(syncedQuote.text, author: syncedQuote.author);
         }
+        await _reconcileOwnedState(userId, data);
 
         // Persist accepted friends first so later notification rows can resolve
         // usernames without waiting for another sync cycle.

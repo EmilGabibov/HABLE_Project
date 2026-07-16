@@ -2338,6 +2338,45 @@ app.get('/api/sync/daily', async (c) => {
     WHERE fr.status = 'accepted'
   `).bind(userId, userId).all()
 
+  // Return the authenticated user's own read model so a fresh device can
+  // reconcile habits and check-ins from the server after login. Keep the log
+  // transfer bounded; older history remains a separate future pagination
+  // concern.
+  const { results: ownedHabits } = await c.env.DB.prepare(`
+    SELECT
+      h.id as habit_id,
+      h.title,
+      h.description,
+      h.target_duration,
+      h.color_hex,
+      h.status,
+      h.created_at,
+      h.updated_at,
+      MAX(h.target_duration - COALESCE(hp.current_duration, 0), 0) as remaining_days
+    FROM habits h
+    LEFT JOIN habit_progress hp
+      ON hp.user_id = h.user_id AND hp.habit_id = h.id
+    WHERE h.user_id = ?
+    ORDER BY h.updated_at DESC
+  `).bind(userId).all()
+
+  const { results: ownedLogs } = await c.env.DB.prepare(`
+    SELECT
+      hl.id as log_id,
+      hl.habit_id,
+      hl.status,
+      hl.logged_at,
+      COALESCE(se.points, 0) as points_awarded
+    FROM habit_logs hl
+    JOIN habits h ON h.id = hl.habit_id
+    LEFT JOIN user_score_events se
+      ON se.user_id = hl.user_id
+      AND se.source_event_id = 'check_in:' || hl.id
+    WHERE hl.user_id = ? AND h.user_id = ?
+    ORDER BY hl.logged_at DESC
+    LIMIT 500
+  `).bind(userId, userId).all()
+
   const gamification = await getGamificationPayload(c.env, userId)
   const quote = await getDailyQuote(c.env)
 
@@ -2348,6 +2387,8 @@ app.get('/api/sync/daily', async (c) => {
     invitations: invitations,
     friend_requests: friendRequests,
     accepted_friends: acceptedFriends,
+    owned_habits: ownedHabits,
+    owned_logs: ownedLogs,
     gamification: gamification,
     ...(quote ? { quote } : {})
   })

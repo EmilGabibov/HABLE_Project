@@ -35,6 +35,7 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
     remains independent and user-controlled.
 * **Inbound Sync (Social & Quotes):** To handle partner nudges, accepted friends, habit invitations, and feeds, poll the Cloudflare `GET /api/sync/daily` endpoint silently in the background when the app is opened, updating the local database. Riverpod will dynamically refresh the UI.
   * `HomeScreen` initializes the sync service and pulls daily sync after login so accepted-friend chips, invitation banners, and partner snapshots are populated from Drift without direct Home-screen network reads.
+  * Authenticated daily sync also returns the user's owned habit read model and a bounded recent log set. Flutter reconciles `owned_habits` and `owned_logs` into Drift after login, so a check-in made on another device is visible through the same local `todaysLogProvider` and habit streams.
   * `SyncService.pullDailySync` should normalize `nudges`, private messages, habit invitations, friend requests, and accepted-friend changes into local `notification_events` rows before the UI renders badges or inbox state. The notification center reads that unified local stream rather than special-casing backend payloads in multiple screens.
   * Reconnect sync must also reconcile transient social state, not only append to it. Pending habit invitations, incoming friend requests, and active nudge notifications that disappear from the next `/api/sync/daily` payload should be pruned locally so Home banners and unread badges do not linger after the server state clears.
   * A local accept/decline decision for a habit invitation wins over a stale inbound `pending` invite. The queued mutation remains responsible for reaching the Worker, while the stale payload must not resurrect the Home banner before that delivery completes.
@@ -66,6 +67,7 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
 
 * **Optimistic UI:** The user must never see a "syncing" spinner block their actions. All actions are assumed successful locally.
 * **Last Write Wins:** If a user logs a habit on two offline devices, the backend Cloudflare Worker must resolve conflicts by accepting the payload with the most recent `updated_at` timestamp.
+* **Cross-device read reconciliation:** `/api/sync/daily` returns owned habits plus at most 500 recent owned logs. The client upserts server rows as synced data but does not overwrite a newer unsynced local mutation. Full history pagination and cursor-based incremental sync remain future protocol work.
 
 ## 5. Beyond Foreground Polling: Realtime Transport Accelerator
 

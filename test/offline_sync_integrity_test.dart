@@ -256,6 +256,68 @@ void main() {
     },
   );
 
+  test(
+    'daily sync hydrates owned habits and check-ins for a fresh device',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      const userId = 'user-1';
+      await db.insertUser(
+        UsersCompanion.insert(userId: userId, username: 'Alice'),
+      );
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient((request) async {
+          return http.Response(
+            jsonEncode(
+              _dailySyncPayload(
+                ownedHabits: [
+                  {
+                    'habit_id': 'habit-1',
+                    'title': 'Hydration',
+                    'target_duration': 5,
+                    'remaining_days': 4,
+                    'status': 'active',
+                    'color_hex': 'FF9CAF88',
+                    'created_at': '2026-07-15T08:30:00.000Z',
+                    'updated_at': '2026-07-16T08:30:00.000Z',
+                  },
+                ],
+                ownedLogs: [
+                  {
+                    'log_id': 'log-1',
+                    'habit_id': 'habit-1',
+                    'status': 'completed',
+                    'logged_at': '2026-07-16T09:00:00.000Z',
+                    'points_awarded': 5,
+                  },
+                ],
+              ),
+            ),
+            200,
+          );
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync(userId);
+      await syncService.pullDailySync(userId);
+
+      final habit = await db.getHabit('habit-1');
+      expect(habit?.currentDuration, 4);
+      expect(habit?.isSynced, isTrue);
+      final log = await db.getTodaysLog('habit-1');
+      expect(log?.logId, 'log-1');
+      expect(log?.status, LogStatus.completed);
+      expect(log?.pointsAwarded, 5);
+      expect(await db.watchLogsForHabit('habit-1').first, hasLength(1));
+    },
+  );
+
   test('daily sync preserves a shared habit challenge start date', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
@@ -436,6 +498,8 @@ Map<String, dynamic> _dailySyncPayload({
   List<Map<String, dynamic>> friendRequests = const [],
   List<Map<String, dynamic>> nudges = const [],
   List<Map<String, dynamic>> partners = const [],
+  List<Map<String, dynamic>> ownedHabits = const [],
+  List<Map<String, dynamic>> ownedLogs = const [],
   Map<String, dynamic>? quote,
 }) {
   return {
@@ -445,6 +509,8 @@ Map<String, dynamic> _dailySyncPayload({
     'messages': <Map<String, dynamic>>[],
     'invitations': invitations,
     'friend_requests': friendRequests,
+    'owned_habits': ownedHabits,
+    'owned_logs': ownedLogs,
     'gamification': {
       'total_points': 0,
       'level': 'Newbie',
