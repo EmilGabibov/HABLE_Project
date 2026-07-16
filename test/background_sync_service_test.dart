@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/tables.dart';
 import 'package:hable/services/background_sync_service.dart';
@@ -28,6 +29,15 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('current platform guard is safe and disabled on web', () {
+    final supported = BackgroundSyncService.supportsPrefetchForCurrentPlatform;
+
+    expect(supported, isA<bool>());
+    // The browser target must return false before evaluating dart:io Platform.
+    // Native host tests still exercise the getter without changing the matrix.
+    if (kIsWeb) expect(supported, isFalse);
   });
 
   test('prefetch task identity remains stable for replacement', () {

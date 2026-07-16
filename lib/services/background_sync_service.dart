@@ -134,11 +134,15 @@ class BackgroundSyncService {
     return !isWeb && isAndroid && !isIOS;
   }
 
-  static bool get supportsPrefetchForCurrentPlatform => shouldSchedulePrefetch(
-    isWeb: kIsWeb,
-    isAndroid: Platform.isAndroid,
-    isIOS: Platform.isIOS,
-  );
+  static bool get supportsPrefetchForCurrentPlatform {
+    if (kIsWeb) return false;
+
+    return shouldSchedulePrefetch(
+      isWeb: false,
+      isAndroid: Platform.isAndroid,
+      isIOS: Platform.isIOS,
+    );
+  }
 
   Future<void> initialize() async {
     if (!supportsPrefetchForCurrentPlatform) return;
