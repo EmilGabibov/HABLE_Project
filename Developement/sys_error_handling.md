@@ -162,6 +162,12 @@ Use only when the user cannot proceed safely:
 - required session loss,
 - unrecoverable route bootstrap states.
 
+The universal startup splash is not an error owner. Forced-reset and web-version
+checks fail open through their existing bounded guards, and the web version
+status request times out after three seconds. Once auth restoration and those
+guards resolve, the splash hands off to `AppGate`, which continues to own any
+localized loading, cached-data, auth, or safe full-screen error surface.
+
 ## 5. Offline-First Boundaries
 
 Because Hable is offline-first:

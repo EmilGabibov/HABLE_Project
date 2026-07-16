@@ -54,6 +54,15 @@ All Flutter builds should resolve backend targets through the central `lib/confi
 
 ## 4. Platform-Specific Constraints & Evidence Capture
 
+### Startup continuity
+
+The shared Flutter startup surface is the cross-platform continuity layer.
+Android and iOS already provide non-blank native launch surfaces, Windows keeps
+its window hidden until Flutter's first frame, and macOS/web hand off directly
+to that first frame. Keep native launch files minimal; do not duplicate auth,
+sync, timing, localization, or animated splash logic per platform. If native
+branding is expanded later, track it as a separate platform task.
+
 When investigating and fixing platform builds, agents must adhere to Hable-specific constraints:
 
 ### Android

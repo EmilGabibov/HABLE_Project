@@ -23,6 +23,15 @@ Authentication state is managed globally by the `authProvider` (`NotifierProvide
 - **Startup (`build()` & `_loadStoredAuth`):** Reads the JWT and `userId` from `flutter_secure_storage`. On macOS, if secure storage is unavailable or denied, the app may fall back to the local session snapshot for continuity, but it must not immediately write the restored snapshot back into secure storage in the same startup pass. Once auth state is restored, local reminders are asynchronously reloaded via `localReminderServiceProvider`.
 - **Logout:** Clears all keys from secure storage, cancels pending local reminders, and resets the `AuthState`.
 
+### Universal Startup Presentation
+
+`StartupSplashBoundary` is a presentation-only overlay above `AppGate`. It keeps
+the first Flutter frame visible for at least 800 ms, then fades once both auth
+restoration and the bounded startup guards have resolved. `AppGate` remains the
+only owner of auth, version-gate, sync, profile, and first-run quote routing, and
+emits its readiness signal at most once. Background Workmanager initialization
+runs after the first frame and never blocks `runApp` or the splash handoff.
+
 ## 3. Local Persistence and Security
 
 ### `flutter_secure_storage`

@@ -40,7 +40,7 @@ Future<DeployedWebVersionStatus?> _fetchDeployedWebVersionStatus() async {
     queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()},
   );
 
-  final response = await http.get(uri);
+  final response = await http.get(uri).timeout(const Duration(seconds: 3));
   if (response.statusCode != 200) return null;
 
   final data = jsonDecode(response.body);

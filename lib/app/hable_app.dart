@@ -9,6 +9,7 @@ import '../providers/usage_diagnostics_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/usage_tracked_screen.dart';
 import 'app_gate.dart';
+import 'startup_splash.dart';
 
 class HableApp extends ConsumerWidget {
   const HableApp({super.key});
@@ -55,7 +56,31 @@ class HableApp extends ConsumerWidget {
         Locale('fa', ''),
       ],
       navigatorObservers: [usageRouteObserver],
-      home: const AppGate(),
+      home: const _HableStartup(),
+    );
+  }
+}
+
+class _HableStartup extends StatefulWidget {
+  const _HableStartup();
+
+  @override
+  State<_HableStartup> createState() => _HableStartupState();
+}
+
+class _HableStartupState extends State<_HableStartup> {
+  bool _isAppReady = false;
+
+  void _markAppReady() {
+    if (_isAppReady || !mounted) return;
+    setState(() => _isAppReady = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StartupSplashBoundary(
+      ready: _isAppReady,
+      child: AppGate(onStartupReady: _markAppReady),
     );
   }
 }

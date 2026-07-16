@@ -311,6 +311,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appGateLoadingProfileState => 'Loading profile state...';
 
   @override
+  String get appStartupOpening => 'Opening Hable';
+
+  @override
   String skipSheetTitle(String habitTitle) {
     return 'Skipping \"$habitTitle\"';
   }

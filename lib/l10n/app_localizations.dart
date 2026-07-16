@@ -670,6 +670,12 @@ abstract class AppLocalizations {
   /// **'Loading profile state...'**
   String get appGateLoadingProfileState;
 
+  /// No description provided for @appStartupOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening Hable'**
+  String get appStartupOpening;
+
   /// No description provided for @skipSheetTitle.
   ///
   /// In en, this message translates to:

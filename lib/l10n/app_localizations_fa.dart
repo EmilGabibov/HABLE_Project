@@ -311,6 +311,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appGateLoadingProfileState => 'Loading profile state...';
 
   @override
+  String get appStartupOpening => 'در حال باز کردن Hable';
+
+  @override
   String skipSheetTitle(String habitTitle) {
     return 'Skipping \"$habitTitle\"';
   }

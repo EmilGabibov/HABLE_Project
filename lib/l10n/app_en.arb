@@ -118,6 +118,7 @@
   "appGateRestoringSession": "Restoring session...",
   "appGatePreparingHabits": "Preparing your habits...",
   "appGateLoadingProfileState": "Loading profile state...",
+  "appStartupOpening": "Opening Hable",
   "skipSheetTitle": "Skipping \"{habitTitle}\"",
   "@skipSheetTitle": {
     "placeholders": {

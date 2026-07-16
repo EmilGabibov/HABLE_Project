@@ -19,7 +19,9 @@ import '../services/web_version_gate_service.dart';
 
 /// Routes to AuthScreen if no user exists, otherwise to the three-tab app shell.
 class AppGate extends ConsumerStatefulWidget {
-  const AppGate({super.key});
+  const AppGate({super.key, this.onStartupReady});
+
+  final VoidCallback? onStartupReady;
 
   @override
   ConsumerState<AppGate> createState() => _AppGateState();
@@ -36,37 +38,73 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
   bool _isCheckingFirstRunQuote = false;
   bool _showFirstRunQuoteSplash = false;
   String? _firstRunQuoteUserId;
+  bool _startupGuardsResolved = false;
+  bool _startupReadySignaled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _runStartupGuards();
+      unawaited(_runStartupGuards());
     });
   }
 
   Future<void> _runStartupGuards() async {
-    final resetResult = await applyForcedClientResetIfNeeded(
-      database: ref.read(databaseProvider),
-      authNotifier: ref.read(authProvider.notifier),
-    );
-    if (!mounted) return;
-    if (resetResult.didReset) {
-      setState(() {
-        _lastSyncedUserId = null;
-      });
-      return;
+    var shouldSetUpNotificationHandling = false;
+    try {
+      final resetResult = await applyForcedClientResetIfNeeded(
+        database: ref.read(databaseProvider),
+        authNotifier: ref.read(authProvider.notifier),
+      );
+      if (!mounted) return;
+      if (resetResult.didReset) {
+        setState(() {
+          _lastSyncedUserId = null;
+        });
+        return;
+      }
+
+      await _checkWebVersionGate();
+      if (!mounted ||
+          _webVersionGateAction == WebVersionGateAction.refreshing ||
+          _webVersionGateAction == WebVersionGateAction.blocked) {
+        return;
+      }
+      await _checkAndStartSync();
+      shouldSetUpNotificationHandling = true;
+    } catch (error, stackTrace) {
+      debugPrint('Startup guards failed safely: $error\n$stackTrace');
+    } finally {
+      if (mounted) {
+        _startupGuardsResolved = true;
+        _signalStartupReadyIfPossible();
+      }
     }
 
-    await _checkWebVersionGate();
-    if (!mounted ||
-        _webVersionGateAction == WebVersionGateAction.refreshing ||
-        _webVersionGateAction == WebVersionGateAction.blocked) {
+    if (shouldSetUpNotificationHandling) {
+      try {
+        await _setupNotificationTapHandling();
+      } catch (error, stackTrace) {
+        debugPrint(
+          'Notification startup handling failed safely: $error\n$stackTrace',
+        );
+      }
+    }
+  }
+
+  void _signalStartupReadyIfPossible([AuthState? authState]) {
+    final isAuthInitialized =
+        authState?.isInitialized ?? ref.read(authProvider).isInitialized;
+    if (_startupReadySignaled ||
+        !_startupGuardsResolved ||
+        !isAuthInitialized) {
       return;
     }
-    await _checkAndStartSync();
-    await _setupNotificationTapHandling();
+    _startupReadySignaled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onStartupReady?.call();
+    });
   }
 
   Future<void> _setupNotificationTapHandling() async {
@@ -179,6 +217,7 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context);
+    _signalStartupReadyIfPossible(authState);
 
     ref.listen(authProvider, (previous, next) {
       if ((previous == null || !previous.isAuthenticated) &&

@@ -94,6 +94,7 @@
   "appGateRestoringSession": "Restoring session...",
   "appGatePreparingHabits": "Preparing your habits...",
   "appGateLoadingProfileState": "Loading profile state...",
+  "appStartupOpening": "Hable திறக்கப்படுகிறது",
   "skipSheetTitle": "Skipping \"{habitTitle}\"",
   "@skipSheetTitle": {"placeholders": {"habitTitle": {"type": "String"}}},
   "skipSheetBody": "This will add +2 days to your journey. Write a quick journal entry to continue.",
