@@ -333,6 +333,66 @@ async function run() {
     bobNormalAfterLog,
   );
 
+  const rolloverHabitId = `smoke-rollover-${runId}`;
+  await createHabit(aliceToken, rolloverHabitId, 'Smoke Rollover Habit', 3);
+
+  const rolloverDayOne = '2026-07-15T12:00:00.000Z';
+  const rolloverDayTwo = '2026-07-16T12:00:00.000Z';
+  const rolloverBaselinePoints = Number(
+    (await dailySync(
+      aliceToken,
+      'Alice daily sync before next-day rollover check-in',
+    )).gamification?.total_points ?? 0,
+  );
+
+  await expectResponse(
+    'Alice logs rollover habit completion on day one',
+    await post('/api/sync/log', aliceToken, {
+      log_id: `alice-rollover-day-one-${runId}`,
+      habit_id: rolloverHabitId,
+      status: 'completed',
+      logged_at: rolloverDayOne,
+    }),
+  );
+  await expectResponse(
+    'Alice logs rollover habit completion after moving one day forward',
+    await post('/api/sync/log', aliceToken, {
+      log_id: `alice-rollover-day-two-${runId}`,
+      habit_id: rolloverHabitId,
+      status: 'completed',
+      logged_at: rolloverDayTwo,
+    }),
+  );
+
+  const aliceAfterRollover = await dailySync(
+    aliceToken,
+    'Alice daily sync after next-day rollover check-ins',
+  );
+  const rolloverLogs = aliceAfterRollover.owned_logs.filter(
+    (log) => log.habit_id === rolloverHabitId,
+  );
+  assert(
+    rolloverLogs.length === 2,
+    'Server did not retain both next-day rollover check-ins',
+    rolloverLogs,
+  );
+  assert(
+    rolloverLogs.some((log) => String(log.logged_at).startsWith('2026-07-15')),
+    'Server did not record the day-one rollover check-in date',
+    rolloverLogs,
+  );
+  assert(
+    rolloverLogs.some((log) => String(log.logged_at).startsWith('2026-07-16')),
+    'Server did not record the day-two rollover check-in date',
+    rolloverLogs,
+  );
+  assert(
+    Number(aliceAfterRollover.gamification?.total_points ?? 0) ===
+      rolloverBaselinePoints + 10,
+    'Server did not award one completion per day after the rollover',
+    aliceAfterRollover.gamification,
+  );
+
   await expectResponse(
     'Alice updates normal habit metadata',
     await post('/api/sync/habit', aliceToken, {
