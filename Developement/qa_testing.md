@@ -109,7 +109,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#161](https://github.com/EmilGabibov/HABLE_Project/issues/161) | `proceeded`; commit `d016bb7` | PWA service-worker ownership, supported interop, offline shell |
 | [#162](https://github.com/EmilGabibov/HABLE_Project/issues/162) | `proceeded`; commit recorded in GitHub | Browser-owned Quotable fallback removed; Flutter now reads Worker-synced Drift quote or first-party fallback |
 | [#163](https://github.com/EmilGabibov/HABLE_Project/issues/163) | `proceeded` after commit | Exact-once notification/deep-link routing is owned by AppGate with bounded handoff |
-| [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) | `raw` | Android production signing fail-closed gate |
+| [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) | `proceeded` after commit | Android production signing fails closed; both flavor identities are checked before release evidence |
 | [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `raw` | Android backup/auth/local-data restore policy |
 | [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `raw` | Portable Android build/device/smoke tooling |
 | [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167) | `raw` | Reproducible iOS runtime/destination smoke |

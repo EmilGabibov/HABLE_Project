@@ -109,6 +109,16 @@ flutter build apk --release --flavor friend -t lib/main.dart \
   --dart-define=HABLE_APP_ENV=production
 ```
 
+Production Android release builds fail closed when `android/key.properties`
+or its referenced keystore is missing. Inject the real values through the
+operator/CI secret store; never commit the file or keystore. After both APKs
+build, verify their certificate and flavor identities:
+```bash
+scripts/verify_android_release_signing.sh \
+  build/app/outputs/flutter-apk/app-primary-release.apk \
+  build/app/outputs/flutter-apk/app-friend-release.apk
+```
+
 A production release artifact must not use the Android Debug certificate.
 Until [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) makes the
 task fail closed, always inspect both flavor certificates before treating the

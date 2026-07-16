@@ -71,6 +71,7 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
   - `flutter build apk --release --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
   - `flutter build apk --release --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
 - **Evidence:** Record success/failure logs and artifact hashes for both flavors. Inspect both certificates with `apksigner`; a release APK signed by `Android Debug` is a failed distribution gate even when compilation succeeds.
+- **Signing gate:** `android/app/build.gradle.kts` never falls back to the debug certificate for release variants. Missing or incomplete `android/key.properties`, a missing referenced keystore, or invalid signing material must fail before packaging. Use `scripts/verify_android_release_signing.sh` for the non-debug certificate and `com.hable.app.primary`/`com.hable.app.friend` identity check.
 - **Built-in Kotlin audit (2026-07-16):** Both release flavors build successfully with AGP `9.2.1`, Kotlin `2.3.20`, and Gradle `9.6.1`, but Flutter still warns that `flutter_timezone 5.1.0` and `workmanager_android 0.9.0+2` apply KGP. `flutter pub outdated` reports no newer compatible releases, so `android.builtInKotlin` remains `false` and an upstream plugin report is required before enabling it.
 - **Local smoke note:** For local Wrangler testing keep `HABLE_APP_ENV=local` and use `HABLE_API_BASE_URL` only when the device cannot reach `127.0.0.1:8787` directly (for example Android emulator `10.0.2.2`).
 

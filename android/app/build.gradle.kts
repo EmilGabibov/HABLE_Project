@@ -12,6 +12,23 @@ val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+val releaseStoreFile = keystoreProperties.getProperty("storeFile")
+val hasCompleteReleaseSigning = keystorePropertiesFile.isFile &&
+    listOf("storePassword", "keyPassword", "keyAlias").all { key ->
+        !keystoreProperties.getProperty(key).orEmpty().trim().isEmpty()
+    } &&
+    !releaseStoreFile.isNullOrBlank() &&
+    rootProject.file(releaseStoreFile!!).isFile
+val validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        if (!hasCompleteReleaseSigning) {
+            throw GradleException(
+                "Production Android release signing is unavailable. " +
+                    "Inject android/key.properties with a real keystore before building release variants."
+            )
+        }
+    }
+}
 
 android {
     namespace = "com.hable.app"
@@ -55,7 +72,7 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (hasCompleteReleaseSigning) {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String?
                 keyPassword = keystoreProperties["keyPassword"] as String?
@@ -67,15 +84,21 @@ android {
 
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (hasCompleteReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                signingConfig = signingConfigs.getByName("debug")
+                signingConfig = null
             }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+}
+
+tasks.configureEach {
+    if (name.matches(Regex("^(assemble|bundle|package).*Release$"))) {
+        dependsOn(validateReleaseSigning)
     }
 }
 
