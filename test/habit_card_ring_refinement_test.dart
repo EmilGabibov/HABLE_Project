@@ -154,7 +154,7 @@ void main() {
       final firstCard = tester.getRect(cards.at(0));
       final secondCard = tester.getRect(cards.at(1));
       expect(cards, findsNWidgets(2));
-      expect(firstCard.height, lessThan(264));
+      expect(firstCard.height, lessThanOrEqualTo(HabitCardShell.compactHeight));
       expect(secondCard.top, lessThan(498));
       expect(find.text('💧 Hydration'), findsNWidgets(2));
       expect(find.text('Hydration'), findsNothing);
@@ -177,6 +177,45 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('HabitCard compact layout stays bounded with larger text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 498);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(1.2)),
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _compactCard(
+                  _habit(
+                    description:
+                        'A long description that must remain inside the compact card at larger text sizes.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(HabitCardShell)),
+      const Size(320, HabitCardShell.compactHeight),
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('HabitCard preserves shared feedback and read-only states', (
     tester,

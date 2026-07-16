@@ -539,7 +539,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 maxCrossAxisExtent: 400,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                mainAxisExtent: 216,
+                mainAxisExtent: HabitCardShell.compactHeight,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) => KeyedSubtree(

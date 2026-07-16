@@ -18,6 +18,13 @@ class QueuedNudgeFeedback {
 }
 
 class HabitCardShell extends StatelessWidget {
+  /// The compact card height shared by Home and the habit dashboard grids.
+  ///
+  /// This reserves space for the title/description row, the 120 px ring, the
+  /// optional feedback affordances, and the two-row progress footer without
+  /// relying on each caller to guess a compatible grid extent.
+  static const double compactHeight = 264;
+
   final String semanticsLabel;
   final String title;
   final String? subtitle;
@@ -169,7 +176,10 @@ class HabitCardShell extends StatelessWidget {
                     if (subtitle != null && subtitle!.trim().isNotEmpty)
                       Text(
                         subtitle!,
-                        maxLines: 2,
+                        // Compact cards are grid tiles with a shared fixed
+                        // height. Keep the description bounded so larger
+                        // text cannot push the footer outside the tile.
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: subtitleStyle,
                       ),
@@ -297,7 +307,7 @@ class _HabitCardState extends State<HabitCard> {
       title: displayTitle,
       subtitle: habitDescription,
       compact: true,
-      minHeight: 216,
+      minHeight: HabitCardShell.compactHeight,
       backgroundColor: habitColor.withValues(alpha: 0.08),
       topTrailing: HabitPartnerRow(
         partners: widget.partners,

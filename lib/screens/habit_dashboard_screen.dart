@@ -244,7 +244,7 @@ class _DashboardGrid extends StatelessWidget {
         crossAxisCount: columns,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        mainAxisExtent: columns == 1 ? 216 : 232,
+        mainAxisExtent: HabitCardShell.compactHeight,
       ),
       itemCount: habits.length,
       itemBuilder: (context, index) {
