@@ -145,12 +145,36 @@ flutter run --release --flavor primary -t lib/main.dart \
 ## Install APKs via ADB
 Install the **primary** APK on a connected USB device:
 ```bash
-~/Library/Android/sdk/platform-tools/adb install build/app/outputs/flutter-apk/app-primary-release.apk
+adb install build/app/outputs/flutter-apk/app-primary-release.apk
 ```
 
 Install the **partner/friend** APK on a connected USB device:
 ```bash
-~/Library/Android/sdk/platform-tools/adb install build/app/outputs/flutter-apk/app-friend-release.apk
+adb install build/app/outputs/flutter-apk/app-friend-release.apk
+
+Android build and smoke tooling is host-portable. Keep Android SDK
+`platform-tools` on `PATH`, or set `ANDROID_HOME`/`ANDROID_SDK_ROOT`; no SDK
+path or device identifier is committed. Build one release flavor with an
+explicit environment:
+```bash
+scripts/build_android_release.sh --flavor primary --env production
+scripts/build_android_release.sh --flavor friend --env production
+```
+
+Run the bounded smoke harness against one supplied device. It fails when no
+device or more than one device is available, leaves normal onboarding/auth
+intact, and writes only a small sanitized artifact record:
+```bash
+scripts/android_smoke.sh --flavor primary --env production \
+  --mode release --device <device-id> --apk build/app/outputs/flutter-apk/app-primary-release.apk
+```
+For the local twin fixture, pass both seed values explicitly and use the
+operator's chosen device; the harness never creates accounts or assumes a
+particular emulator:
+```bash
+scripts/android_smoke.sh --flavor primary --env local --device <device-id> \
+  --seed-user-id local-user-1 --seed-username Alice
+```
 ```
 
 ## Build & Install on iOS via USB

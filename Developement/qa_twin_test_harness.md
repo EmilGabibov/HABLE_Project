@@ -8,6 +8,8 @@ This guide provides instructions for testing the end-to-end friendship, habit in
 ## Prerequisites
 
 1. An Android device or emulator connected and accessible via ADB (`adb devices`).
+   Set `ANDROID_DEVICE_ID` or pass the device ID to each command; never rely on
+   a hard-coded emulator identifier.
 2. The Cloudflare Worker backend must be running locally.
 3. The local database (`schema.sql`) must be applied locally with `npm run db:setup`.
 4. The app flavors are launched with seeded identities via `SEED_USER_ID` and `SEED_USERNAME`.
@@ -33,10 +35,8 @@ adb reverse tcp:8787 tcp:8787
 Run the following command to install the `primary` flavor of the app, automatically seeded as Alice:
 
 ```bash
-flutter run --flavor primary \
-  --dart-define=SEED_USER_ID=local-user-1 \
-  --dart-define=SEED_USERNAME=Alice \
-  -d <your-device-id>
+scripts/android_smoke.sh --flavor primary --env local --device <your-device-id> \
+  --seed-user-id local-user-1 --seed-username Alice
 ```
 
 - This installs an app named **Hable Primary**.
@@ -48,10 +48,8 @@ flutter run --flavor primary \
 Open a new terminal window and run the following command to install the `friend` flavor:
 
 ```bash
-flutter run --flavor friend \
-  --dart-define=SEED_USER_ID=local-user-2 \
-  --dart-define=SEED_USERNAME=Bob \
-  -d <your-device-id>
+scripts/android_smoke.sh --flavor friend --env local --device <your-device-id> \
+  --seed-user-id local-user-2 --seed-username Bob
 ```
 
 - This installs an app named **Hable Friend**.

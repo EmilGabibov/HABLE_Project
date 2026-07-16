@@ -111,7 +111,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#163](https://github.com/EmilGabibov/HABLE_Project/issues/163) | `proceeded` after commit | Exact-once notification/deep-link routing is owned by AppGate with bounded handoff |
 | [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) | `proceeded` after commit | Android production signing fails closed; both flavor identities are checked before release evidence |
 | [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `proceeded` after commit | Android backup/auth/local-data restore policy is explicit; device restore smoke remains release evidence |
-| [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `raw` | Portable Android build/device/smoke tooling |
+| [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `proceeded` after commit | Android build/device/smoke tooling uses PATH/ANDROID_HOME discovery, explicit flavor/environment/device arguments, normal onboarding by default, and bounded sanitized evidence |
 | [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167) | `raw` | Reproducible iOS runtime/destination smoke |
 | [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `raw` | iOS flavor identity, Keychain group, archive validation |
 | [#169](https://github.com/EmilGabibov/HABLE_Project/issues/169) | `raw` | Safe iOS reminder prefetch scheduling |
@@ -496,7 +496,10 @@ Then rerun `npm run db:setup`.
 - The shared Android flows continue to work after the web deployment work: Home rendering, social navigation, and flavor-specific installs.
 
 **Notes:**
-- `adb` was not on PATH in this environment, so the SDK path was used directly: `~/Library/Android/sdk/platform-tools/adb`.
+- The historical run used an SDK-local `adb` because it was not on PATH; the
+  current portable harness resolves `adb` from PATH, `ANDROID_HOME`, or
+  `ANDROID_SDK_ROOT` and requires an explicit device when discovery is not
+  unambiguous.
 - The Android smoke did not require any web-only assets; the shared code path remained compatible with Android.
 
 ## 11. ADB Fresh Registration Smoke Test (Emulator)

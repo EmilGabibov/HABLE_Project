@@ -1,36 +1,47 @@
-#!/bin/bash
-# build_android_release.sh
-# Script to build a Play Store ready Android App Bundle (.aab)
+#!/usr/bin/env bash
+# Build one explicitly selected Android release flavor.
 
-set -e
+set -euo pipefail
 
-echo "======================================"
-echo "Android Play Store Release Builder"
-echo "======================================"
+usage() {
+  cat <<'EOF'
+Usage: scripts/build_android_release.sh --flavor primary|friend [--env production|staging]
 
-# Ensure keystore exists
-ANDROID_DIR="$(dirname "$0")/../android"
-KEY_PROPERTIES_FILE="$ANDROID_DIR/key.properties"
+The Android Gradle signing gate requires android/key.properties and a real
+keystore. Flutter/Gradle discover the SDK through their normal local setup.
+EOF
+}
 
-if [ ! -f "$KEY_PROPERTIES_FILE" ]; then
-    echo "Error: key.properties not found!"
-    echo "Please run scripts/generate_keystore.sh first."
-    exit 1
-fi
+FLAVOR=""
+ENVIRONMENT="production"
+while (($#)); do
+  case "$1" in
+    --flavor) FLAVOR="${2:?missing value for --flavor}"; shift 2 ;;
+    --env) ENVIRONMENT="${2:?missing value for --env}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
 
-echo "Building Android App Bundle..."
-# We use --obfuscate and --split-debug-info to further protect code and keep stack trace mapping
-flutter build appbundle --release --obfuscate --split-debug-info=build/app/outputs/symbols --flavor primary
+case "$FLAVOR" in
+  primary|friend) ;;
+  *) echo "--flavor is required and must be primary or friend" >&2; exit 2 ;;
+esac
+case "$ENVIRONMENT" in
+  production|staging) ;;
+  *) echo "--env must be production or staging" >&2; exit 2 ;;
+esac
 
-echo "======================================"
-echo "Build Successful!"
-echo "Your App Bundle is located at:"
-echo "build/app/outputs/bundle/primaryRelease/app-primary-release.aab"
-echo ""
-echo "Next Steps:"
-echo "1. Go to the Google Play Console (https://play.google.com/console/)"
-echo "2. Select your app -> Production -> Create new release"
-echo "3. Upload the .aab file."
-echo "4. IMPORTANT: Keep the contents of 'build/app/outputs/symbols' safe."
-echo "   If you need to de-obfuscate a crash log from this release, you will need those symbols."
-echo "======================================"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+command -v flutter >/dev/null || { echo "Flutter is not on PATH; install it or add it to PATH." >&2; exit 1; }
+
+echo "Building Android ${FLAVOR} App Bundle (${ENVIRONMENT})..."
+flutter build appbundle --release --obfuscate \
+  --split-debug-info="build/app/outputs/symbols/${FLAVOR}" \
+  --flavor "$FLAVOR" -t lib/main.dart \
+  --dart-define="HABLE_APP_ENV=${ENVIRONMENT}"
+
+ARTIFACT="build/app/outputs/bundle/${FLAVOR}Release/app-${FLAVOR}-release.aab"
+echo "Build successful: ${ARTIFACT}"
+echo "Keep build/app/outputs/symbols/${FLAVOR} with the release artifact for crash de-obfuscation."
