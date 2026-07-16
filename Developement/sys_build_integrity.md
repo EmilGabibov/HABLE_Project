@@ -62,6 +62,7 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
   - `flutter build apk --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
   - `flutter build apk --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
 - **Evidence:** Record success/failure logs for both flavors. Address any signing or keystore issues if release builds are requested.
+- **Built-in Kotlin audit (2026-07-16):** Both release flavors build successfully with AGP `9.2.1`, Kotlin `2.3.20`, and Gradle `9.6.1`, but Flutter still warns that `flutter_timezone 5.1.0` and `workmanager_android 0.9.0+2` apply KGP. `flutter pub outdated` reports no newer compatible releases, so `android.builtInKotlin` remains `false` and an upstream plugin report is required before enabling it.
 - **Local smoke note:** For local Wrangler testing keep `HABLE_APP_ENV=local` and use `HABLE_API_BASE_URL` only when the device cannot reach `127.0.0.1:8787` directly (for example Android emulator `10.0.2.2`).
 
 ### iOS
