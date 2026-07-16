@@ -33,6 +33,16 @@ class SocialRecapPlan {
   }
 }
 
+class SyncMutationException implements Exception {
+  const SyncMutationException(this.statusCode, this.message);
+
+  final int statusCode;
+  final String message;
+
+  @override
+  String toString() => 'Sync mutation failed ($statusCode): $message';
+}
+
 /// Background sync service that processes the outbound queue
 /// and pulls inbound data from Cloudflare Workers.
 class SyncService {
@@ -93,7 +103,15 @@ class SyncService {
         await _sendToCloudflare(item);
         await _db.markSyncProcessed(item.id);
       } catch (e) {
-        // Retry on next connectivity restore
+        if (e is SyncMutationException &&
+            e.statusCode >= 400 &&
+            e.statusCode < 500) {
+          // A client or permission rejection will not become valid by retrying.
+          await _db.markSyncProcessed(item.id);
+          debugPrint('Sync mutation rejected for item ${item.id}: $e');
+          continue;
+        }
+        // Retry transport/server failures on the next connectivity restore.
         debugPrint('Sync failed for item ${item.id}: $e');
         break;
       }
@@ -294,8 +312,9 @@ class SyncService {
           body: item.payload,
         );
         if (response.statusCode != 200) {
-          throw Exception(
-            'Failed to send nudge: ${response.statusCode} - ${response.body}',
+          throw SyncMutationException(
+            response.statusCode,
+            'Failed to send nudge: ${response.body}',
           );
         }
         debugPrint('[SyncService] POST NUDGE successful');

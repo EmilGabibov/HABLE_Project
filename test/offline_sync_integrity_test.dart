@@ -256,6 +256,39 @@ void main() {
     },
   );
 
+  test('deterministic nudge 403 is consumed instead of retried', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await db.enqueueSync(
+      SyncQueueCompanion.insert(
+        action: SyncAction.sendNudge,
+        payload: jsonEncode({'target_user_id': 'friend-1'}),
+      ),
+    );
+    var attempts = 0;
+    final syncService = SyncService(
+      db: db,
+      connectivity: ConnectivityService(),
+      storage: const FlutterSecureStorage(),
+      client: MockClient((request) async {
+        attempts++;
+        return http.Response(
+          jsonEncode({'error': 'Unauthorized: Not a participant'}),
+          403,
+        );
+      }),
+      apiBaseUrlOverride: 'http://offline.test',
+    );
+    addTearDown(syncService.dispose);
+
+    await syncService.flushPending();
+    await syncService.flushPending();
+
+    expect(attempts, 1);
+    expect(await db.getPendingSyncItems(), isEmpty);
+  });
+
   test(
     'daily sync without a quote leaves the local quote cache empty',
     () async {
