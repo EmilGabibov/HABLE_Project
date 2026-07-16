@@ -1,0 +1,8 @@
+// Shared release identity surface. Protected signing values stay injected by
+// the operator/CI xcodebuild invocation and are never committed here.
+HABLE_BUNDLE_PREFIX = com.hable.app
+HABLE_DEVELOPMENT_TEAM =
+HABLE_PROVISIONING_PROFILE_SPECIFIER =
+DEVELOPMENT_TEAM = $(HABLE_DEVELOPMENT_TEAM)
+PROVISIONING_PROFILE_SPECIFIER = $(HABLE_PROVISIONING_PROFILE_SPECIFIER)
+CODE_SIGN_STYLE = Automatic

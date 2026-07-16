@@ -113,7 +113,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `proceeded` after commit | Android backup/auth/local-data restore policy is explicit; device restore smoke remains release evidence |
 | [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `proceeded` after commit | Android build/device/smoke tooling uses PATH/ANDROID_HOME discovery, explicit flavor/environment/device arguments, normal onboarding by default, and bounded sanitized evidence |
 | [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167) | `proceeded` after commit | iOS preflight/smoke pins the supported runtime, fails closed on unavailable destinations, and records bounded flavor launch evidence plus named fixture checkpoints |
-| [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `raw` | iOS flavor identity, Keychain group, archive validation |
+| [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `proceeded` after commit | iOS flavor identities and display names are non-placeholder; shared Keychain group derives from final IDs; unsigned identity checks are static and protected archive validation is documented |
 | [#169](https://github.com/EmilGabibov/HABLE_Project/issues/169) | `raw` | Safe iOS reminder prefetch scheduling |
 | [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170) | `raw` | macOS reminder permission/delivery adapter |
 | [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `raw` | macOS entitlement separation, signing, Gatekeeper/notarization |

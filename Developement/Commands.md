@@ -206,6 +206,24 @@ flutter build ios --release --no-codesign --flavor friend -t lib/main.dart \
   --dart-define=HABLE_APP_ENV=production
 ```
 
+The production iOS identities are `com.hable.app.primary` / `Hable Primary`
+and `com.hable.app.friend` / `Hable Friend`. Use the flavor schemes for
+archives; the base `Runner` scheme is only a non-flavor development target.
+Inject team/profile values through the protected archive environment:
+```bash
+xcodebuild -workspace ios/Runner.xcworkspace -scheme primary \
+  -configuration Release-primary archive \
+  -archivePath build/ios/archive/primary.xcarchive \
+  DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+  PROVISIONING_PROFILE_SPECIFIER="$APPLE_PRIMARY_PROFILE"
+
+scripts/verify_ios_archive.sh \
+  --archive build/ios/archive/primary.xcarchive --flavor primary
+```
+Repeat with `friend`, `Release-friend`, and the friend profile. If the team,
+certificate, or profile is absent, archive must fail with a signing error;
+never commit or embed those credentials.
+
 *(Note: For iOS, `flutter run --release` is the most reliable way to compile and transfer the app to your device over USB in one step. If you only want to install an already-built iOS app without running it, you can simply use `flutter install`.)*
 
 Run the fail-closed preflight before either flavor. It pins the reusable iOS
