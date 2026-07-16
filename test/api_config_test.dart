@@ -30,7 +30,7 @@ void main() {
       );
       expect(
         resolveAppEnvironment(
-          rawEnvironment: 'prod',
+          rawEnvironment: '  PROD  ',
           defaultEnvironment: HableAppEnvironment.local,
         ),
         HableAppEnvironment.production,
@@ -89,6 +89,18 @@ void main() {
         resolveApiBaseUrl(
           apiBaseOverride: '',
           environment: HableAppEnvironment.production,
+          currentWebOrigin: 'https://preview-123.hable.pages.dev',
+        ),
+        'https://preview-123.hable.pages.dev',
+      );
+    });
+
+    test('pages preview origin stays authoritative for non-local staging builds', () {
+      expect(
+        resolveApiBaseUrl(
+          apiBaseOverride: '',
+          environment: HableAppEnvironment.staging,
+          stagingApiBaseUrl: 'https://staging.example.com',
           currentWebOrigin: 'https://preview-123.hable.pages.dev',
         ),
         'https://preview-123.hable.pages.dev',
