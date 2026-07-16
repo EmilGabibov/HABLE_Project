@@ -6,6 +6,7 @@ import 'package:hable/l10n/app_localizations.dart';
 import 'package:hable/providers/mud_tuning_provider.dart';
 import 'package:hable/theme/app_theme.dart';
 import 'package:hable/widgets/habit_card.dart';
+import 'package:hable/widgets/mud_long_press_button.dart';
 
 Habit _habit({String? description}) {
   final now = DateTime(2026, 7, 13, 9);
@@ -63,6 +64,30 @@ PartnerSnapshot _partner({
   );
 }
 
+HabitCard _compactCard(Habit habit) {
+  return HabitCard(
+    habit: habit,
+    userId: 'user-1',
+    challengeDay: 4,
+    targetDays: 21,
+    progressFraction: 0.25,
+    isContinuous: false,
+    isCompletedToday: false,
+    isSkippedToday: false,
+    viewerRole: PartnershipRole.owner,
+    recentNudge: null,
+    streak: 5,
+    resistanceCoefficient: 0.4,
+    calculatedDurationMs: 600,
+    partners: const [],
+    hapticsEnabled: false,
+    hapticProfile: MudHapticProfile.standard,
+    onCompletion: () {},
+    onSkip: () {},
+    onNudgeTap: (_) async {},
+  );
+}
+
 void main() {
   testWidgets('HabitCardShell renders the shared surface contract', (
     tester,
@@ -96,12 +121,16 @@ void main() {
   });
 
   testWidgets(
-    'HabitCard uses a compact rectangular shell with safe content zones',
+    'HabitCard keeps two compact shells discoverable in a mobile viewport',
     (tester) async {
       final habit = _habit(
         description:
             'A deliberately long habit description that must wrap without colliding with the completion ring.',
       );
+      tester.view.physicalSize = const Size(320, 498);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -109,53 +138,40 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: Align(
-              alignment: Alignment.topLeft,
-              child: SizedBox(
-                width: 320,
-                height: 264,
-                child: HabitCard(
-                  habit: habit,
-                  userId: 'user-1',
-                  challengeDay: 4,
-                  targetDays: 21,
-                  progressFraction: 0.25,
-                  isContinuous: false,
-                  isCompletedToday: false,
-                  isSkippedToday: false,
-                  viewerRole: PartnershipRole.owner,
-                  recentNudge: null,
-                  streak: 5,
-                  resistanceCoefficient: 0.4,
-                  calculatedDurationMs: 600,
-                  partners: const [],
-                  hapticsEnabled: false,
-                  hapticProfile: MudHapticProfile.standard,
-                  onCompletion: () {},
-                  onSkip: () {},
-                  onNudgeTap: (_) async {},
-                ),
-              ),
+            body: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _compactCard(habit),
+                const SizedBox(height: 12),
+                _compactCard(habit),
+              ],
             ),
           ),
         ),
       );
 
-      final cardSize = tester.getSize(find.byType(HabitCardShell));
-      expect(cardSize.height, lessThan(cardSize.width));
-      expect(find.text('💧 Hydration'), findsOneWidget);
+      final cards = find.byType(HabitCardShell);
+      final firstCard = tester.getRect(cards.at(0));
+      final secondCard = tester.getRect(cards.at(1));
+      expect(cards, findsNWidgets(2));
+      expect(firstCard.height, lessThan(264));
+      expect(secondCard.top, lessThan(498));
+      expect(find.text('💧 Hydration'), findsNWidgets(2));
       expect(find.text('Hydration'), findsNothing);
       expect(
         find.textContaining('A deliberately long habit description'),
-        findsOneWidget,
+        findsNWidgets(2),
       );
       expect(
         tester
-            .widget<Container>(find.byKey(const Key('habit-card-progress-bar')))
+            .widget<Container>(
+              find.byKey(const Key('habit-card-progress-bar')).first,
+            )
             .constraints
             ?.maxHeight,
         8,
       );
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -248,6 +264,10 @@ void main() {
     );
 
     expect(find.text('👩‍💻'), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(MudLongPressButton)),
+      const Size(120, 120),
+    );
     expect(
       tester
           .widget<Container>(find.byKey(const Key('habit-card-progress-bar')))

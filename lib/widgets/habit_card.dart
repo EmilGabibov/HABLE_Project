@@ -29,6 +29,7 @@ class HabitCardShell extends StatelessWidget {
   final double minHeight;
   final double titleRightInset;
   final EdgeInsetsGeometry centerPadding;
+  final bool compact;
 
   const HabitCardShell({
     super.key,
@@ -43,11 +44,11 @@ class HabitCardShell extends StatelessWidget {
     this.minHeight = 264,
     this.titleRightInset = 112,
     this.centerPadding = const EdgeInsets.only(top: 48, bottom: 48),
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final overlayBottom = bottomChild == null ? 16.0 : 40.0;
     return Semantics(
       label: semanticsLabel,
       child: Card(
@@ -55,58 +56,140 @@ class HabitCardShell extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: minHeight),
-          child: Stack(
+          child: compact
+              ? _buildCompactLayout(context)
+              : _buildStackedLayout(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStackedLayout(BuildContext context) {
+    final overlayBottom = bottomChild == null ? 16.0 : 40.0;
+    return Stack(
+      children: [
+        Positioned(
+          top: 16,
+          left: 16,
+          right: titleRightInset,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Positioned(
-                top: 16,
-                left: 16,
-                right: titleRightInset,
+              Text(
+                title,
+                maxLines: subtitle == null ? 2 : 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.warmGray,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (topTrailing != null)
+          Positioned(top: 12, right: 12, child: topTrailing!),
+        Align(
+          alignment: Alignment.center,
+          child: Padding(padding: centerPadding, child: centerChild),
+        ),
+        if (overlayChild != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: overlayBottom,
+            child: overlayChild!,
+          ),
+        if (bottomChild != null)
+          Positioned(bottom: 0, left: 0, right: 0, child: bottomChild!),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(BuildContext context) {
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
+    final subtitleStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray, height: 1.35);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
+                ),
+              ),
+              if (topTrailing case final trailing?) ...[
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 96),
+                  child: trailing,
+                ),
+              ],
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      maxLines: subtitle == null ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                    if (subtitle != null && subtitle!.trim().isNotEmpty)
                       Text(
                         subtitle!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.warmGray,
-                          height: 1.35,
-                        ),
+                        style: subtitleStyle,
+                      ),
+                    if (overlayChild != null) ...[
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: overlayChild!,
                       ),
                     ],
                   ],
                 ),
               ),
-              if (topTrailing != null)
-                Positioned(top: 12, right: 12, child: topTrailing!),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(padding: centerPadding, child: centerChild),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: Center(child: centerChild),
               ),
-              if (overlayChild != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: overlayBottom,
-                  child: overlayChild!,
-                ),
-              if (bottomChild != null)
-                Positioned(bottom: 0, left: 0, right: 0, child: bottomChild!),
             ],
           ),
         ),
-      ),
+        ?bottomChild,
+      ],
     );
   }
 }
@@ -209,6 +292,8 @@ class _HabitCardState extends State<HabitCard> {
               : loc.habitNotCompletedToday}${widget.recentNudge == null ? "" : " ${loc.habitNudgedBy(widget.recentNudge!.username)}."}',
       title: displayTitle,
       subtitle: habitDescription,
+      compact: true,
+      minHeight: 216,
       topTrailing: HabitPartnerRow(
         partners: widget.partners,
         habitColor: habitColor,
@@ -234,7 +319,7 @@ class _HabitCardState extends State<HabitCard> {
             child: MudLongPressButton(
               resistanceCoefficient: widget.resistanceCoefficient,
               calculatedDurationMs: widget.calculatedDurationMs,
-              size: 144,
+              size: 120,
               visualState: visualState,
               habitColor: habitColor,
               habitIcon: habitIcon,

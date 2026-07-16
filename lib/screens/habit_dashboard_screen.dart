@@ -164,7 +164,7 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
                   SizedBox(
                     height: math.max(
                       520,
-                      (habits.length * 280 / columns).ceilToDouble(),
+                      (habits.length * 232 / columns).ceilToDouble(),
                     ),
                     child: content,
                   ),
@@ -243,7 +243,7 @@ class _DashboardGrid extends StatelessWidget {
         crossAxisCount: columns,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: columns == 1 ? 1.45 : 0.96,
+        mainAxisExtent: columns == 1 ? 216 : 232,
       ),
       itemCount: habits.length,
       itemBuilder: (context, index) {

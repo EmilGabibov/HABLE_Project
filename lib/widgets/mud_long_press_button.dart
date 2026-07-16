@@ -247,8 +247,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
 
   Widget _buildCompletionFlashState(AppLocalizations loc) {
     return SizedBox(
-      width: 180,
-      height: 180,
+      width: widget.size,
+      height: widget.size,
       child: CustomPaint(
         painter: _MudButtonPainter(
           progress: 1.0,
@@ -262,15 +262,15 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
             children: [
               Icon(
                 Icons.check_circle_rounded,
-                size: 48,
+                size: min(48, widget.size * 0.32),
                 color: widget.habitColor,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: min(8, widget.size * 0.08)),
               Text(
                 loc.mudDone,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: min(16, widget.size * 0.12),
                   color: widget.habitColor,
                 ),
               ),
@@ -284,8 +284,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   Widget _buildEstablishedState(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
     return SizedBox(
-      width: 180,
-      height: 180,
+      width: widget.size,
+      height: widget.size,
       child: TweenAnimationBuilder<Color?>(
         tween: ColorTween(
           begin: disableAnimations
@@ -319,7 +319,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                     scale: widget.visualParameters.completedIconScale,
                     child: Text(
                       widget.habitIcon!,
-                      style: const TextStyle(fontSize: 56),
+                      style: TextStyle(fontSize: min(56, widget.size * 0.4)),
                     ),
                   ),
                 )
@@ -350,7 +350,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                   scale: _iconScaleAnimation.value,
                   child: Text(
                     widget.habitIcon!,
-                    style: const TextStyle(fontSize: 56),
+                    style: TextStyle(fontSize: min(56, widget.size * 0.4)),
                   ),
                 ),
               );
@@ -365,16 +365,16 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         children: [
           Icon(
             Icons.spa_rounded,
-            size: 40,
+            size: min(40, widget.size * 0.3),
             color: AppTheme.deepCharcoal.withValues(alpha: 0.6),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: min(8, widget.size * 0.08)),
           Text(
             AppLocalizations.of(context)!.mudHoldToComplete,
             style: TextStyle(
               fontWeight: FontWeight.w500,
               letterSpacing: 0.5,
-              fontSize: 14,
+              fontSize: min(14, widget.size * 0.1),
               color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
             ),
           ),
