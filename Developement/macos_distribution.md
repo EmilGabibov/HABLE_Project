@@ -18,6 +18,14 @@ and notarization still require focused release work.
 - Release entitlements:
   - `com.apple.security.app-sandbox = true`
   - `com.apple.security.network.client = true`
+- Configuration entitlement policy:
+  - Debug: `Runner/DebugProfile.entitlements` with JIT for local debugging.
+  - Profile: `Runner/Profile.entitlements` without JIT.
+  - Release: `Runner/Release.entitlements` without Keychain sharing or
+    `get-task-allow`, with hardened runtime enabled.
+- Release signing policy: `CODE_SIGN_STYLE = Manual`; team, identity, and
+  provisioning profile are empty source-controlled inputs that must be
+  injected by the protected archive/operator command.
 - Smoke-validated locally on 2026-07-16:
   - `flutter build macos --release --dart-define=HABLE_APP_ENV=production`
   - `codesign -dvvv --entitlements :- build/macos/Build/Products/Release/Hable.app`
@@ -27,7 +35,7 @@ and notarization still require focused release work.
 - Executable SHA-256: `02ab5da7206345967cc9490d24b4da0f5d7b2e2b783478434c7fb742ab0450fe`
 - Bundle/version: `com.hable.app.macos`, `1.0.0` (`1`)
 
-Local signing state during validation:
+Historical pre-fix signing state during validation:
 
 - `security find-identity -p codesigning -v` returned `0 valid identities found`
 - Result: buildable locally, but the release app is ad-hoc signed (`Signature=adhoc`, `TeamIdentifier=not set`), its effective signature includes `get-task-allow`, and strict deep verification fails on modified `Contents/Frameworks/App.framework`; `spctl` also reports `nested code is modified or invalid`. App Store export, Developer ID signing, and notarization were not executable on this machine because no signing identities are installed.
@@ -55,6 +63,21 @@ Runtime authentication policy:
    - `App Store Connect`
 5. Validate and upload from Organizer.
 
+The protected command-line equivalent keeps credentials out of the repo:
+
+```bash
+xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+  -configuration Release \
+  -archivePath build/macos/archive/Hable-AppStore.xcarchive archive \
+  MACOS_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+  MACOS_CODE_SIGN_IDENTITY="Apple Distribution" \
+  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_APPSTORE_PROFILE"
+```
+
+After export, run `scripts/verify_macos_distribution.sh --app <Hable.app>
+--channel app-store` for the identity, nested-signature, hardened-runtime, and
+Gatekeeper evidence applicable to the exported app.
+
 Recommended validation commands after archive/export:
 
 ```bash
@@ -71,6 +94,18 @@ spctl -a -vv "Hable.app"
 flutter build macos --release --dart-define=HABLE_APP_ENV=production
 ```
 
+For a protected Developer ID archive, inject the team, identity, and profile
+through `xcodebuild` rather than editing the checked-in xcconfig:
+
+```bash
+xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+  -configuration Release \
+  -archivePath build/macos/archive/Hable-DeveloperID.xcarchive archive \
+  MACOS_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+  MACOS_CODE_SIGN_IDENTITY="Developer ID Application" \
+  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_DEVELOPER_ID_PROFILE"
+```
+
 3. Verify nested signatures in the exported app bundle.
 4. Sign the final bundle with Developer ID if Xcode/Flutter did not already do so under the selected signing setup.
 5. Package either:
@@ -81,8 +116,9 @@ flutter build macos --release --dart-define=HABLE_APP_ENV=production
 Recommended post-export checks:
 
 ```bash
-codesign -dvvv --entitlements :- "build/macos/Build/Products/Release/Hable.app"
-spctl -a -vv "build/macos/Build/Products/Release/Hable.app"
+scripts/verify_macos_distribution.sh \
+  --app build/macos/Build/Products/Release/Hable.app \
+  --channel developer-id --require-staple
 ```
 
 ## Operator Checklist
@@ -96,8 +132,9 @@ spctl -a -vv "build/macos/Build/Products/Release/Hable.app"
 ## Current Gaps
 
 - No local code-signing identities are installed on the current machine.
-- Duplicate `CODE_SIGN_ENTITLEMENTS` assignments currently collapse configuration separation and must be repaired in [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171).
-- The source `Release.entitlements` contains only sandbox and outbound-network access, but the effective ad-hoc signature includes `get-task-allow`; `spctl` fails and reports invalid/modified nested code.
+- The historical duplicate entitlement assignments and ad-hoc `get-task-allow`
+  result are repaired by #171; rerun the protected verifier for current release
+  evidence.
 - macOS reminder permission/delivery still needs the supported adapter and direct smoke tracked in [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170).
 - The final direct signed-out launch/relaunch UI check for the no-Keychain auth policy is pending because the host was locked.
 - No notarized standalone artifact was produced in this session.

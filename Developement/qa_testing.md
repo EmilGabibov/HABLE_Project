@@ -116,7 +116,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `proceeded` after commit | iOS flavor identities and display names are non-placeholder; shared Keychain group derives from final IDs; unsigned identity checks are static and protected archive validation is documented |
 | [#169](https://github.com/EmilGabibov/HABLE_Project/issues/169) | `proceeded` after commit | iOS recap prefetch is disabled because the Apple adapter ignores requested delays; local reminders remain independent and Android-only prefetch has stable replacement identity |
 | [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170) | `proceeded` after commit | macOS permission/status use the Darwin local-notifications adapter, denied state opens System Settings, and reminder schedule/cancel identity remains deterministic |
-| [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `raw` | macOS entitlement separation, signing, Gatekeeper/notarization |
+| [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `proceeded` after commit | macOS Debug/Profile/Release entitlements are distinct; Release is hardened/manual-signing and `verify_macos_distribution.sh` fails closed on missing team, nested signature, Gatekeeper, or staple evidence |
 | [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172) | `raw` | Native CI matrix and revision-traceable release artifacts |
 | [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) | `raw` | Friend-profile regression test failure |
 | [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) | `raw` | Deterministic authenticated cross-platform smoke fixture |

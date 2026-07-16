@@ -88,9 +88,9 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 
 ### macOS
 - **Constraints:** macOS relies on desktop entitlements, pods, configuration-specific signing, and notarization. Current auth is intentionally process-local and must not access Keychain or credential autofill; every new process starts signed out.
-- **Verification Commands:** `flutter build macos --release --dart-define=HABLE_APP_ENV=production`, followed by entitlement inspection, `codesign --verify --deep --strict --verbose=4`, and `spctl -a -vv` against the built app.
-- **Evidence:** Record bundle/version, executable hash, effective entitlements, signature/team identity, Gatekeeper result, launch/relaunch behavior, and any permission failure. Compilation with an ad-hoc signature is only a local build pass.
-- **Local Release Builds:** Do not edit entitlements temporarily to force a pass. Preserve the real project configuration and report missing identities, invalid nested code, Gatekeeper rejection, or notarization limits as release blockers.
+- **Verification Commands:** Debug uses `DebugProfile.entitlements`, Profile uses `Profile.entitlements`, and Release uses `Release.entitlements` with hardened runtime. Build the signed Release artifact through protected Xcode team/identity/profile injection, then run `scripts/verify_macos_distribution.sh --app <Hable.app> --channel developer-id --require-staple`.
+- **Evidence:** Record bundle/version, executable hash, effective entitlements, signature/team identity, Gatekeeper, notarization/staple result, launch/relaunch behavior, and any permission failure. Compilation with an ad-hoc signature is only a local debug/profile pass.
+- **Local Release Builds:** Release signing is manual and fails closed without injected protected values. Do not edit entitlements temporarily to force a pass; report missing identities, invalid nested code, Gatekeeper rejection, or notarization limits as release blockers.
 
 ### Windows
 - **Constraints:** Cannot be compiled from a macOS host.

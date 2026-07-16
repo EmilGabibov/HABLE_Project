@@ -151,6 +151,7 @@ adb install build/app/outputs/flutter-apk/app-primary-release.apk
 Install the **partner/friend** APK on a connected USB device:
 ```bash
 adb install build/app/outputs/flutter-apk/app-friend-release.apk
+```
 
 Android build and smoke tooling is host-portable. Keep Android SDK
 `platform-tools` on `PATH`, or set `ANDROID_HOME`/`ANDROID_SDK_ROOT`; no SDK
@@ -287,11 +288,16 @@ flutter run -d macos \
 ```
 
 ### Verify
-Verify the built release bundle on macOS:
+Verify a signed macOS distribution bundle with the fail-closed verifier:
 ```bash
-codesign -dvvv --entitlements :- "build/macos/Build/Products/Release/Hable.app"
-spctl -a -vv "build/macos/Build/Products/Release/Hable.app"
+scripts/verify_macos_distribution.sh \
+  --app build/macos/Build/Products/Release/Hable.app \
+  --channel developer-id --require-staple
 ```
+
+Unsigned/ad-hoc macOS release output is intentionally not distribution-ready;
+the release configuration requires protected team, identity, and profile
+injection. Debug/profile builds remain available for local development.
 
 The current macOS auth policy is intentionally process-local: every new app
 process starts signed out, and auth fields do not participate in credential
@@ -331,8 +337,9 @@ xcodebuild -workspace ios/Runner.xcworkspace -scheme primary -showdestinations
 ```bash
 shasum -a 256 build/macos/Build/Products/Release/Hable.app/Contents/MacOS/Hable
 codesign -dvvv --entitlements :- build/macos/Build/Products/Release/Hable.app
-codesign --verify --deep --strict --verbose=4 build/macos/Build/Products/Release/Hable.app
-spctl -a -vv build/macos/Build/Products/Release/Hable.app
+scripts/verify_macos_distribution.sh \
+  --app build/macos/Build/Products/Release/Hable.app \
+  --channel developer-id --require-staple
 ```
 
 ---
