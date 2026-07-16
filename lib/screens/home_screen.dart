@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../models/daily_quote.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
@@ -23,6 +22,7 @@ import '../data/standard_habits.dart';
 import '../utils/habit_timeline.dart';
 import '../models/celebration_feedback.dart';
 import '../services/app_error.dart';
+import '../services/completion_feedback.dart';
 import '../services/celebration_sequence_controller.dart';
 import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/invitation_banner.dart';
@@ -866,6 +866,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
   ) async {
     final db = ref.read(databaseProvider);
     final mudTuning = ref.read(mudTuningProvider);
+    final feedbackDuration = completionFeedbackDurationFor(context);
     final currentStreak = await db.getStreak(habit.habitId);
     final newStreak = currentStreak + 1;
     final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
@@ -880,39 +881,13 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
 
     // Show transient completion feedback on the ring
     if (mounted) {
-      if (mudTuning.hapticsEnabled) {
-        if (isMilestone) {
-          switch (mudTuning.hapticProfile) {
-            case MudHapticProfile.soft:
-              HapticFeedback.lightImpact();
-              break;
-            case MudHapticProfile.standard:
-              HapticFeedback.heavyImpact();
-              break;
-            case MudHapticProfile.strong:
-              HapticFeedback.vibrate();
-              break;
-          }
-        } else {
-          switch (mudTuning.hapticProfile) {
-            case MudHapticProfile.soft:
-              HapticFeedback.selectionClick();
-              break;
-            case MudHapticProfile.standard:
-              HapticFeedback.mediumImpact();
-              break;
-            case MudHapticProfile.strong:
-              HapticFeedback.heavyImpact();
-              break;
-          }
-        }
-      }
+      playCompletionHaptic(mudTuning, milestone: isMilestone);
 
       setState(() {
         _isShowingCompletionFeedback = true;
       });
       _completionFeedbackTimer?.cancel();
-      _completionFeedbackTimer = Timer(const Duration(milliseconds: 1200), () {
+      _completionFeedbackTimer = Timer(feedbackDuration, () {
         if (mounted) {
           setState(() {
             _isShowingCompletionFeedback = false;
