@@ -7,7 +7,7 @@ import 'package:hable/providers/mud_tuning_provider.dart';
 import 'package:hable/theme/app_theme.dart';
 import 'package:hable/widgets/habit_card.dart';
 
-Habit _habit() {
+Habit _habit({String? description}) {
   final now = DateTime(2026, 7, 13, 9);
   return Habit(
     habitId: 'habit-1',
@@ -21,6 +21,7 @@ Habit _habit() {
     isSynced: true,
     targetDuration: 21,
     currentDuration: 17,
+    description: description,
   );
 }
 
@@ -93,6 +94,68 @@ void main() {
     expect(find.text('Center content'), findsOneWidget);
     expect(find.text('Bottom summary'), findsOneWidget);
   });
+
+  testWidgets(
+    'HabitCard uses a compact rectangular shell with safe content zones',
+    (tester) async {
+      final habit = _habit(
+        description:
+            'A deliberately long habit description that must wrap without colliding with the completion ring.',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 320,
+                height: 264,
+                child: HabitCard(
+                  habit: habit,
+                  userId: 'user-1',
+                  challengeDay: 4,
+                  targetDays: 21,
+                  progressFraction: 0.25,
+                  isContinuous: false,
+                  isCompletedToday: false,
+                  isSkippedToday: false,
+                  viewerRole: PartnershipRole.owner,
+                  recentNudge: null,
+                  streak: 5,
+                  resistanceCoefficient: 0.4,
+                  calculatedDurationMs: 600,
+                  partners: const [],
+                  hapticsEnabled: false,
+                  hapticProfile: MudHapticProfile.standard,
+                  onCompletion: () {},
+                  onSkip: () {},
+                  onNudgeTap: (_) async {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final cardSize = tester.getSize(find.byType(HabitCardShell));
+      expect(cardSize.height, lessThan(cardSize.width));
+      expect(
+        find.textContaining('A deliberately long habit description'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Container>(find.byKey(const Key('habit-card-progress-bar')))
+            .constraints
+            ?.maxHeight,
+        8,
+      );
+    },
+  );
 
   testWidgets('HabitCard preserves shared feedback and read-only states', (
     tester,
@@ -188,7 +251,7 @@ void main() {
           .widget<Container>(find.byKey(const Key('habit-card-progress-bar')))
           .constraints
           ?.maxHeight,
-      6,
+      8,
     );
     expect(
       tester

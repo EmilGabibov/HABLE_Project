@@ -28,6 +28,7 @@ class MudLongPressButton extends StatefulWidget {
   final HabitVisualParameters visualParameters;
   final bool hapticsEnabled;
   final MudHapticProfile hapticProfile;
+  final double size;
 
   const MudLongPressButton({
     super.key,
@@ -40,6 +41,7 @@ class MudLongPressButton extends StatefulWidget {
     this.visualParameters = HabitVisualParameters.standard,
     this.hapticsEnabled = true,
     this.hapticProfile = MudHapticProfile.standard,
+    this.size = 180,
   });
 
   @override
@@ -207,8 +209,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
             );
           },
           child: SizedBox(
-            width: 180,
-            height: 180,
+            width: widget.size,
+            height: widget.size,
             child: Center(
               child: isDimmed
                   ? Opacity(opacity: 0.5, child: _buildIconContent())

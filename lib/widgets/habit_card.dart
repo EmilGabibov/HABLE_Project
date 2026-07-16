@@ -40,9 +40,9 @@ class HabitCardShell extends StatelessWidget {
     this.overlayChild,
     this.bottomChild,
     this.margin = EdgeInsets.zero,
-    this.minHeight = 280,
-    this.titleRightInset = 64,
-    this.centerPadding = const EdgeInsets.only(top: 24, bottom: 48),
+    this.minHeight = 264,
+    this.titleRightInset = 112,
+    this.centerPadding = const EdgeInsets.only(top: 48, bottom: 48),
   });
 
   @override
@@ -233,6 +233,7 @@ class _HabitCardState extends State<HabitCard> {
             child: MudLongPressButton(
               resistanceCoefficient: widget.resistanceCoefficient,
               calculatedDurationMs: widget.calculatedDurationMs,
+              size: 144,
               visualState: visualState,
               habitColor: habitColor,
               habitIcon: habitIcon,
@@ -340,7 +341,7 @@ class _HabitCardState extends State<HabitCard> {
             ),
             child: Container(
               key: const Key('habit-card-progress-bar'),
-              height: 6,
+              height: 8,
               decoration: BoxDecoration(
                 color: habitColor.withValues(alpha: 0.12),
               ),
