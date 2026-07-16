@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Drift data may be restored for explicit-login reconciliation. -->
+    <include domain="database" path="." />
+
+    <!-- JWT credentials and presentation state must never be restored silently. -->
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="root" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

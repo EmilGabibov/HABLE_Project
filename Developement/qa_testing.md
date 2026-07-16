@@ -80,7 +80,7 @@ reopen the stale missing-secret finding without an authenticated check.
 | Offline startup | `FAIL`: reload returns `ERR_INTERNET_DISCONNECTED` | `NOT RUN` | `BLOCKED` | `NOT RUN` |
 | Retry / reconnect | `FAIL`: no bounded PWA shell recovery | `NOT RUN` | `BLOCKED` | `NOT RUN` |
 | Logout | `NOT RUN` | `NOT RUN` | `BLOCKED` | `PARTIAL`: state/storage unit coverage only |
-| Session restoration | `NOT RUN` | `NOT RUN`; backup policy undefined | `BLOCKED` | `PARTIAL`: policy/unit tests prove restoration is disabled; direct visible signed-out relaunch remains open in #160 |
+| Session restoration | `NOT RUN` | `PARTIAL`: release backup rules exclude credentials/preferences and allow only Drift restore; device restore smoke remains host/device evidence | `BLOCKED` | `PARTIAL`: policy/unit tests prove restoration is disabled; direct visible signed-out relaunch remains open in #160 |
 | Relaunch | `PARTIAL`: online fresh browser load only | `PASS`: signed-out cold relaunch in 615 ms | `BLOCKED` | `PARTIAL`: process launch stable; visible signed-out screen pending |
 | Visible copy / accessibility | `PARTIAL`: onboarding semantics visible | `PARTIAL`: onboarding semantics visible | `BLOCKED` | `PARTIAL`: widget coverage only |
 
@@ -110,7 +110,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#162](https://github.com/EmilGabibov/HABLE_Project/issues/162) | `proceeded`; commit recorded in GitHub | Browser-owned Quotable fallback removed; Flutter now reads Worker-synced Drift quote or first-party fallback |
 | [#163](https://github.com/EmilGabibov/HABLE_Project/issues/163) | `proceeded` after commit | Exact-once notification/deep-link routing is owned by AppGate with bounded handoff |
 | [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) | `proceeded` after commit | Android production signing fails closed; both flavor identities are checked before release evidence |
-| [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `raw` | Android backup/auth/local-data restore policy |
+| [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `proceeded` after commit | Android backup/auth/local-data restore policy is explicit; device restore smoke remains release evidence |
 | [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `raw` | Portable Android build/device/smoke tooling |
 | [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167) | `raw` | Reproducible iOS runtime/destination smoke |
 | [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `raw` | iOS flavor identity, Keychain group, archive validation |
@@ -261,7 +261,7 @@ True native APNs/FCM delivery remains out of scope for this local/web harness. F
    - Clicked "Accept", and the API successfully changed the friend request status to `accepted` in the database.
 
 **Failures Encountered & Resolved:**
-- **Historical Auto-Backup Finding (unresolved release policy):** This run observed Android backup restoring production tokens into a `401 Unauthorized` loop and reported a debug-only wipe as a workaround. The 2026-07-16 audit found no explicit manifest backup/data-extraction policy and no current release-safe reconciliation contract. Do not treat the old workaround as resolution evidence; verify [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) before enabling release backup.
+- **Android Auto Backup policy:** Release manifests explicitly allow only Drift database restoration for later explicit-login reconciliation and exclude SharedPreferences/files/root/external storage. Credentials are not restored as auth state. Validate clean install, restored database without credentials, expired session, logout, and account-switch behavior on a device before changing this policy.
 - **D1 Schema Mismatch:** The local D1 state was missing the `total_score` column added in a recent task. Resolved by manually applying the ALTER TABLE statement to the local `.wrangler` state files.
 
 - The `.gitignore` was missing `backend/.wrangler/` and `.env`. These have been appended to prevent committing local database states and environment variables.

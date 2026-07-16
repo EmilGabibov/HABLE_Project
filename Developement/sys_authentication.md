@@ -43,6 +43,17 @@ The following keys are stored securely on supported session-persistence hosts (K
 
 macOS is an intentional exception: auth credentials are process-local and never pass through `flutter_secure_storage`. Existing Keychain entries are ignored rather than deleted, because deletion could invoke the system-credential path this policy disables. Non-sensitive per-user presentation flags, including first-run quote and revealed-badge state, use SharedPreferences on macOS so post-login UI cannot reintroduce Keychain prompts.
 
+### Android restore boundary
+
+Android release builds explicitly allow encrypted local Drift database backup for
+reconciliation after an explicit login, while excluding SharedPreferences,
+files, root storage, and external storage from Auto Backup and device transfer.
+JWT credentials remain outside the backup set through `flutter_secure_storage`
+and the excluded preference/file domains. A restored install therefore starts
+signed out; it must not silently resurrect a session or switch accounts. Logout
+and account switching continue to use the existing auth/cache clearing paths,
+and restore does not add a backend backup or full-database replay request.
+
 ### Drift Database (`Users` Table)
 The local database acts as the offline source of truth. The `_ensureUserInDb` method handles upserting the user profile when they log in or register.
 Fields cached locally include `userId`, `username`, `email`, `avatarUrl`, and `emailVerifiedAt`.
