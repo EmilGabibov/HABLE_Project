@@ -14,6 +14,9 @@ import 'usage_diagnostics_service.dart';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // The iOS adapter does not honor Workmanager's requested one-off delay.
+    // Return success for stale registrations so an old task cannot self-loop.
+    if (!BackgroundSyncService.supportsPrefetchForCurrentPlatform) return true;
     try {
       final userId = inputData?['userId'] as String?;
       final reminderId = inputData?['reminderId'] as int?;
@@ -123,13 +126,24 @@ class BackgroundSyncService {
   static const String _prefetchTaskName = "com.hable.sync.prefetch";
   static const int _prefetchLeadMinutes = 10;
 
-  Future<void> initialize() async {
-    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+  static bool shouldSchedulePrefetch({
+    required bool isWeb,
+    required bool isAndroid,
+    required bool isIOS,
+  }) {
+    return !isWeb && isAndroid && !isIOS;
+  }
 
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: kDebugMode,
-    );
+  static bool get supportsPrefetchForCurrentPlatform => shouldSchedulePrefetch(
+    isWeb: kIsWeb,
+    isAndroid: Platform.isAndroid,
+    isIOS: Platform.isIOS,
+  );
+
+  Future<void> initialize() async {
+    if (!supportsPrefetchForCurrentPlatform) return;
+
+    await Workmanager().initialize(callbackDispatcher);
   }
 
   String uniquePrefetchName(String userId, ReminderType type, int reminderId) {
@@ -143,7 +157,7 @@ class BackgroundSyncService {
     required int targetHour,
     required int targetMinute,
   }) async {
-    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+    if (!supportsPrefetchForCurrentPlatform) return;
 
     final now = DateTime.now();
     var targetTime = DateTime(
@@ -193,7 +207,7 @@ class BackgroundSyncService {
     required ReminderType type,
     required int reminderId,
   }) async {
-    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+    if (!supportsPrefetchForCurrentPlatform) return;
     await Workmanager().cancelByUniqueName(
       uniquePrefetchName(userId, type, reminderId),
     );

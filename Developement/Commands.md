@@ -251,6 +251,10 @@ logout, and relaunch in the fixture and record those checkpoints beside the
 generated evidence. A missing runtime or ineligible device remains `BLOCKED`,
 not a passing iOS gate; see [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167).
 
+iOS does not register the unsupported Workmanager recap-prefetch path. Local
+reminders still use the explicit notification permission/schedule/cancel flow;
+the recap optimization is Android-only and is never a startup dependency.
+
 ## macOS
 ### Clean
 Clean Flutter artifacts and remove the native macOS build folder:

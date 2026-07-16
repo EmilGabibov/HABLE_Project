@@ -24,11 +24,15 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
   3. Push a sync task to the background queue.
   4. Habit edit/archive/restore actions should also enqueue the full habit payload, including `status`, so the backend can persist the same lifecycle state that Drift shows locally.
   5. For habit partner invites, create the local habit first, enqueue the full habit sync payload, then enqueue one `sendHabitInvitation` item per accepted friend.
-* **The Background Queue:** 
+* **The Background Queue:**
   * If the device is online, trigger the queue immediately to push data to Cloudflare Workers.
   * If offline, store the tasks. The queue must automatically begin processing when `connectivity_plus` detects a restored internet connection.
   * Treat `connectivity_plus` as a retry hint, not a hard gate. ADB-reversed local development can report no Wi-Fi/mobile network while `http://127.0.0.1:8787` is reachable, so foreground sync attempts should rely on the HTTP result and retry failures later.
   * Workmanager registration is non-critical startup work. Initialize it after Flutter renders its first frame, report failures to diagnostics, and never hold the offline-first UI or auth restoration behind plugin readiness.
+  * Reminder recap prefetch is Android-only. The installed iOS Workmanager
+    adapter does not honor Hable's requested one-off delay, so iOS skips this
+    optimization and never chains a callback; local OS reminder scheduling
+    remains independent and user-controlled.
 * **Inbound Sync (Social & Quotes):** To handle partner nudges, accepted friends, habit invitations, and feeds, poll the Cloudflare `GET /api/sync/daily` endpoint silently in the background when the app is opened, updating the local database. Riverpod will dynamically refresh the UI.
   * `HomeScreen` initializes the sync service and pulls daily sync after login so accepted-friend chips, invitation banners, and partner snapshots are populated from Drift without direct Home-screen network reads.
   * `SyncService.pullDailySync` should normalize `nudges`, private messages, habit invitations, friend requests, and accepted-friend changes into local `notification_events` rows before the UI renders badges or inbox state. The notification center reads that unified local stream rather than special-casing backend payloads in multiple screens.
