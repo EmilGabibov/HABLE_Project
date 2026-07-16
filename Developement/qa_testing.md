@@ -60,7 +60,7 @@ Status meanings:
 | Web/PWA | Current local source; production environment | Release build `PASS`; analyzer `PASS` with informational diagnostics only; full tests `FAIL` on friend-profile expectation | Local source smoke has one activated app-scope controller, bounded readiness, offline shell reload, and no browser-owned Quotable request; production deployment still requires rerun | `FAIL`: [#161](https://github.com/EmilGabibov/HABLE_Project/issues/161), [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172), [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) |
 | Android primary/friend | Source `5949de5`; APK SHA-256 primary `8cf071e9…5047`, friend `b61e59a3…b58c`; target SDK 36; production environment | Both release flavor APKs `PASS` compilation | Pixel 9 / Android 17 primary fresh install reached onboarding, invalid login returned a safe backend message, cold relaunch passed with no `adb reverse`; authenticated/offline flows not run | `FAIL`: both release artifacts use the Android Debug certificate; [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164)-[#166](https://github.com/EmilGabibov/HABLE_Project/issues/166), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
 | iOS primary/friend | Source `5949de5`; production environment; Xcode reports required iOS 26.5 platform unavailable | Primary `BLOCKED`: no simulator runtimes and every destination ineligible; friend build not run after the shared destination blocker | No runtime smoke; bundle IDs/display names are placeholders and no signing identity/profile is installed | `FAIL`: [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167)-[#169](https://github.com/EmilGabibov/HABLE_Project/issues/169), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
-| macOS | Source `77900a3`; executable SHA-256 `02ab5da7…50fe`; `com.hable.app.macos`; production environment | Release build `PASS` compilation | Auth/flag tests prove zero macOS secure-storage access; launch process stayed stable with no Keychain error log. Direct UI inspection was blocked by the locked host | `FAIL`: ad-hoc signature, no team ID, Gatekeeper/nested-code validation failure; reminder and direct UI gates open in [#160](https://github.com/EmilGabibov/HABLE_Project/issues/160), [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170), [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
+| macOS | Source `77900a3`; executable SHA-256 `02ab5da7…50fe`; `com.hable.app.macos`; production environment | Release build `PASS` compilation | Auth/flag tests prove zero macOS secure-storage access; direct release relaunch reached signed-out onboarding with `Log in`/`Next` visible and no restored account surface | `FAIL`: ad-hoc signature, no team ID, Gatekeeper/nested-code validation failure; reminder and release evidence gates remain open in [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170), [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
 
 Production Web Push binding names were present during the audit. An
 unauthenticated `/api/push/config` request correctly returned `401`; do not
@@ -70,7 +70,7 @@ reopen the stale missing-secret finding without an authenticated check.
 
 | Flow | Web/PWA baseline | Android | iOS | macOS |
 |---|---|---|---|---|
-| Launch / startup recovery | `PARTIAL`: online onboarding loads; service-worker wait exceeds 4 s | `PASS`: fresh cold launch reached usable onboarding in 2360 ms | `BLOCKED`: no eligible destination | `PARTIAL`: release process stable after #160; visible UI check blocked by locked host |
+| Launch / startup recovery | `PARTIAL`: online onboarding loads; service-worker wait exceeds 4 s | `PASS`: fresh cold launch reached usable onboarding in 2360 ms | `BLOCKED`: no eligible destination | `PASS`: release relaunch reached signed-out onboarding with no restored account surface |
 | Authentication | `NOT RUN`: no production credentials/account mutation | `PARTIAL`: invalid login reached production and showed actionable error | `BLOCKED` | `PARTIAL`: process-local session policy and no-Keychain tests pass; explicit release login not run |
 | Primary navigation | `NOT RUN`: authenticated shell fixture missing | `NOT RUN` | `BLOCKED` | `NOT RUN` |
 | Core data read | `NOT RUN`: authenticated fixture missing | `NOT RUN` | `BLOCKED` | `NOT RUN` |
@@ -80,8 +80,8 @@ reopen the stale missing-secret finding without an authenticated check.
 | Offline startup | `FAIL`: reload returns `ERR_INTERNET_DISCONNECTED` | `NOT RUN` | `BLOCKED` | `NOT RUN` |
 | Retry / reconnect | `FAIL`: no bounded PWA shell recovery | `NOT RUN` | `BLOCKED` | `NOT RUN` |
 | Logout | `NOT RUN` | `NOT RUN` | `BLOCKED` | `PARTIAL`: state/storage unit coverage only |
-| Session restoration | `NOT RUN` | `PARTIAL`: release backup rules exclude credentials/preferences and allow only Drift restore; device restore smoke remains host/device evidence | `BLOCKED` | `PARTIAL`: policy/unit tests prove restoration is disabled; direct visible signed-out relaunch remains open in #160 |
-| Relaunch | `PARTIAL`: online fresh browser load only | `PASS`: signed-out cold relaunch in 615 ms | `BLOCKED` | `PARTIAL`: process launch stable; visible signed-out screen pending |
+| Session restoration | `NOT RUN` | `PARTIAL`: release backup rules exclude credentials/preferences and allow only Drift restore; device restore smoke remains host/device evidence | `BLOCKED` | `PASS`: policy/unit tests plus direct release relaunch prove macOS does not restore the prior process session |
+| Relaunch | `PARTIAL`: online fresh browser load only | `PASS`: signed-out cold relaunch in 615 ms | `BLOCKED` | `PASS`: signed-out onboarding/login surface observed after quitting and relaunching the release app |
 | Visible copy / accessibility | `PARTIAL`: onboarding semantics visible | `PARTIAL`: onboarding semantics visible | `BLOCKED` | `PARTIAL`: widget coverage only |
 
 Rows marked `NOT RUN`, `PARTIAL`, `FAIL`, or `BLOCKED` must be rerun through
@@ -105,7 +105,7 @@ compile never upgrades a runtime row to `PASS`.
 
 | Issue | Lifecycle | Blocking scope |
 |---|---|---|
-| [#160](https://github.com/EmilGabibov/HABLE_Project/issues/160) | `engineered`; commit `77900a3`; direct UI smoke pending | macOS auto-login, Keychain prompts, and credential autofill |
+| [#160](https://github.com/EmilGabibov/HABLE_Project/issues/160) | `proceeded`; commit `77900a3`; direct UI smoke verified | macOS auto-login, Keychain prompts, and credential autofill |
 | [#161](https://github.com/EmilGabibov/HABLE_Project/issues/161) | `proceeded`; commit `d016bb7` | PWA service-worker ownership, supported interop, offline shell |
 | [#162](https://github.com/EmilGabibov/HABLE_Project/issues/162) | `proceeded`; commit recorded in GitHub | Browser-owned Quotable fallback removed; Flutter now reads Worker-synced Drift quote or first-party fallback |
 | [#163](https://github.com/EmilGabibov/HABLE_Project/issues/163) | `proceeded` after commit | Exact-once notification/deep-link routing is owned by AppGate with bounded handoff |
@@ -118,7 +118,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170) | `proceeded` after commit | macOS permission/status use the Darwin local-notifications adapter, denied state opens System Settings, and reminder schedule/cancel identity remains deterministic |
 | [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `proceeded` after commit | macOS Debug/Profile/Release entitlements are distinct; Release is hardened/manual-signing and `verify_macos_distribution.sh` fails closed on missing team, nested signature, Gatekeeper, or staple evidence |
 | [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172) | `proceeded` after commit | CI runs web/backend plus Android, Apple, and Windows compile gates; canonical web root and bounded provenance records are enforced; distribution remains secret-gated |
-| [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) | `raw` | Friend-profile regression test failure |
+| [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) | `proceeded` after commit | Friend-profile regression test failure |
 | [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) | `proceeded` after commit | Bounded authenticated fixture smoke, fail-closed target reports, and explicit PASS/BLOCKED evidence semantics |
 
 ### Evidence record for every rerun
