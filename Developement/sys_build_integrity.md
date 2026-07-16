@@ -27,6 +27,9 @@ When a cross-platform or general dependency update causes build failures, always
 - **Analyzer policy:** Informational diagnostics remain visible in CI logs, but
   only warnings and errors fail the shared Flutter job.
 - **Command:** `flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production && node scripts/prepare_web_service_worker.mjs` (or another explicit environment override when intentionally targeting non-production). The preparation step creates the one app-scope Hable worker's finite shell asset list.
+- **Pages upload:** Deploy only the prepared root `build/web` artifact. The
+  supported shortcut is `cd backend && npm run web:deploy`; never substitute
+  the stale `backend/public` tree for the current Flutter shell.
 - **Workflow:** 
   1. Run the build command.
   2. If it fails, capture the exact error output in the current task's completion notes or walkthrough.

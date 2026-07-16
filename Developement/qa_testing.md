@@ -390,6 +390,11 @@ True native APNs/FCM delivery remains out of scope for this local/web harness. F
 - The first direct upload produced a preview URL, but the production alias updated after propagation.
 - Remote D1 schema had to be synchronized with `backend/schema.sql` before habit sync smoke tests passed.
 
+For subsequent release-readiness reruns, use `cd backend && npm run web:deploy`
+so the production environment define and finite service-worker preparation are
+part of the same artifact-producing command. Confirm the Pages deployment list
+records the served commit before judging browser/PWA evidence.
+
 ## 8. Local Worker RBAC Smoke
 
 **Date:** 2026-07-11  
