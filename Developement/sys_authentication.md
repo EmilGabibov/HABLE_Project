@@ -5,8 +5,8 @@ This document outlines the authentication and user session architecture within t
 ## 1. Overview and Hybrid Session Model
 
 Hable uses a hybrid authentication model to support its offline-first architecture:
-- **Online (Cloudflare Backend):** Relies on standard JSON Web Tokens (JWT) stored securely on the device. All authenticated API requests require a `Bearer <token>` header.
-- **Offline (Drift Local Database):** Upon successful login, the backend responds with the user's profile which is cached in the local SQLite database (`Users` table). The app boots offline by reading the saved JWT and matching `userId`.
+- **Online (Cloudflare Backend):** Relies on standard JSON Web Tokens (JWT). Android, iOS, and Web persist the session through their existing host storage path; macOS deliberately keeps the token only in Riverpod memory for the running process. All authenticated API requests require a `Bearer <token>` header.
+- **Offline (Drift Local Database):** Upon successful login, the backend responds with the user's profile which is cached in the local SQLite database (`Users` table). Platforms with persisted sessions can boot offline by matching the saved JWT and `userId`. macOS requires explicit login after every process launch, but retains local Drift data while signed out.
 
 ## 2. State Management (Riverpod)
 
@@ -14,14 +14,15 @@ Authentication state is managed globally by the `authProvider` (`NotifierProvide
 
 ### `AuthState` Properties
 - `isLoading`: Boolean flag indicating active network requests (e.g., login, register, PIN requests).
-- `isInitialized`: Boolean flag set to `true` once the app has attempted to load a saved session from secure storage on startup. Used to gate the splash screen.
+- `isInitialized`: Boolean flag set to `true` once startup session initialization has finished. Android, iOS, and Web attempt their persisted-session path; macOS clears the legacy snapshot and initializes signed out without touching Keychain.
 - `isAuthenticated`: A derived boolean getter (`token != null && userId != null`).
 - `error`: Stores user-friendly error messages parsed from backend or network exceptions.
 - `token`, `userId`, `username`: Core session identifiers stored in memory.
 
 ### Session Lifecycle Hooks
-- **Startup (`build()` & `_loadStoredAuth`):** Reads the JWT and `userId` from `flutter_secure_storage`. On macOS, if secure storage is unavailable or denied, the app may fall back to the local session snapshot for continuity, but it must not immediately write the restored snapshot back into secure storage in the same startup pass. Once auth state is restored, local reminders are asynchronously reloaded via `localReminderServiceProvider`.
-- **Logout:** Clears all keys from secure storage, cancels pending local reminders, and resets the `AuthState`.
+- **Startup (`build()` & `_loadStoredAuth`):** Android, iOS, and Web read the persisted JWT and `userId`. macOS never restores credentials: it removes the legacy SharedPreferences token snapshot, initializes signed out, and requires explicit login. Once a persisted session is restored on a supported host, local reminders are asynchronously reloaded via `localReminderServiceProvider`.
+- **Explicit macOS login:** A successful login writes the token only to `AuthState`. Riverpod consumers and `SyncService.tokenProvider` use that in-memory token until logout or process exit. macOS auth fields publish disabled autofill configuration so the platform password service is not invoked.
+- **Logout:** Cancels pending local reminders and resets `AuthState`. Persisted credentials are cleared on platforms that use them; macOS does not call Keychain read, write, or delete operations.
 
 ### Universal Startup Presentation
 
@@ -35,12 +36,12 @@ runs after the first frame and never blocks `runApp` or the splash handoff.
 ## 3. Local Persistence and Security
 
 ### `flutter_secure_storage`
-The following keys are stored securely on the host device (Keychain on iOS/macOS, EncryptedSharedPreferences on Android):
+The following keys are stored securely on supported session-persistence hosts (Keychain on iOS and the existing secure host storage on other supported targets; EncryptedSharedPreferences on Android):
 - `jwt_token`: The Bearer token.
 - `user_id`: The canonical UUID.
 - `username`: The user's handle.
 
-On macOS, secure storage failures should be treated as bounded per-session failures. The app may continue using the already-restored in-memory/session-snapshot credentials for the current session, but it should avoid repeated background re-read or write attempts that would retrigger keychain prompts.
+macOS is an intentional exception: auth credentials are process-local and never pass through `flutter_secure_storage`. Existing Keychain entries are ignored rather than deleted, because deletion could invoke the system-credential path this policy disables. Non-sensitive per-user presentation flags, including first-run quote and revealed-badge state, use SharedPreferences on macOS so post-login UI cannot reintroduce Keychain prompts.
 
 ### Drift Database (`Users` Table)
 The local database acts as the offline source of truth. The `_ensureUserInDb` method handles upserting the user profile when they log in or register.

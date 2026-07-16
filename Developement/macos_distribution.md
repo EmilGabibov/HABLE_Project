@@ -27,6 +27,14 @@ Local signing state during validation:
 - `security find-identity -p codesigning -v` returned `0 valid identities found`
 - Result: buildable locally, but the release app is ad-hoc signed (`Signature=adhoc`, `TeamIdentifier=not set`) and `spctl` rejects it. App Store export, Developer ID signing, and notarization were not executable on this machine because no signing identities are installed.
 
+Runtime authentication policy:
+
+- macOS starts signed out on every process launch and does not read, write, or delete authentication credentials through Keychain.
+- Explicit login remains valid in Riverpod memory for the current process; quitting the app requires a new login next time.
+- Auth text fields disable platform credential autofill on macOS.
+- Non-sensitive first-run and revealed-badge flags use SharedPreferences so they cannot trigger a Keychain prompt after login.
+- This is an intentional reliability policy for the current macOS client, not a substitute for the signing and entitlement work required for distribution.
+
 ## App Store Path
 
 1. Install the Apple distribution assets in Xcode:

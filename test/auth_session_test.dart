@@ -11,38 +11,49 @@ import 'package:hable/providers/database_provider.dart';
 import 'package:hable/providers/habit_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThrowingReadSecureStoragePlatform extends FlutterSecureStoragePlatform {
-  ThrowingReadSecureStoragePlatform({required this.writeLog});
+class RecordingSecureStoragePlatform extends FlutterSecureStoragePlatform {
+  RecordingSecureStoragePlatform({required this.accessLog});
 
-  final List<String> writeLog;
+  final List<String> accessLog;
 
   @override
   Future<bool> containsKey({
     required String key,
     required Map<String, String> options,
-  }) async => false;
+  }) async {
+    accessLog.add('contains:$key');
+    return false;
+  }
 
   @override
   Future<void> delete({
     required String key,
     required Map<String, String> options,
-  }) async {}
+  }) async {
+    accessLog.add('delete:$key');
+  }
 
   @override
-  Future<void> deleteAll({required Map<String, String> options}) async {}
+  Future<void> deleteAll({required Map<String, String> options}) async {
+    accessLog.add('deleteAll');
+  }
 
   @override
   Future<String?> read({
     required String key,
     required Map<String, String> options,
   }) async {
-    throw Exception('keychain denied');
+    accessLog.add('read:$key');
+    return null;
   }
 
   @override
   Future<Map<String, String>> readAll({
     required Map<String, String> options,
-  }) async => const {};
+  }) async {
+    accessLog.add('readAll');
+    return const {};
+  }
 
   @override
   Future<void> write({
@@ -50,7 +61,7 @@ class ThrowingReadSecureStoragePlatform extends FlutterSecureStoragePlatform {
     required String value,
     required Map<String, String> options,
   }) async {
-    writeLog.add(key);
+    accessLog.add('write:$key');
   }
 }
 
@@ -134,12 +145,12 @@ void main() {
   );
 
   test(
-    'macOS snapshot restore does not rewrite secure storage after keychain read failure',
+    'macOS starts signed out without accessing secure storage or restoring snapshots',
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-      final writes = <String>[];
-      FlutterSecureStoragePlatform.instance = ThrowingReadSecureStoragePlatform(
-        writeLog: writes,
+      final accesses = <String>[];
+      FlutterSecureStoragePlatform.instance = RecordingSecureStoragePlatform(
+        accessLog: accesses,
       );
       SharedPreferences.setMockInitialValues({
         'session_token_snapshot': 'snapshot-token',
@@ -167,9 +178,17 @@ void main() {
 
       final authState = container.read(authProvider);
       expect(authState.isInitialized, isTrue);
-      expect(authState.userId, 'snapshot-user');
-      expect(authState.username, 'Snapshot');
-      expect(writes, isEmpty);
+      expect(authState.isAuthenticated, isFalse);
+      expect(authState.userId, isNull);
+      expect(accesses, isEmpty);
+
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString('session_token_snapshot'), isNull);
+      expect(preferences.getString('session_user_id_snapshot'), isNull);
+      expect(preferences.getString('session_username_snapshot'), isNull);
+
+      await container.read(authProvider.notifier).logout();
+      expect(accesses, isEmpty);
     },
   );
 }

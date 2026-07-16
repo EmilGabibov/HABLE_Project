@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,7 @@ import 'package:hable/models/daily_quote.dart';
 import 'package:hable/providers/quote_provider.dart';
 import 'package:hable/screens/auth_screen.dart';
 import 'package:hable/screens/onboarding/onboarding_slides_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_harness.dart';
 
@@ -119,5 +121,28 @@ void main() {
 
     expect(find.text('Sign Up'), findsOneWidget);
     expect(find.text('Join Hable.'), findsOneWidget);
+  });
+
+  testWidgets('macOS auth fields disable platform credential autofill', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      SharedPreferences.setMockInitialValues({});
+
+      expect(authAutofillHintsForPlatform(TargetPlatform.macOS), isNull);
+      expect(authAutofillHintsForPlatform(TargetPlatform.android), isEmpty);
+
+      await tester.pumpWidget(_wrap(const AuthScreen()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('onboarding-log-in')));
+      await tester.pumpAndSettle();
+
+      final fields = tester.widgetList<TextField>(find.byType(TextField));
+      expect(fields, hasLength(2));
+      expect(fields.every((field) => field.autofillHints == null), isTrue);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 }

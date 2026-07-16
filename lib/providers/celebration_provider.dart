@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
@@ -41,7 +43,7 @@ class CelebrationNotifier extends Notifier<List<AchievementUnlock>> {
   Future<void> _init() async {
     if (_userId.isEmpty) return;
     final key = 'revealed_badges_$_userId';
-    final stored = await _secureStorage.read(key: key);
+    final stored = await _readStoredFlag(key);
     if (stored != null) {
       try {
         final List<dynamic> decoded = jsonDecode(stored);
@@ -80,9 +82,23 @@ class CelebrationNotifier extends Notifier<List<AchievementUnlock>> {
     state = state.where((u) => u.achievementId != achievementId).toList();
 
     final key = 'revealed_badges_$_userId';
-    await _secureStorage.write(
-      key: key,
-      value: jsonEncode(_revealedIds.toList()),
-    );
+    await _writeStoredFlag(key, jsonEncode(_revealedIds.toList()));
+  }
+
+  Future<String?> _readStoredFlag(String key) async {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      final preferences = await SharedPreferences.getInstance();
+      return preferences.getString(key);
+    }
+    return _secureStorage.read(key: key);
+  }
+
+  Future<void> _writeStoredFlag(String key, String value) async {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(key, value);
+      return;
+    }
+    await _secureStorage.write(key: key, value: value);
   }
 }

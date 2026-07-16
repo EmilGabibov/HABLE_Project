@@ -12,6 +12,10 @@ import '../l10n/app_localizations.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
 
+Iterable<String>? authAutofillHintsForPlatform(TargetPlatform platform) {
+  return platform == TargetPlatform.macOS ? null : const <String>[];
+}
+
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -121,6 +125,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context)!;
+    final authAutofillHints = authAutofillHintsForPlatform(
+      defaultTargetPlatform,
+    );
 
     if (_isAutoLoggingIn) {
       return const Scaffold(body: SafeArea(child: _AuthLoadingSkeleton()));
@@ -198,6 +205,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         _currentView == AuthView.register)
                       TextField(
                         controller: _usernameController,
+                        autofillHints: authAutofillHints,
                         decoration: InputDecoration(
                           labelText: loc.authUsernameLabel,
                           prefixIcon: const Icon(Icons.person_outline_rounded),
@@ -210,6 +218,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     if (_currentView == AuthView.forgotPasswordRequest)
                       TextField(
                         controller: _emailController,
+                        autofillHints: authAutofillHints,
                         decoration: InputDecoration(
                           labelText: loc.authEmailLabel,
                           prefixIcon: const Icon(Icons.email_outlined),
@@ -227,6 +236,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     if (_currentView == AuthView.forgotPasswordVerify)
                       TextField(
                         controller: _pinController,
+                        autofillHints: authAutofillHints,
                         decoration: InputDecoration(
                           labelText: loc.authPinLabel,
                           prefixIcon: const Icon(Icons.pin_outlined),
@@ -239,6 +249,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         padding: const EdgeInsets.only(top: 16),
                         child: TextField(
                           controller: _passwordController,
+                          autofillHints: authAutofillHints,
                           obscureText: true,
                           decoration: InputDecoration(
                             labelText:

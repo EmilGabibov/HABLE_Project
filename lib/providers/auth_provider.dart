@@ -25,7 +25,6 @@ class AuthState {
   final String? token;
   final String? userId;
   final String? username;
-  final bool restoredFromLocalSnapshot;
 
   AuthState({
     this.isLoading = false,
@@ -34,7 +33,6 @@ class AuthState {
     this.token,
     this.userId,
     this.username,
-    this.restoredFromLocalSnapshot = false,
   });
 
   bool get isAuthenticated => token != null && userId != null;
@@ -46,7 +44,6 @@ class AuthState {
     String? token,
     String? userId,
     String? username,
-    bool? restoredFromLocalSnapshot,
     bool clearError = false,
     bool clearCredentials = false,
   }) {
@@ -57,9 +54,6 @@ class AuthState {
       token: clearCredentials ? null : (token ?? this.token),
       userId: clearCredentials ? null : (userId ?? this.userId),
       username: clearCredentials ? null : (username ?? this.username),
-      restoredFromLocalSnapshot: clearCredentials
-          ? false
-          : (restoredFromLocalSnapshot ?? this.restoredFromLocalSnapshot),
     );
   }
 }
@@ -113,6 +107,20 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _loadStoredAuth() async {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      // macOS sessions are intentionally process-local. Avoid touching Keychain
+      // during startup because unsigned/ad-hoc builds can repeatedly prompt for
+      // the user's system credentials. Remove only the legacy non-Keychain
+      // snapshot so it can never restore a session again.
+      try {
+        await _clearSessionSnapshot();
+      } catch (error) {
+        debugPrint('Failed to clear legacy macOS session snapshot: $error');
+      }
+      state = state.copyWith(isInitialized: true, clearCredentials: true);
+      return;
+    }
+
     String? token;
     String? userId;
     String? username;
@@ -124,24 +132,14 @@ class AuthNotifier extends Notifier<AuthState> {
       _secureStorageUsable = false;
       debugPrint('Failed to read auth from secure storage: $error');
     }
-    final snapshot = defaultTargetPlatform == TargetPlatform.macOS
-        ? await _readSessionSnapshot()
-        : const <String, String?>{};
-
-    final restoredToken = token ?? snapshot['token'];
-    final restoredUserId = userId ?? snapshot['userId'];
-    final restoredUsername = username ?? snapshot['username'];
-
-    if (restoredToken != null && restoredUserId != null) {
+    if (token != null && userId != null) {
       state = state.copyWith(
-        token: restoredToken,
-        userId: restoredUserId,
-        username: restoredUsername,
-        restoredFromLocalSnapshot: defaultTargetPlatform == TargetPlatform.macOS &&
-            (token == null || userId == null || username == null),
+        token: token,
+        userId: userId,
+        username: username,
         isInitialized: true,
       );
-      unawaited(_restoreReminderForUser(restoredUserId));
+      unawaited(_restoreReminderForUser(userId));
       return;
     }
 
@@ -654,13 +652,14 @@ class AuthNotifier extends Notifier<AuthState> {
     if (userId != null) {
       await _cancelReminderForUser(userId);
     }
-    try {
-      await _storage.deleteAll();
-    } catch (error) {
-      debugPrint('Failed to clear secure storage on logout: $error');
-    }
     if (defaultTargetPlatform == TargetPlatform.macOS) {
       await _clearSessionSnapshot();
+    } else {
+      try {
+        await _storage.deleteAll();
+      } catch (error) {
+        debugPrint('Failed to clear secure storage on logout: $error');
+      }
     }
     state = state.copyWith(
       isLoading: false,
@@ -676,13 +675,14 @@ class AuthNotifier extends Notifier<AuthState> {
     if (userId != null) {
       await _cancelReminderForUser(userId);
     }
-    try {
-      await _storage.deleteAll();
-    } catch (error) {
-      debugPrint('Failed to clear secure storage on logout: $error');
-    }
     if (defaultTargetPlatform == TargetPlatform.macOS) {
       await _clearSessionSnapshot();
+    } else {
+      try {
+        await _storage.deleteAll();
+      } catch (error) {
+        debugPrint('Failed to clear secure storage on logout: $error');
+      }
     }
     state = state.copyWith(
       isLoading: false,
@@ -692,15 +692,13 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _saveAuth(String token, String userId, String username) async {
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _persistSessionSnapshot(token, userId, username);
+    if (defaultTargetPlatform != TargetPlatform.macOS) {
+      await _persistAuthToSecureStorage(token, userId, username);
     }
-    await _persistAuthToSecureStorage(token, userId, username);
     state = state.copyWith(
       token: token,
       userId: userId,
       username: username,
-      restoredFromLocalSnapshot: false,
       isInitialized: true,
     );
   }
@@ -754,7 +752,10 @@ class AuthNotifier extends Notifier<AuthState> {
     String userId,
     String username,
   ) async {
-    if (!_secureStorageUsable) return;
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        !_secureStorageUsable) {
+      return;
+    }
     try {
       await _storage.write(key: _tokenKey, value: token);
       await _storage.write(key: _userIdKey, value: userId);
@@ -763,26 +764,6 @@ class AuthNotifier extends Notifier<AuthState> {
       _secureStorageUsable = false;
       debugPrint('Failed to persist auth in secure storage: $error');
     }
-  }
-
-  Future<void> _persistSessionSnapshot(
-    String token,
-    String userId,
-    String username,
-  ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_sessionTokenKey, token);
-    await prefs.setString(_sessionUserIdKey, userId);
-    await prefs.setString(_sessionUsernameKey, username);
-  }
-
-  Future<Map<String, String?>> _readSessionSnapshot() async {
-    final prefs = await SharedPreferences.getInstance();
-    return {
-      'token': prefs.getString(_sessionTokenKey),
-      'userId': prefs.getString(_sessionUserIdKey),
-      'username': prefs.getString(_sessionUsernameKey),
-    };
   }
 
   Future<void> _clearSessionSnapshot() async {
