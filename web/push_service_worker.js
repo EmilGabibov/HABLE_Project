@@ -112,14 +112,26 @@ self.addEventListener('notificationclick', (event) => {
     route === '/' ? './' : route.slice(1),
     self.registration.scope,
   ).toString();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((client) => 'focus' in client);
-      if (existing) {
-        existing.navigate(target);
-        return existing.focus();
+
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+    const existing = clients.find((client) => 'focus' in client);
+    if (!existing) return self.clients.openWindow(target);
+
+    try {
+      await existing.navigate(target);
+      return await existing.focus();
+    } catch (_) {
+      // The tab may have closed or navigated away between matchAll and focus.
+      // Open one clean target instead of leaving event.waitUntil rejected.
+      try {
+        return await self.clients.openWindow(target);
+      } catch (_) {
+        return undefined;
       }
-      return self.clients.openWindow(target);
-    }),
-  );
+    }
+  })().catch(() => undefined));
 });

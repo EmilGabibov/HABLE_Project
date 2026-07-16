@@ -286,6 +286,22 @@ This test covers friend requests, shared habit invites, mutual completion holds,
 The current harness also includes a third isolated browser user so invite acceptance, nudge visibility, and friend-profile `Follow` flows can be exercised without reusing one of the partner sessions.
 True native APNs/FCM delivery remains out of scope for this local/web harness. For PWA Web Push, deploy VAPID secrets (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) and the dispatch token, open Profile → reminders in a supported HTTPS browser, grant permission from the explicit web-reminder button, verify the subscription upsert, send a bounded test reminder through the protected dispatch route, and click the notification to return to Home or Social. Verify denied/unsupported permission leaves local reminder settings intact and that 404/410 endpoints are removed.
 
+### PWA connection-lifecycle boundary
+
+The Hable-owned browser lifecycle surface is the app-scope service worker in
+`web/push_service_worker.js` and the Flutter web bootstrap. Notification clicks
+must tolerate a window closing or navigating between `clients.matchAll()` and
+`navigate()`/`focus()`; stale clients fall back to one `openWindow()` call and
+must not leave `event.waitUntil()` rejected.
+
+When browser-console reports mention `FrameDoesNotExistError`,
+`webNavigation.getAllFrames`, `runtime.lastError`, or an asynchronous extension
+message channel, reproduce once in a clean browser profile with extensions
+disabled before attributing the report to Hable. Hable currently owns no
+browser-extension messaging or frame-navigation API. If the warning disappears
+in the clean profile, record it as extension-owned rather than adding app-level
+listeners or retries.
+
 
 ## 2. ADB Smoke Test Execution Log
 
