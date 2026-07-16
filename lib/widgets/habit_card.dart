@@ -30,6 +30,7 @@ class HabitCardShell extends StatelessWidget {
   final double titleRightInset;
   final EdgeInsetsGeometry centerPadding;
   final bool compact;
+  final Color? backgroundColor;
 
   const HabitCardShell({
     super.key,
@@ -45,6 +46,7 @@ class HabitCardShell extends StatelessWidget {
     this.titleRightInset = 112,
     this.centerPadding = const EdgeInsets.only(top: 48, bottom: 48),
     this.compact = false,
+    this.backgroundColor,
   });
 
   @override
@@ -53,6 +55,8 @@ class HabitCardShell extends StatelessWidget {
       label: semanticsLabel,
       child: Card(
         margin: margin,
+        color: backgroundColor,
+        surfaceTintColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: minHeight),
@@ -294,6 +298,7 @@ class _HabitCardState extends State<HabitCard> {
       subtitle: habitDescription,
       compact: true,
       minHeight: 216,
+      backgroundColor: habitColor.withValues(alpha: 0.08),
       topTrailing: HabitPartnerRow(
         partners: widget.partners,
         habitColor: habitColor,

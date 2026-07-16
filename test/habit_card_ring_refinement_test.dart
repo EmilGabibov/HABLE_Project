@@ -158,6 +158,9 @@ void main() {
       expect(secondCard.top, lessThan(498));
       expect(find.text('💧 Hydration'), findsNWidgets(2));
       expect(find.text('Hydration'), findsNothing);
+      final card = tester.widget<Card>(find.byType(Card).first);
+      expect(card.color?.a, closeTo(0.08, 0.01));
+      expect(card.surfaceTintColor, Colors.transparent);
       expect(
         find.textContaining('A deliberately long habit description'),
         findsNWidgets(2),
