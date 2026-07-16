@@ -33,10 +33,12 @@ failure rather than behavior for native clients to copy.
 - Apple host: macOS `26.5.2`, Xcode `26.6` (`17F113`)
 - Target environment: explicit `--dart-define=HABLE_APP_ENV=production`,
   resolved by `lib/config/api_config.dart` to `https://hable.pages.dev`
-- Result: **FAIL — keep #159 open.** Android passed the bounded signed-out
-  runtime smoke, but the shared analyzer/test gates are red, Web/PWA has no
-  functioning service-worker/offline path, iOS cannot compile on the available
-  runtime, and macOS is not distribution-signed or fully UI-smoked.
+- Result: **FAIL — host-blocked release gate; child execution complete.** Android
+  passed the bounded signed-out runtime smoke, Web/PWA still lacks a resettable
+  authenticated UI fixture, iOS cannot compile on the available runtime, and
+  macOS direct signed-out relaunch now passes while distribution signing remains
+  blocked. Closing this umbrella records the evidence and child disposition;
+  it does not claim release readiness.
 
 The audit re-read `sys_authentication.md`, `sys_offline_architecture.md`,
 `sys_error_handling.md`, `qa_accessibility.md`, `macos_distribution.md`, and
@@ -135,11 +137,13 @@ Record these fields in #159 or its child before changing a matrix status:
    changed backend data.
 6. Signing identity/team or an explicit `blocked`/ad-hoc result.
 
-Do not mark #159 complete until every child is resolved or explicitly accepted,
-all four targets compile from a clean checkout, every required flow row is
-`PASS` (or a documented intentional difference with its own passing expected
-behavior), and no verified path retains a crash, hang, blank state, infinite
-loading state, data-loss risk, or unrecoverable authentication failure.
+Do not claim release readiness until every required flow row is `PASS` (or a
+documented intentional difference with its own passing expected behavior), all
+four targets compile from a clean checkout, and no verified path retains a
+crash, hang, blank state, infinite loading state, data-loss risk, or
+unrecoverable authentication failure. Host-blocked rows remain explicit
+release blockers even when this umbrella is closed as an accepted evidence
+record.
 
 ## 2. Deterministic Authenticated Release Smoke (Issue #174)
 
