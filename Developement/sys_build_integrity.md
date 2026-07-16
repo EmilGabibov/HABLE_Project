@@ -93,7 +93,7 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 - **Constraints:** macOS relies on desktop entitlements, pods, configuration-specific signing, and notarization. Current auth is intentionally process-local and must not access Keychain or credential autofill; every new process starts signed out.
 - **Verification Commands:** Debug uses `DebugProfile.entitlements`, Profile uses `Profile.entitlements`, and Release uses `Release.entitlements` with hardened runtime. Build the signed Release artifact through protected Xcode team/identity/profile injection, then run `scripts/verify_macos_distribution.sh --app <Hable.app> --channel developer-id --require-staple`.
 - **Evidence:** Record bundle/version, executable hash, effective entitlements, signature/team identity, Gatekeeper, notarization/staple result, launch/relaunch behavior, and any permission failure. Compilation with an ad-hoc signature is only a local debug/profile pass.
-- **Local Release Builds:** Release signing is manual and fails closed without injected protected values. Do not edit entitlements temporarily to force a pass; report missing identities, invalid nested code, Gatekeeper rejection, or notarization limits as release blockers.
+- **Local Release Builds:** `flutter build macos --release` is compile-only by default and does not require a team or edit entitlements. Protected release archives must explicitly pass `CODE_SIGNING_ALLOWED=YES` with injected team, identity, and profile values; report missing identities, invalid nested code, Gatekeeper rejection, or notarization limits as distribution blockers.
 
 ### Windows
 - **Constraints:** Cannot be compiled from a macOS host.

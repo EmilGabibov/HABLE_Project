@@ -319,6 +319,11 @@ Build a release macOS app:
 flutter build macos --release --dart-define=HABLE_APP_ENV=production
 ```
 
+The checked-in Release configuration is compile-only by default, so this
+command does not require an Apple Developer team or modify entitlements. It
+does not produce a distributable signed artifact. Protected archives must use
+the explicit signing overrides documented in `Developement/macos_distribution.md`.
+
 ### Run
 Run the macOS app from source during local development:
 ```bash
@@ -334,9 +339,10 @@ scripts/verify_macos_distribution.sh \
   --channel developer-id --require-staple
 ```
 
-Unsigned/ad-hoc macOS release output is intentionally not distribution-ready;
-the release configuration requires protected team, identity, and profile
-injection. Debug/profile builds remain available for local development.
+Local release output is intentionally compile-only and is not
+distribution-ready. Protected team, identity, profile, and
+`CODE_SIGNING_ALLOWED=YES` injection are required for distribution archives.
+Debug/profile builds remain available for local development.
 
 The current macOS auth policy is intentionally process-local: every new app
 process starts signed out, and auth fields do not participate in credential

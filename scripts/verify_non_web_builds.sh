@@ -17,11 +17,9 @@ echo "=== Building Web ==="
 flutter build web --no-tree-shake-icons
 
 echo "=== Building macOS ==="
-# Temporarily strip keychain-access-groups to allow local ad-hoc release signing
-git checkout macos/Runner/Release.entitlements
-sed -i '' '/keychain-access-groups/,+1d' macos/Runner/Release.entitlements
+# Release defaults to compile-only signing, so local verification never edits
+# tracked entitlements or requires an Apple Developer team.
 flutter build macos
-git checkout macos/Runner/Release.entitlements
 
 echo "=== Checking Windows Build ==="
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" || "$OSTYPE" == "windows" ]]; then

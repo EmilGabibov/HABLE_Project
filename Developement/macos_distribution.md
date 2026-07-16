@@ -66,12 +66,14 @@ Runtime authentication policy:
 The protected command-line equivalent keeps credentials out of the repo:
 
 ```bash
-xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+  xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
   -configuration Release \
   -archivePath build/macos/archive/Hable-AppStore.xcarchive archive \
   MACOS_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
   MACOS_CODE_SIGN_IDENTITY="Apple Distribution" \
-  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_APPSTORE_PROFILE"
+  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_APPSTORE_PROFILE" \
+  CODE_SIGNING_ALLOWED=YES \
+  CODE_SIGNING_REQUIRED=YES
 ```
 
 After export, run `scripts/verify_macos_distribution.sh --app <Hable.app>
@@ -98,12 +100,14 @@ For a protected Developer ID archive, inject the team, identity, and profile
 through `xcodebuild` rather than editing the checked-in xcconfig:
 
 ```bash
-xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+  xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
   -configuration Release \
   -archivePath build/macos/archive/Hable-DeveloperID.xcarchive archive \
   MACOS_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
   MACOS_CODE_SIGN_IDENTITY="Developer ID Application" \
-  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_DEVELOPER_ID_PROFILE"
+  MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_DEVELOPER_ID_PROFILE" \
+  CODE_SIGNING_ALLOWED=YES \
+  CODE_SIGNING_REQUIRED=YES
 ```
 
 3. Verify nested signatures in the exported app bundle.
