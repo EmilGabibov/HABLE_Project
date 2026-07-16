@@ -255,6 +255,11 @@ iOS does not register the unsupported Workmanager recap-prefetch path. Local
 reminders still use the explicit notification permission/schedule/cancel flow;
 the recap optimization is Android-only and is never a startup dependency.
 
+On macOS, reminder permission/status are read through the Darwin local
+notifications plugin. If access is denied, use the Profile settings action to
+open System Settings > Notifications; do not repeatedly request permission or
+route the macOS check through `permission_handler`.
+
 ## macOS
 ### Clean
 Clean Flutter artifacts and remove the native macOS build folder:

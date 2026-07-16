@@ -256,4 +256,39 @@ void main() {
       expect(backgroundSync.scheduledPrefetchNames, hasLength(2));
     },
   );
+
+  test(
+    'logout cancellation removes every reminder schedule for the user',
+    () async {
+      const userId = 'user-logout';
+      await db.insertReminderSetting(
+        ReminderSettingsCompanion.insert(
+          userId: userId,
+          type: const Value(ReminderType.dailyHabit),
+          isEnabled: const Value(true),
+          hour: const Value(7),
+          minute: const Value(0),
+        ),
+      );
+      await db.insertReminderSetting(
+        ReminderSettingsCompanion.insert(
+          userId: userId,
+          type: const Value(ReminderType.dailyHabit),
+          isEnabled: const Value(false),
+          hour: const Value(19),
+          minute: const Value(0),
+        ),
+      );
+
+      final actions = container.read(notificationActionsProvider);
+      await actions.cancelRemindersForUser(userId);
+
+      final settings = await db.getReminderSettings(
+        userId,
+        ReminderType.dailyHabit,
+      );
+      expect(reminders.canceledIds, hasLength(settings.length * 2));
+      expect(backgroundSync.canceledPrefetchNames, hasLength(settings.length));
+    },
+  );
 }

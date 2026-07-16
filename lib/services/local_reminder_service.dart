@@ -7,6 +7,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'dart:async';
+import 'dart:io' as io;
 import '../database/tables.dart';
 
 class LocalReminderService {
@@ -97,6 +98,20 @@ class LocalReminderService {
     await initialize();
     if (!_pluginAvailable) return false;
 
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      try {
+        return await _plugin
+                .resolvePlatformSpecificImplementation<
+                  MacOSFlutterLocalNotificationsPlugin
+                >()
+                ?.requestPermissions(alert: true, badge: true, sound: true) ??
+            false;
+      } catch (_) {
+        _pluginAvailable = false;
+        return false;
+      }
+    }
+
     final status = await Permission.notification.request();
     if (status.isGranted) {
       if (defaultTargetPlatform == TargetPlatform.android) {
@@ -129,11 +144,37 @@ class LocalReminderService {
 
   Future<bool> checkPermission() async {
     if (!supportsScheduling) return false;
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await initialize();
+      if (!_pluginAvailable || !_initialized) return false;
+      try {
+        final permissions = await _plugin
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >()
+            ?.checkPermissions();
+        return permissions?.isEnabled == true &&
+            permissions?.isAlertEnabled == true;
+      } catch (_) {
+        _pluginAvailable = false;
+        return false;
+      }
+    }
     final status = await Permission.notification.status;
     return status.isGranted;
   }
 
   Future<bool> openSettings() async {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      try {
+        final result = await io.Process.run('open', [
+          'x-apple.systempreferences:com.apple.preference.notifications',
+        ]);
+        return result.exitCode == 0;
+      } catch (_) {
+        return false;
+      }
+    }
     return await openAppSettings();
   }
 
