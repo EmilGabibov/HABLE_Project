@@ -17,4 +17,14 @@ void main() {
       expect(standardHabitForTitle('Reading')?.emoji, '📖');
     },
   );
+
+  test(
+    'habit title display adds standard emojis without duplicating custom ones',
+    () {
+      expect(habitTitleWithEmoji('Hydration'), '💧 Hydration');
+      expect(habitTitleWithEmoji('💧 Hydration'), '💧 Hydration');
+      expect(habitTitleWithEmoji('👩‍💻 Sketching'), '👩‍💻 Sketching');
+      expect(habitTitleWithEmoji('Evening Walk'), 'Evening Walk');
+    },
+  );
 }

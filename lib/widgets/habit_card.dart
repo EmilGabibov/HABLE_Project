@@ -183,6 +183,7 @@ class _HabitCardState extends State<HabitCard> {
     final habitDescription = habit.description?.trim().isNotEmpty == true
         ? habit.description!.trim()
         : standardHabitDescriptionForTitle(habit.title);
+    final displayTitle = habitTitleWithEmoji(habit.title);
     final habitColor = _hexToColor(habit.colorHex);
 
     final canLogProgress = widget.viewerRole != PartnershipRole.supporter;
@@ -201,12 +202,12 @@ class _HabitCardState extends State<HabitCard> {
 
     return HabitCardShell(
       semanticsLabel:
-          '${habit.title}.${habitDescription == null ? '' : ' $habitDescription.'} ${loc.habitDayProgress(widget.challengeDay, widget.targetDays)}. ${widget.isCompletedToday
+          '$displayTitle.${habitDescription == null ? '' : ' $habitDescription.'} ${loc.habitDayProgress(widget.challengeDay, widget.targetDays)}. ${widget.isCompletedToday
               ? loc.habitCompletedToday
               : widget.isSkippedToday
               ? loc.habitSkippedToday
               : loc.habitNotCompletedToday}${widget.recentNudge == null ? "" : " ${loc.habitNudgedBy(widget.recentNudge!.username)}."}',
-      title: habit.title,
+      title: displayTitle,
       subtitle: habitDescription,
       topTrailing: HabitPartnerRow(
         partners: widget.partners,

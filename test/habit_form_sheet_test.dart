@@ -178,6 +178,13 @@ void main() {
       find.byKey(const Key('habit-form-duration-value')),
     );
     expect(durationValue.data, '40 days');
+
+    await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
+    await tester.tap(find.byKey(const Key('habit-form-save')));
+    await tester.pumpAndSettle();
+
+    expect(actions.createdTitle, '💧 Hydration');
+    expect(actions.createdIsCustom, isFalse);
   });
 
   testWidgets('HabitFormSheet creates habit with selected partners', (

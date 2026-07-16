@@ -25,6 +25,8 @@ Sync the Hable email secrets from Doppler `hable/dev` into the Pages project:
 cd /Flutter/hable/backend && npm run sync:pages-secrets
 ```
 
+The sync script always requires the Hable email/runtime keys and also passes through optional Web Push keys when present in Doppler: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, and `PUSH_DISPATCH_TOKEN`. Omitting those optional keys leaves PWA push visibly unconfigured.
+
 ## Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash

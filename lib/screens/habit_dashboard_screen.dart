@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/daily_quote.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../data/standard_habits.dart';
 import '../theme/app_theme.dart';
 
 import '../database/database.dart';
@@ -309,9 +310,9 @@ class _DashboardSummaryCard extends StatelessWidget {
                       TextSpan(
                         text: '\n— ${quote.author}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.warmGray,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          color: AppTheme.warmGray,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                   ],
                 ),
@@ -610,7 +611,7 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
   void _handleSkip(BuildContext context, Habit habit) {
     SkipBottomSheet.show(
       context,
-      habitTitle: habit.title,
+      habitTitle: habitTitleWithEmoji(habit.title),
       onSkipConfirmed: (journalEntry) async {
         final db = ref.read(databaseProvider);
         final logId = const Uuid().v4();

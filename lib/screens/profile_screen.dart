@@ -1720,6 +1720,7 @@ class _FriendHabitListTile extends ConsumerWidget {
     final loc = AppLocalizations.of(context)!;
     final title =
         habitData['title'] as String? ?? loc.profileHabitFallbackTitle;
+    final displayTitle = habitTitleWithEmoji(title);
     final description = habitData['description'] as String?;
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
@@ -1737,8 +1738,8 @@ class _FriendHabitListTile extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: HabitCardShell(
         semanticsLabel:
-            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} $progressLabel. ${_roleLabel(loc, role)}. ${loc.profileFriendHabitBody}',
-        title: title,
+            '$displayTitle.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} $progressLabel. ${_roleLabel(loc, role)}. ${loc.profileFriendHabitBody}',
+        title: displayTitle,
         subtitle: description,
         minHeight: 220,
         centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
@@ -1948,14 +1949,15 @@ class _HabitListTile extends ConsumerWidget {
     final habitMeta = standardHabitForTitle(habit.title);
     final habitColor = _tileColor(habit.colorHex);
     final description = habit.description;
+    final displayTitle = habitTitleWithEmoji(habit.title);
 
     if (isActive) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: HabitCardShell(
           semanticsLabel:
-              '${habit.title}.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${loc.profileDaysLeft(habit.currentDuration)}. ${_roleLabel(loc, role)}.',
-          title: habit.title,
+              '$displayTitle.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${loc.profileDaysLeft(habit.currentDuration)}. ${_roleLabel(loc, role)}.',
+          title: displayTitle,
           subtitle: description,
           minHeight: 236,
           titleRightInset: canEdit ? 56 : 16,
@@ -2057,7 +2059,7 @@ class _HabitListTile extends ConsumerWidget {
         ),
       ),
       title: Text(
-        habit.title,
+        habitTitleWithEmoji(habit.title),
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Column(
@@ -2101,7 +2103,11 @@ class _HabitListTile extends ConsumerWidget {
                       context: context,
                       builder: (dialogContext) => AlertDialog(
                         title: Text(loc.profileDeleteHabitTitle),
-                        content: Text(loc.profileDeleteHabitBody(habit.title)),
+                        content: Text(
+                          loc.profileDeleteHabitBody(
+                            habitTitleWithEmoji(habit.title),
+                          ),
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () =>
@@ -2197,7 +2203,9 @@ class _HabitListTile extends ConsumerWidget {
               context: context,
               builder: (dialogContext) => AlertDialog(
                 title: Text(loc.profileDeleteHabitTitle),
-                content: Text(loc.profileDeleteHabitBody(habit.title)),
+                content: Text(
+                  loc.profileDeleteHabitBody(habitTitleWithEmoji(habit.title)),
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -2351,7 +2359,10 @@ class _HabitHistorySheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(habit.title, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              habitTitleWithEmoji(habit.title),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 4),
             Text(
               loc.profileHistoryIntro,

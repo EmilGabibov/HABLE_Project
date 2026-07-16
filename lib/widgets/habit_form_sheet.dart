@@ -240,7 +240,9 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     final persistedDescription = cleanDescription.isEmpty
         ? null
         : cleanDescription;
-    final persistedTitle = matchedPreset == null && _shouldPersistCustomEmoji
+    final persistedTitle = matchedPreset != null
+        ? habitTitleWithEmoji(matchedPreset.title)
+        : _shouldPersistCustomEmoji
         ? '${_selectedEmoji.trim()} $normalizedTitle'.trim()
         : normalizedTitle;
 

@@ -80,6 +80,19 @@ String stripLeadingHabitEmoji(String title) {
   return title.replaceFirst(_leadingHabitEmoji, '').trim();
 }
 
+/// Returns the single user-facing habit title shape used across Hable.
+///
+/// Custom habits already persist their emoji prefix in [title]. Standard habits
+/// may exist in old local data without that prefix, so display code normalizes
+/// them here instead of giving template and custom habits separate behavior.
+String habitTitleWithEmoji(String title) {
+  final cleanTitle = title.trim();
+  if (leadingHabitEmoji(cleanTitle) != null) return cleanTitle;
+  final standardHabit = standardHabitForTitle(cleanTitle);
+  if (standardHabit == null) return cleanTitle;
+  return '${standardHabit.emoji} ${standardHabit.title}';
+}
+
 String _normalizeHabitTitle(String title) {
   return stripLeadingHabitEmoji(title).toLowerCase();
 }

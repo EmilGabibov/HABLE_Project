@@ -143,6 +143,8 @@ void main() {
 
       final cardSize = tester.getSize(find.byType(HabitCardShell));
       expect(cardSize.height, lessThan(cardSize.width));
+      expect(find.text('💧 Hydration'), findsOneWidget);
+      expect(find.text('Hydration'), findsNothing);
       expect(
         find.textContaining('A deliberately long habit description'),
         findsOneWidget,

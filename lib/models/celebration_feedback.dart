@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/standard_habits.dart';
 import '../database/database.dart';
 import '../theme/app_theme.dart';
 
@@ -56,13 +57,14 @@ CompletionCelebrationSpec resolveCompletionCelebration({
   required bool sharedBonusEarned,
 }) {
   final habitColor = _parseHabitColor(habit.colorHex);
+  final displayTitle = habitTitleWithEmoji(habit.title);
   if (sharedBonusEarned && streakCount >= 7) {
     return CompletionCelebrationSpec(
       kind: CompletionCelebrationKind.sharedMilestone,
       kicker: 'Shared milestone',
       headline: 'Day $streakCount lands louder together.',
       supportingText:
-          'You completed ${habit.title} and matched your partner on a milestone streak.',
+          'You completed $displayTitle and matched your partner on a milestone streak.',
       backgroundColor: _blendHabitBackdrop(habitColor, AppTheme.deepCharcoal),
       accentColor: habitColor,
       particleCount: 24,
@@ -74,7 +76,7 @@ CompletionCelebrationSpec resolveCompletionCelebration({
       kicker: 'Joint completion',
       headline: 'You and your partner showed up today.',
       supportingText:
-          'Shared momentum makes ${habit.title} feel easier to repeat tomorrow.',
+          'Shared momentum makes $displayTitle feel easier to repeat tomorrow.',
       backgroundColor: _blendHabitBackdrop(habitColor, AppTheme.mutedLavender),
       accentColor: habitColor,
       particleCount: 12,
@@ -86,7 +88,7 @@ CompletionCelebrationSpec resolveCompletionCelebration({
       kicker: 'Streak day $streakCount',
       headline: 'The streak is getting real.',
       supportingText:
-          'You completed ${habit.title} and kept a meaningful run alive today.',
+          'You completed $displayTitle and kept a meaningful run alive today.',
       backgroundColor: _blendHabitBackdrop(habitColor, AppTheme.deepCharcoal),
       accentColor: habitColor,
       particleCount: 20,
@@ -95,7 +97,7 @@ CompletionCelebrationSpec resolveCompletionCelebration({
   return CompletionCelebrationSpec(
     kind: CompletionCelebrationKind.standard,
     headline: 'Great job!',
-    supportingText: 'You completed ${habit.title} today.',
+    supportingText: 'You completed $displayTitle today.',
     backgroundColor: habitColor,
     accentColor: Colors.white,
   );

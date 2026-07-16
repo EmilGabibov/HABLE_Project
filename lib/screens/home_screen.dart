@@ -599,10 +599,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(habit.emoji, style: const TextStyle(fontSize: 24)),
-                        const SizedBox(height: 6),
                         Text(
-                          habit.title,
+                          habitTitleWithEmoji(habit.title),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -809,7 +807,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Nudge queued for ${partner.username} on ${habit.title}.',
+              'Nudge queued for ${partner.username} on ${habitTitleWithEmoji(habit.title)}.',
             ),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Color(
@@ -966,7 +964,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
   void _handleSkip(BuildContext context, WidgetRef ref, Habit habit) {
     SkipBottomSheet.show(
       context,
-      habitTitle: habit.title,
+      habitTitle: habitTitleWithEmoji(habit.title),
       onSkipConfirmed: (journalEntry) async {
         final db = ref.read(databaseProvider);
         final logId = const Uuid().v4();
