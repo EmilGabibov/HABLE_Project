@@ -9,13 +9,14 @@ fi
 ANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS:-${ANDROID_SDK_ROOT:-}/build-tools/36.1.0}"
 APKSIGNER="${APKSIGNER:-$ANDROID_BUILD_TOOLS/apksigner}"
 APKANALYZER="${APKANALYZER:-$(command -v apkanalyzer || true)}"
+AAPT="${AAPT:-$ANDROID_BUILD_TOOLS/aapt}"
 
 if [[ ! -x "$APKSIGNER" ]]; then
   echo "apksigner not found; set APKSIGNER or ANDROID_BUILD_TOOLS." >&2
   exit 1
 fi
-if [[ -z "$APKANALYZER" || ! -x "$APKANALYZER" ]]; then
-  echo "apkanalyzer not found; set APKANALYZER to the Android SDK tool." >&2
+if [[ ( -z "$APKANALYZER" || ! -x "$APKANALYZER" ) && ! -x "$AAPT" ]]; then
+  echo "Neither apkanalyzer nor aapt was found; set APKANALYZER or ANDROID_BUILD_TOOLS." >&2
   exit 1
 fi
 
@@ -30,7 +31,11 @@ verify_artifact() {
     exit 1
   fi
 
-  application_id="$($APKANALYZER manifest application-id "$artifact")"
+  if [[ -n "$APKANALYZER" && -x "$APKANALYZER" ]]; then
+    application_id="$($APKANALYZER manifest application-id "$artifact")"
+  else
+    application_id="$($AAPT dump badging "$artifact" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1)"
+  fi
   if [[ "$application_id" != "$expected_application_id" ]]; then
     echo "Unexpected application id for $artifact: $application_id" >&2
     exit 1

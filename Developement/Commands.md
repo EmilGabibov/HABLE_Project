@@ -112,9 +112,12 @@ flutter build apk --release --flavor friend -t lib/main.dart \
 ```
 
 Production Android release builds fail closed when `android/key.properties`
-or its referenced keystore is missing. Inject the real values through the
-operator/CI secret store; never commit the file or keystore. After both APKs
-build, verify their certificate and flavor identities:
+or its referenced keystore is missing. For GitHub Actions, add both protected
+repository secrets: `ANDROID_KEY_PROPERTIES` (the complete properties file,
+with `storeFile=.signing/upload-keystore.jks`) and
+`ANDROID_KEYSTORE_BASE64` (the base64-encoded upload keystore). The workflow
+materializes them only for the protected job; never commit either file. After
+both APKs build, verify their certificate and flavor identities:
 ```bash
 scripts/verify_android_release_signing.sh \
   build/app/outputs/flutter-apk/app-primary-release.apk \
