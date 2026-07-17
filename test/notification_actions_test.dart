@@ -11,6 +11,7 @@ import 'package:hable/services/local_reminder_service.dart';
 
 class FakeLocalReminderService extends LocalReminderService {
   final List<int> scheduledIds = [];
+  final List<(int, int)> scheduledTimes = [];
   final List<int> canceledIds = [];
   bool permissionGranted = true;
 
@@ -35,6 +36,7 @@ class FakeLocalReminderService extends LocalReminderService {
     String? payload,
   }) async {
     scheduledIds.add(notificationId);
+    scheduledTimes.add((hour, minute));
   }
 
   @override
@@ -206,6 +208,56 @@ void main() {
           ),
         ),
       );
+    },
+  );
+
+  test(
+    'permission loss disables and cancels the previous reminder schedule',
+    () async {
+      const userId = 'user-permission-loss';
+      final actions = container.read(notificationActionsProvider);
+      await actions.addDailyReminder(userId: userId, hour: 8, minute: 30);
+      final setting = (await db.getReminderSettings(
+        userId,
+        ReminderType.dailyHabit,
+      )).single;
+
+      reminders.permissionGranted = false;
+      final result = await actions.updateDailyReminder(
+        setting: setting,
+        enabled: true,
+        hour: 9,
+        minute: 45,
+      );
+
+      expect(result, ReminderUpdateResult.denied);
+      expect(
+        reminders.canceledIds,
+        contains(
+          LocalReminderService.notificationIdForReminder(
+            ReminderType.dailyHabit,
+            setting.id,
+          ),
+        ),
+      );
+      expect(
+        backgroundSync.canceledPrefetchNames,
+        contains(
+          backgroundSync.uniquePrefetchName(
+            userId,
+            ReminderType.dailyHabit,
+            setting.id,
+          ),
+        ),
+      );
+      final stored = (await db.getReminderSettings(
+        userId,
+        ReminderType.dailyHabit,
+      )).single;
+      expect(stored.isEnabled, isFalse);
+      expect(stored.isPermissionDenied, isTrue);
+      expect(stored.hour, 9);
+      expect(stored.minute, 45);
     },
   );
 

@@ -169,6 +169,17 @@ class NotificationActions {
       if (!granted) {
         permissionDenied = true;
         enabled = false;
+        await _reminders.cancelReminderVariants(
+          notificationId: notificationId,
+          legacySlotNotificationId: legacySlotNotificationId,
+          userId: setting.userId,
+          type: ReminderType.dailyHabit,
+        );
+        await _backgroundSync.cancelReminderPrefetch(
+          userId: setting.userId,
+          type: ReminderType.dailyHabit,
+          reminderId: setting.id,
+        );
       } else {
         await _reminders.cancelReminderVariants(
           notificationId: notificationId,
