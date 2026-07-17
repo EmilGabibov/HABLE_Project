@@ -70,6 +70,13 @@ with commit, version, target/flavor, environment, toolchain, hash, and signing
 boundary.
 
 ## Build Android APKs
+Java 24+ requires the Gradle wrapper JVM to opt into native access. The tracked
+Android build/smoke scripts set this automatically. Before running direct local
+`flutter build apk` or `flutter build appbundle` commands, export:
+```bash
+export GRADLE_OPTS="${GRADLE_OPTS:-} --enable-native-access=ALL-UNNAMED"
+```
+
 Build the **primary** Android APK for local development:
 ```bash
 flutter build apk --debug --flavor primary -t lib/main.dart \

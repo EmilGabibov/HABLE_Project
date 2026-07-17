@@ -36,6 +36,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 command -v flutter >/dev/null || { echo "Flutter is not on PATH; install it or add it to PATH." >&2; exit 1; }
 
+# Java 24+ restricts Gradle's native-platform loader unless the wrapper JVM
+# explicitly opts in. Keep the option scoped to Android Gradle invocations.
+export GRADLE_OPTS="${GRADLE_OPTS:-} --enable-native-access=ALL-UNNAMED"
+
 echo "Building Android ${FLAVOR} App Bundle (${ENVIRONMENT})..."
 flutter build appbundle --release --obfuscate \
   --split-debug-info="build/app/outputs/symbols/${FLAVOR}" \

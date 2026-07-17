@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Java 24+ restricts Gradle's native-platform loader unless the wrapper JVM
+# explicitly opts in. Keep the option scoped to Android Gradle invocations.
+export GRADLE_OPTS="${GRADLE_OPTS:-} --enable-native-access=ALL-UNNAMED"
+
 echo "=== Cleaning build cache ==="
 flutter clean
 

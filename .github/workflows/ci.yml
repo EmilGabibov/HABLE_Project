@@ -60,6 +60,8 @@ jobs:
   android:
     name: Android ${{ matrix.flavor }} compile
     runs-on: ubuntu-latest
+    env:
+      GRADLE_OPTS: --enable-native-access=ALL-UNNAMED
     strategy:
       fail-fast: false
       matrix:
@@ -146,6 +148,8 @@ jobs:
     name: Android protected distribution
     if: ${{ github.event_name == 'push' && secrets.ANDROID_KEY_PROPERTIES != '' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     runs-on: ubuntu-latest
+    env:
+      GRADLE_OPTS: --enable-native-access=ALL-UNNAMED
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

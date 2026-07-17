@@ -76,6 +76,18 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 - **Evidence:** Record success/failure logs and artifact hashes for both flavors. Inspect both certificates with `apksigner`; a release APK signed by `Android Debug` is a failed distribution gate even when compilation succeeds.
 - **Signing gate:** `android/app/build.gradle.kts` never falls back to the debug certificate for release variants. Missing or incomplete `android/key.properties`, a missing referenced keystore, or invalid signing material must fail before packaging. The protected GitHub job requires `ANDROID_KEY_PROPERTIES` and `ANDROID_KEYSTORE_BASE64`, materializing the key at `android/.signing/upload-keystore.jks` only while it runs. Use `scripts/verify_android_release_signing.sh` for the non-debug certificate and `com.hable.app.primary`/`com.hable.app.friend` identity check.
 - **Built-in Kotlin audit (2026-07-16):** Both release flavors build successfully with AGP `9.2.1`, Kotlin `2.3.20`, and Gradle `9.6.1`, but Flutter still warns that `flutter_timezone 5.1.0` and `workmanager_android 0.9.0+2` apply KGP. `flutter pub outdated` reports no newer compatible releases, so `android.builtInKotlin` remains `false` and an upstream plugin report is required before enabling it.
+- **Gradle native access:** Keep `--enable-native-access=ALL-UNNAMED` in
+  `org.gradle.jvmargs` for the daemon and in `GRADLE_OPTS` for the wrapper JVM.
+  The tracked Android build/smoke scripts and Android CI jobs export the wrapper
+  option. For a direct local Flutter command on Java 24+, prefix it with
+  `GRADLE_OPTS="${GRADLE_OPTS:-} --enable-native-access=ALL-UNNAMED"`.
+  Generated `android/gradlew*` launchers remain ignored and must not be treated
+  as repository configuration.
+- **Explicit Android flavors:** Do not set Flutter's global `default-flavor` in
+  `pubspec.yaml`; it also affects macOS and causes Flutter to look for a
+  nonexistent `primary` Xcode scheme. Android build and smoke commands must
+  name `--flavor primary` or `--flavor friend`, after which Flutter must resolve
+  the matching `app-<flavor>-<mode>.apk` or bundle artifact.
 - **Local smoke note:** For local Wrangler testing keep `HABLE_APP_ENV=local` and use `HABLE_API_BASE_URL` only when the device cannot reach `127.0.0.1:8787` directly (for example Android emulator `10.0.2.2`).
 - **Portable Android tooling:** Keep `adb` on `PATH` or expose it through
   `ANDROID_HOME`/`ANDROID_SDK_ROOT`; use `scripts/build_android_release.sh`
