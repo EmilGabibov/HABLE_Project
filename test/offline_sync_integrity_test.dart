@@ -365,11 +365,13 @@ void main() {
       final habit = await db.getHabit('habit-1');
       expect(habit?.currentDuration, 4);
       expect(habit?.isSynced, isTrue);
-      final log = await db.getTodaysLog('habit-1');
-      expect(log?.logId, 'log-1');
-      expect(log?.status, LogStatus.completed);
-      expect(log?.pointsAwarded, 5);
-      expect(await db.watchLogsForHabit('habit-1').first, hasLength(1));
+      final logs = await db.watchLogsForHabit('habit-1').first;
+      expect(logs, hasLength(1));
+      final log = logs.single;
+      expect(log.logId, 'log-1');
+      expect(log.status, LogStatus.completed);
+      expect(log.pointsAwarded, 5);
+      expect(log.actionDate.toUtc(), DateTime.utc(2026, 7, 16, 9));
     },
   );
 
