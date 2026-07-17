@@ -18,7 +18,7 @@ dependencies:
   riverpod_annotation: ^4.0.3
 
   # Local Database (Offline-First)
-  drift: ^2.22.1
+  drift: ^2.34.2
   sqlite3_flutter_libs: ^0.6.0+eol
 
   # Background Sync & Connectivity
