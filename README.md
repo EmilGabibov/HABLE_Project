@@ -1,5 +1,11 @@
 # Hable
 
+<p align="center">
+  <img src="web/icons/Icon-512.png" alt="Hable logo" width="160" />
+</p>
+
+<p align="center"><strong>Warm, offline-first habit building with accountability.</strong></p>
+
 Hable is an offline-first habit tracker for building consistent routines with a little more warmth and accountability. It combines a Flutter client, local Drift storage, background synchronization, and a Cloudflare Pages/Worker backend for accounts and social features.
 
 <p align="center">
@@ -17,6 +23,35 @@ Hable is an offline-first habit tracker for building consistent routines with a 
   <img src="https://img.shields.io/badge/Human%20Supervised-No-red?style=for-the-badge" alt="Not Supervised by Human">
   <br>
 </p>
+
+[![CI](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml)
+[![Website](https://img.shields.io/badge/website-hable.pages.dev-0f766e?logo=cloudflare&logoColor=white)](https://hable.pages.dev)
+[![Android](https://img.shields.io/badge/available-Android-3ddc84?logo=android&logoColor=white)](#availability)
+[![macOS](https://img.shields.io/badge/available-macOS-111827?logo=apple&logoColor=white)](#availability)
+[![Web app](https://img.shields.io/badge/available-Web%20app-2563eb?logo=googlechrome&logoColor=white)](https://hable.pages.dev)
+[![Contributors](https://img.shields.io/github/contributors/EmilGabibov/HABLE_Project?label=contributors)](#contributors)
+[![Coded by AI agent](https://img.shields.io/badge/coded%20by-AI%20agent-7c3aed?logo=openai&logoColor=white)](#ai-authorship)
+[![Human supervision](https://img.shields.io/badge/human%20code%20supervision-none-dc2626)](#ai-authorship)
+
+## Availability
+
+Hable is currently available as an Android app, a macOS app, and a web app at
+[hable.pages.dev](https://hable.pages.dev).
+
+## Contributors
+
+Thanks to the people who have contributed to Hable:
+
+[![ettefagh](https://img.shields.io/badge/@ettefagh-181717?logo=github&logoColor=white)](https://github.com/ettefagh)
+[![AbdulMuhaiminKhan](https://img.shields.io/badge/@AbdulMuhaiminKhan-181717?logo=github&logoColor=white)](https://github.com/AbdulMuhaiminKhan)
+[![EmilGabibov](https://img.shields.io/badge/@EmilGabibov-181717?logo=github&logoColor=white)](https://github.com/EmilGabibov)
+[![NabielImtiyaz](https://img.shields.io/badge/@NabielImtiyaz-181717?logo=github&logoColor=white)](https://github.com/NabielImtiyaz)
+
+## AI authorship
+
+This repository is coded by an AI agent. The code is not human-supervised;
+reviewers should validate behavior, security, dependencies, and deployment
+configuration before using it in production.
 
 ## Hable at a glance
 

@@ -1,0 +1,1761 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-17",
+  "language": {
+    "code": "fa",
+    "name": "Persian",
+    "displayName": "فارسی"
+  },
+  "source": {
+    "template": "lib/l10n/app_en.arb",
+    "locale": "lib/l10n/app_fa.arb",
+    "codeScanRoot": "lib/"
+  },
+  "coverageDefinition": "An ARB string is counted as covered only when the Persian value differs from the English template. Hardcoded entries are always uncovered because they bypass AppLocalizations.",
+  "metrics": {
+    "arbStrings": 375,
+    "translatedArbStrings": 97,
+    "uncoveredArbStrings": 278,
+    "arbCoveragePercent": 25.9,
+    "targetCoveragePercent": 60,
+    "additionalArbTranslationsNeeded": 128,
+    "hardcodedUserFacingEntries": 43
+  },
+  "uncoveredArbByCategory": {
+    "app": 5,
+    "skip": 4,
+    "mud": 4,
+    "social": 46,
+    "partner": 21,
+    "habit": 34,
+    "home": 12,
+    "profile": 71,
+    "dashboard": 11,
+    "notification": 12,
+    "settings": 39,
+    "common": 7,
+    "leaderboard": 7,
+    "accessibility": 5
+  },
+  "uncoveredArbStrings": [
+    {
+      "key": "appGateRestoredLocalSession",
+      "english": "Restored local session on macOS.",
+      "category": "app"
+    },
+    {
+      "key": "appGateUpdatingHable",
+      "english": "Updating Hable...",
+      "category": "app"
+    },
+    {
+      "key": "appGateRestoringSession",
+      "english": "Restoring session...",
+      "category": "app"
+    },
+    {
+      "key": "appGatePreparingHabits",
+      "english": "Preparing your habits...",
+      "category": "app"
+    },
+    {
+      "key": "appGateLoadingProfileState",
+      "english": "Loading profile state...",
+      "category": "app"
+    },
+    {
+      "key": "skipSheetTitle",
+      "english": "Skipping \"{habitTitle}\"",
+      "category": "skip"
+    },
+    {
+      "key": "skipSheetBody",
+      "english": "This will add +2 days to your journey. Write a quick journal entry to continue.",
+      "category": "skip"
+    },
+    {
+      "key": "skipSheetHint",
+      "english": "Why are you skipping today?",
+      "category": "skip"
+    },
+    {
+      "key": "skipSheetConfirm",
+      "english": "Confirm Skip",
+      "category": "skip"
+    },
+    {
+      "key": "mudCompleteHabitLabel",
+      "english": "Complete Habit",
+      "category": "mud"
+    },
+    {
+      "key": "mudLongPressHint",
+      "english": "Long press to complete",
+      "category": "mud"
+    },
+    {
+      "key": "mudDone",
+      "english": "Done!",
+      "category": "mud"
+    },
+    {
+      "key": "mudHoldToComplete",
+      "english": "Hold to Complete",
+      "category": "mud"
+    },
+    {
+      "key": "socialSyncNow",
+      "english": "Sync now",
+      "category": "social"
+    },
+    {
+      "key": "socialFindFriends",
+      "english": "Find friends",
+      "category": "social"
+    },
+    {
+      "key": "partnerSectionTitle",
+      "english": "Partners",
+      "category": "partner"
+    },
+    {
+      "key": "partnerTickerStateNotCompletedYet",
+      "english": "not completed yet",
+      "category": "partner"
+    },
+    {
+      "key": "partnerTickerProfileSemantics",
+      "english": "{name}, {state}. Opens profile.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerNoPartnersYet",
+      "english": "No partners on this habit yet.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerNoPartnersShort",
+      "english": "No partners",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStackCollapsedSemantics",
+      "english": "Partner stack. {count} total. Long press to expand partner states.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerExpandedSemantics",
+      "english": "Expanded partner states. Tap to collapse. Each row shows completion, pending, or nudged state.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerTapToCollapse",
+      "english": "Tap to collapse",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStateCompleted",
+      "english": "completed",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStateNudged",
+      "english": "nudged",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStateSupporter",
+      "english": "supporter",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStatePending",
+      "english": "pending",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStateCompletedToday",
+      "english": "completed today",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStateSupporting",
+      "english": "supporting",
+      "category": "partner"
+    },
+    {
+      "key": "partnerStatusSemantics",
+      "english": "{name} status {state}",
+      "category": "partner"
+    },
+    {
+      "key": "partnerRoleOwner",
+      "english": "owner",
+      "category": "partner"
+    },
+    {
+      "key": "partnerRolePartner",
+      "english": "partner",
+      "category": "partner"
+    },
+    {
+      "key": "partnerRoleSupporter",
+      "english": "supporter",
+      "category": "partner"
+    },
+    {
+      "key": "partnerProfileSemantics",
+      "english": "{name}, {role}, {state}. Opens profile.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerNudgeSemantics",
+      "english": "Nudge {name} on this habit.",
+      "category": "partner"
+    },
+    {
+      "key": "partnerNudgeTooltip",
+      "english": "Nudge {name}",
+      "category": "partner"
+    },
+    {
+      "key": "habitFormChooseIconTitle",
+      "english": "Choose an icon",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormChooseIconBody",
+      "english": "Custom habits can keep this icon with the title.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormSaveFailed",
+      "english": "That habit did not stick yet. Please try again.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormPresetDescriptionFallback",
+      "english": "Name the behavior clearly so future you can understand it at a glance.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormCreateButton",
+      "english": "Create habit",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormSaveChangesButton",
+      "english": "Save changes",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormCreateTitle",
+      "english": "Build a habit worth repeating",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormEditTitle",
+      "english": "Refine this habit",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormCreateBody",
+      "english": "Pick a name, choose a finite challenge length, and start cleanly.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormEditBody",
+      "english": "Adjust the title, timeline, and color without resetting your progress.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNameLabel",
+      "english": "Habit name",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNameHint",
+      "english": "Morning pages, no phone after 10, daily walk...",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNameHelper",
+      "english": "Tap the icon to the left to personalize custom habits.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNameErrorEmpty",
+      "english": "Give this habit a clear name.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNameErrorShort",
+      "english": "Use at least 3 characters.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormPresetTitle",
+      "english": "Start from a proven pattern",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormPresetBody",
+      "english": "Pick a template to preload the title, duration, color, and cue copy.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDescriptionTitle",
+      "english": "Description",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDescriptionBody",
+      "english": "Use one or two lines to make the habit specific enough to repeat on rough days.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDescriptionHelper",
+      "english": "This can surface on the primary habit card.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDescriptionErrorLong",
+      "english": "Keep the description under 160 characters.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDurationTitle",
+      "english": "Duration",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDurationBody",
+      "english": "Default is 21 days. Use anchors for the usual milestones or slide for any finite plan.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDurationChip",
+      "english": "{days} days",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormCustomDaysLabel",
+      "english": "Custom number of days",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDurationErrorInvalid",
+      "english": "Enter a number of days.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormDurationErrorMin",
+      "english": "Duration must be at least 1 day.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormColorTitle",
+      "english": "Ring color",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormColorBody",
+      "english": "Choose the color this habit will carry across its card and celebrations.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormPartnersTitle",
+      "english": "Invite partners",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormPartnersBody",
+      "english": "Shared habits can start with friends who already follow you.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormNoFriends",
+      "english": "No friends found. Add friends from the Social tab first.",
+      "category": "habit"
+    },
+    {
+      "key": "habitFormFriendsLoadFailed",
+      "english": "Hable could not load your friend list right now.",
+      "category": "habit"
+    },
+    {
+      "key": "homeCreateHabitSemantics",
+      "english": "Create a new habit",
+      "category": "home"
+    },
+    {
+      "key": "homeCreateHabitCta",
+      "english": "Habit",
+      "category": "home"
+    },
+    {
+      "key": "homeLoadFailed",
+      "english": "Hable could not load today's habits right now.",
+      "category": "home"
+    },
+    {
+      "key": "homeFriendFallback",
+      "english": "Friend",
+      "category": "home"
+    },
+    {
+      "key": "homeOpenDashboard",
+      "english": "Open dashboard",
+      "category": "home"
+    },
+    {
+      "key": "homeOpenNotifications",
+      "english": "Open notifications",
+      "category": "home"
+    },
+    {
+      "key": "homeNoHabits",
+      "english": "No active habits yet.\nStart one from Home.",
+      "category": "home"
+    },
+    {
+      "key": "homeAddHabit",
+      "english": "Add habit",
+      "category": "home"
+    },
+    {
+      "key": "homeGreetingMorning",
+      "english": "Good morning",
+      "category": "home"
+    },
+    {
+      "key": "homeGreetingAfternoon",
+      "english": "Good afternoon",
+      "category": "home"
+    },
+    {
+      "key": "homeGreetingEvening",
+      "english": "Good evening",
+      "category": "home"
+    },
+    {
+      "key": "homeSuggestedHabits",
+      "english": "Suggested Habits",
+      "category": "home"
+    },
+    {
+      "key": "profileBack",
+      "english": "Back",
+      "category": "profile"
+    },
+    {
+      "key": "profileTitle",
+      "english": "Profile",
+      "category": "profile"
+    },
+    {
+      "key": "profileOpenSettings",
+      "english": "Open settings",
+      "category": "profile"
+    },
+    {
+      "key": "profileUserFallback",
+      "english": "User",
+      "category": "profile"
+    },
+    {
+      "key": "profileUsernameFallback",
+      "english": "user",
+      "category": "profile"
+    },
+    {
+      "key": "profileLevelFallback",
+      "english": "Newbie",
+      "category": "profile"
+    },
+    {
+      "key": "profileLifetimePoints",
+      "english": "{points} lifetime pts",
+      "category": "profile"
+    },
+    {
+      "key": "profileLifetimeScoreHint",
+      "english": "Lifetime score comes from backend sync. Journey and history show per-check-in awards.",
+      "category": "profile"
+    },
+    {
+      "key": "profileTrophyRoomTab",
+      "english": "Trophy Room",
+      "category": "profile"
+    },
+    {
+      "key": "profileJourneyTab",
+      "english": "Journey",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementsTitle",
+      "english": "Achievements",
+      "category": "profile"
+    },
+    {
+      "key": "profileFirstBadgeHint",
+      "english": "Complete a habit to earn your first badge!",
+      "category": "profile"
+    },
+    {
+      "key": "profileHabitDistributionTitle",
+      "english": "Habit Distribution",
+      "category": "profile"
+    },
+    {
+      "key": "profileNoData",
+      "english": "No data yet",
+      "category": "profile"
+    },
+    {
+      "key": "profileCompletedLegend",
+      "english": "Completed",
+      "category": "profile"
+    },
+    {
+      "key": "profileSkippedLegend",
+      "english": "Skipped",
+      "category": "profile"
+    },
+    {
+      "key": "profileOverdueLegend",
+      "english": "Overdue",
+      "category": "profile"
+    },
+    {
+      "key": "profileThirtyDayPointsTitle",
+      "english": "30-Day Points Earned",
+      "category": "profile"
+    },
+    {
+      "key": "profileThirtyDayPointsHint",
+      "english": "Per-check-in awards from local history. Lifetime score updates separately from daily sync.",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarSubscriptionTitle",
+      "english": "Calendar Subscription",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarSubscriptionBody",
+      "english": "Add your habits to your native calendar app",
+      "category": "profile"
+    },
+    {
+      "key": "profileManageHabitsTitle",
+      "english": "Manage Habits",
+      "category": "profile"
+    },
+    {
+      "key": "profileAddNew",
+      "english": "Add New",
+      "category": "profile"
+    },
+    {
+      "key": "profileSectionActive",
+      "english": "Active",
+      "category": "profile"
+    },
+    {
+      "key": "profileSectionHallOfFame",
+      "english": "Hall of Fame",
+      "category": "profile"
+    },
+    {
+      "key": "profileSectionArchivedHistory",
+      "english": "Archived history",
+      "category": "profile"
+    },
+    {
+      "key": "profileFriendProfileTitle",
+      "english": "Friend Profile",
+      "category": "profile"
+    },
+    {
+      "key": "profileFriendLevel",
+      "english": "{level} level",
+      "category": "profile"
+    },
+    {
+      "key": "profileActiveHabitsTitle",
+      "english": "Active Habits",
+      "category": "profile"
+    },
+    {
+      "key": "profileNoActiveHabits",
+      "english": "No active habits.",
+      "category": "profile"
+    },
+    {
+      "key": "profileFriendLoadFailed",
+      "english": "Failed to load friend profile.",
+      "category": "profile"
+    },
+    {
+      "key": "dashboardTitle",
+      "english": "Habit Dashboard",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardAchievementUnlocked",
+      "english": "You unlocked a new badge!",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardLoadFailed",
+      "english": "Hable could not load this habit dashboard right now.",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardEmptyState",
+      "english": "No active habits yet. Create one from Home to see it here.",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardSummaryTitle",
+      "english": "Dashboard Summary",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardActiveHabitsLabel",
+      "english": "Active habits",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardChallengeHabitsLabel",
+      "english": "Challenge habits",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardContinuousHabitsLabel",
+      "english": "Continuous habits",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardQuoteOfDayTitle",
+      "english": "Quote of the day",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardQuoteLoading",
+      "english": "Loading quote...",
+      "category": "dashboard"
+    },
+    {
+      "key": "dashboardQuoteFallback",
+      "english": "Keep going. The dashboard is here when you need the full field view.",
+      "category": "dashboard"
+    },
+    {
+      "key": "notificationTitle",
+      "english": "Notifications",
+      "category": "notification"
+    },
+    {
+      "key": "notificationMarkAllRead",
+      "english": "Mark all read",
+      "category": "notification"
+    },
+    {
+      "key": "notificationEmptyTitle",
+      "english": "No notifications yet",
+      "category": "notification"
+    },
+    {
+      "key": "notificationEmptyBody",
+      "english": "Friend requests, invites, nudges, and reminder updates will appear here.",
+      "category": "notification"
+    },
+    {
+      "key": "notificationToday",
+      "english": "Today",
+      "category": "notification"
+    },
+    {
+      "key": "notificationYesterday",
+      "english": "Yesterday",
+      "category": "notification"
+    },
+    {
+      "key": "notificationOlder",
+      "english": "Older",
+      "category": "notification"
+    },
+    {
+      "key": "notificationLoadFailed",
+      "english": "Hable could not load your notifications right now.",
+      "category": "notification"
+    },
+    {
+      "key": "notificationJustNow",
+      "english": "Just now",
+      "category": "notification"
+    },
+    {
+      "key": "notificationMinutesAgo",
+      "english": "{minutes}m ago",
+      "category": "notification"
+    },
+    {
+      "key": "notificationHoursAgo",
+      "english": "{hours}h ago",
+      "category": "notification"
+    },
+    {
+      "key": "notificationDaysAgo",
+      "english": "{days}d ago",
+      "category": "notification"
+    },
+    {
+      "key": "settingsSessionTitle",
+      "english": "Session",
+      "category": "settings"
+    },
+    {
+      "key": "settingsSessionBody",
+      "english": "Sign out of this device. Local reminder scheduling is canceled for this user.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRecoverTitle",
+      "english": "Recover This Device",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRecoverBody",
+      "english": "This clears local Hable data on this device and sends you back to login. Use it if the app is stuck or showing old cached state.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCancel",
+      "english": "Cancel",
+      "category": "settings"
+    },
+    {
+      "key": "settingsClearAndSignInAgain",
+      "english": "Clear and Sign In Again",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRecoverAction",
+      "english": "Update / Recover App",
+      "category": "settings"
+    },
+    {
+      "key": "settingsSignOut",
+      "english": "Sign out",
+      "category": "settings"
+    },
+    {
+      "key": "commonAccept",
+      "english": "Accept",
+      "category": "common"
+    },
+    {
+      "key": "commonDecline",
+      "english": "Decline",
+      "category": "common"
+    },
+    {
+      "key": "commonEdit",
+      "english": "Edit",
+      "category": "common"
+    },
+    {
+      "key": "commonDelete",
+      "english": "Delete",
+      "category": "common"
+    },
+    {
+      "key": "commonRemove",
+      "english": "Remove",
+      "category": "common"
+    },
+    {
+      "key": "commonRetry",
+      "english": "Retry",
+      "category": "common"
+    },
+    {
+      "key": "commonYou",
+      "english": "You",
+      "category": "common"
+    },
+    {
+      "key": "socialActivityUnread",
+      "english": "Unread",
+      "category": "social"
+    },
+    {
+      "key": "socialActivityEarlier",
+      "english": "Earlier",
+      "category": "social"
+    },
+    {
+      "key": "socialSearchFailed",
+      "english": "Hable could not search for friends just now. Please try again.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestSendFailed",
+      "english": "Hable could not send that friend request just now.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestAcceptFailed",
+      "english": "Hable could not accept that request right now.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestDeclineFailed",
+      "english": "Hable could not decline that request right now.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRevokeFailed",
+      "english": "Hable could not update that friendship right now.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestAlreadyFriends",
+      "english": "You are already friends with {username}.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestIncomingExists",
+      "english": "{username} already sent you a request. Check Requests.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestSent",
+      "english": "Friend request sent to {username}.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendAccepted",
+      "english": "You are now friends with {username}!",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendDeclined",
+      "english": "Declined request from {username}.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRemoved",
+      "english": "Removed {username} from friends.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendActionsUnfriend",
+      "english": "Unfriend",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendActionsRemoveTitle",
+      "english": "Remove friend?",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendActionsRemoveBody",
+      "english": "Remove {username} from your friends list?",
+      "category": "social"
+    },
+    {
+      "key": "socialNoFriendsTitle",
+      "english": "No friends yet",
+      "category": "social"
+    },
+    {
+      "key": "socialNoFriendsBody",
+      "english": "Tap the search icon above to find and add friends.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendLongPressActions",
+      "english": "Long-press for actions",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendsLoadFailed",
+      "english": "Hable could not load your friends right now.",
+      "category": "social"
+    },
+    {
+      "key": "socialNotSignedIn",
+      "english": "Not signed in",
+      "category": "social"
+    },
+    {
+      "key": "socialNoActivityTitle",
+      "english": "No activity yet",
+      "category": "social"
+    },
+    {
+      "key": "socialNoActivityBody",
+      "english": "Nudges, friend requests, invites, and messages from friends will appear here.",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardEmpty",
+      "english": "No leaderboard scores yet.",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardNoValidScores",
+      "english": "No valid leaderboard scores found.",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardTitle",
+      "english": "Friends Leaderboard",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardSubtitle",
+      "english": "Accepted friends ranked by lifetime score",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardScopeFriends",
+      "english": "Friends",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardLoadTitle",
+      "english": "Could not load leaderboard",
+      "category": "social"
+    },
+    {
+      "key": "socialLeaderboardLoadFailed",
+      "english": "Hable could not load the leaderboard right now.",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestsTitle",
+      "english": "Friend Requests",
+      "category": "social"
+    },
+    {
+      "key": "socialFriendRequestIncomingSubtitle",
+      "english": "Sent you a friend request",
+      "category": "social"
+    },
+    {
+      "key": "socialFindFriendsTitle",
+      "english": "Find Friends",
+      "category": "social"
+    },
+    {
+      "key": "socialFindFriendsSearchLabel",
+      "english": "Search username...",
+      "category": "social"
+    },
+    {
+      "key": "socialFindFriendsTypeMore",
+      "english": "Type at least 2 characters to search.",
+      "category": "social"
+    },
+    {
+      "key": "socialFindFriendsNoMatches",
+      "english": "No matches found.",
+      "category": "social"
+    },
+    {
+      "key": "socialRelationshipAcceptedFriend",
+      "english": "Accepted friend",
+      "category": "social"
+    },
+    {
+      "key": "socialRelationshipRequestSent",
+      "english": "Request sent",
+      "category": "social"
+    },
+    {
+      "key": "socialRelationshipWaiting",
+      "english": "Waiting for your response",
+      "category": "social"
+    },
+    {
+      "key": "socialRelationshipNotConnected",
+      "english": "Not connected",
+      "category": "social"
+    },
+    {
+      "key": "socialChipFriends",
+      "english": "Friends",
+      "category": "social"
+    },
+    {
+      "key": "socialChipRequested",
+      "english": "Requested",
+      "category": "social"
+    },
+    {
+      "key": "socialChipRespondInFriends",
+      "english": "Respond in Friends",
+      "category": "social"
+    },
+    {
+      "key": "socialSendFriendRequestTooltip",
+      "english": "Send friend request",
+      "category": "social"
+    },
+    {
+      "key": "habitCompletionProgressSemantics",
+      "english": "Completion progress {percent} percent.",
+      "category": "habit"
+    },
+    {
+      "key": "leaderboardRankingsTitle",
+      "english": "Rankings",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardShowMore",
+      "english": "Show {count} more",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardShowingAll",
+      "english": "Showing all {count}",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardYou",
+      "english": "You",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardUnknownUser",
+      "english": "Unknown",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardLifetime",
+      "english": "lifetime",
+      "category": "leaderboard"
+    },
+    {
+      "key": "leaderboardLifetimeScoreByline",
+      "english": "Lifetime score",
+      "category": "leaderboard"
+    },
+    {
+      "key": "settingsNoVerifiedEmailYet",
+      "english": "No verified email yet",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCustomizeAvatar",
+      "english": "Customize avatar",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudFeelTitle",
+      "english": "Mud feel",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudFeelBody",
+      "english": "Tune hold resistance and haptic feedback on this device with bounded presets.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudPresetGentle",
+      "english": "Gentle",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudPresetStandard",
+      "english": "Standard",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudPresetIntense",
+      "english": "Intense",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudHapticsTitle",
+      "english": "Mud haptics",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudHapticsSoft",
+      "english": "Soft taps during hold and a light completion pulse.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudHapticsStandard",
+      "english": "Balanced hold taps and standard completion feedback.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsMudHapticsStrong",
+      "english": "Heavier completion feedback with denser hold taps.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsVerificationPinSent",
+      "english": "Verification PIN sent.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCloudSyncActivated",
+      "english": "Cloud sync activated.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCloudSyncActiveTitle",
+      "english": "Cloud sync active",
+      "category": "settings"
+    },
+    {
+      "key": "settingsActivateCloudSyncTitle",
+      "english": "Activate cloud sync",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCloudSyncLinkedToEmail",
+      "english": "Progress recovery is linked to {email}.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsCloudSyncInactiveBody",
+      "english": "Add a verified email when you want recoverable cloud progress and password reset support.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsChangeEmail",
+      "english": "Change email",
+      "category": "settings"
+    },
+    {
+      "key": "settingsDailyRemindersTitle",
+      "english": "Daily reminders",
+      "category": "settings"
+    },
+    {
+      "key": "settingsDailyRemindersEmpty",
+      "english": "Enable daily reminders to return to your habits.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsDailyRemindersEnabled",
+      "english": "Hable will remind you each day at these times.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsEnableInSystemSettings",
+      "english": "Enable in System Settings",
+      "category": "settings"
+    },
+    {
+      "key": "settingsAddTime",
+      "english": "Add Time",
+      "category": "settings"
+    },
+    {
+      "key": "settingsStatusActive",
+      "english": "Active",
+      "category": "settings"
+    },
+    {
+      "key": "settingsStatusSaved",
+      "english": "Saved",
+      "category": "settings"
+    },
+    {
+      "key": "settingsStatusOn",
+      "english": "On",
+      "category": "settings"
+    },
+    {
+      "key": "settingsStatusOff",
+      "english": "Off",
+      "category": "settings"
+    },
+    {
+      "key": "settingsReminderUnsupported",
+      "english": "Reminder scheduling is not available on this platform.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRemindersBlocked",
+      "english": "Notifications are blocked. Enable them in System Settings.",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRemoveReminderTooltip",
+      "english": "Remove reminder",
+      "category": "settings"
+    },
+    {
+      "key": "settingsRemindersLoadFailed",
+      "english": "Hable could not load your reminders right now.",
+      "category": "settings"
+    },
+    {
+      "key": "profileHabitFallbackTitle",
+      "english": "Habit",
+      "category": "profile"
+    },
+    {
+      "key": "profileDaysLabel",
+      "english": "{days} days",
+      "category": "profile"
+    },
+    {
+      "key": "profileDaysLeft",
+      "english": "{days} days left",
+      "category": "profile"
+    },
+    {
+      "key": "profileDayChallenge",
+      "english": "{days} day challenge",
+      "category": "profile"
+    },
+    {
+      "key": "profileFriendHabitBody",
+      "english": "Encourage your friend or follow the same habit yourself.",
+      "category": "profile"
+    },
+    {
+      "key": "profileEncouragementQueued",
+      "english": "Encouragement queued for {title}.",
+      "category": "profile"
+    },
+    {
+      "key": "profileEncourage",
+      "english": "Encourage",
+      "category": "profile"
+    },
+    {
+      "key": "profileFollow",
+      "english": "Follow",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementFirstCheckIn",
+      "english": "First check-in",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementTenStreak",
+      "english": "10-day streak",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementHundredStreak",
+      "english": "100-day streak",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementThousandStreak",
+      "english": "1000-day streak",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementFirstNudge",
+      "english": "First nudge",
+      "category": "profile"
+    },
+    {
+      "key": "profileAchievementFirstSupporter",
+      "english": "First supporter",
+      "category": "profile"
+    },
+    {
+      "key": "profileSharedHabit",
+      "english": "Shared habit",
+      "category": "profile"
+    },
+    {
+      "key": "profileSoloHabit",
+      "english": "Solo habit",
+      "category": "profile"
+    },
+    {
+      "key": "profileOpenHabitActions",
+      "english": "Open habit actions",
+      "category": "profile"
+    },
+    {
+      "key": "profileDeleteHabitTitle",
+      "english": "Delete habit?",
+      "category": "profile"
+    },
+    {
+      "key": "profileDeleteHabitBody",
+      "english": "This will permanently delete \"{title}\" and remove it from synced devices.",
+      "category": "profile"
+    },
+    {
+      "key": "profileArchive",
+      "english": "Archive",
+      "category": "profile"
+    },
+    {
+      "key": "profileViewHistory",
+      "english": "View History",
+      "category": "profile"
+    },
+    {
+      "key": "profileRerun",
+      "english": "Rerun",
+      "category": "profile"
+    },
+    {
+      "key": "profileRoleOwnerView",
+      "english": "Owner view",
+      "category": "profile"
+    },
+    {
+      "key": "profileRolePartnerView",
+      "english": "Partner view",
+      "category": "profile"
+    },
+    {
+      "key": "profileRoleSupporterView",
+      "english": "Supporter view",
+      "category": "profile"
+    },
+    {
+      "key": "profileHistoryIntro",
+      "english": "Archived challenge history and per-check-in awards",
+      "category": "profile"
+    },
+    {
+      "key": "profileNoHistoryYet",
+      "english": "No history recorded yet.",
+      "category": "profile"
+    },
+    {
+      "key": "profilePointsAwarded",
+      "english": "+{points} pts",
+      "category": "profile"
+    },
+    {
+      "key": "profileUnableLoadHistory",
+      "english": "Unable to load habit history.",
+      "category": "profile"
+    },
+    {
+      "key": "profileHistoryCompleted",
+      "english": "Completed",
+      "category": "profile"
+    },
+    {
+      "key": "profileHistorySkippedWithNote",
+      "english": "Skipped: {note}",
+      "category": "profile"
+    },
+    {
+      "key": "profileHistorySkipped",
+      "english": "Skipped",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarUnknownError",
+      "english": "Unknown error",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarGenerateLink",
+      "english": "Generate Subscription Link",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarSubscriptionUrl",
+      "english": "Subscription URL",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarCopied",
+      "english": "Calendar feed URL copied to clipboard",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarCopyTooltip",
+      "english": "Copy subscription URL",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarPasteHint",
+      "english": "Paste this URL into your native calendar app to subscribe",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarRotateToken",
+      "english": "Rotate Token",
+      "category": "profile"
+    },
+    {
+      "key": "profileCalendarRotateHint",
+      "english": "Rotating the token will invalidate the old subscription link",
+      "category": "profile"
+    },
+    {
+      "key": "accessibilityReducedMotionTitle",
+      "english": "Reduced Motion",
+      "category": "accessibility"
+    },
+    {
+      "key": "accessibilityReducedMotionBody",
+      "english": "Disable animations and transitions",
+      "category": "accessibility"
+    },
+    {
+      "key": "accessibilityHighContrastTitle",
+      "english": "High Contrast",
+      "category": "accessibility"
+    },
+    {
+      "key": "accessibilityHighContrastBody",
+      "english": "Increase color contrast for better readability",
+      "category": "accessibility"
+    },
+    {
+      "key": "accessibilityLargerTextTitle",
+      "english": "Larger Text",
+      "category": "accessibility"
+    }
+  ],
+  "hardcodedUserFacingStrings": [
+    {
+      "file": "lib/widgets/avatar_picker_sheet.dart",
+      "line": 61,
+      "surface": "avatar picker",
+      "text": "Avatar updated successfully",
+      "reason": "SnackBar literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/achievement_share_card.dart",
+      "line": 87,
+      "surface": "achievement sharing",
+      "text": "Failed to share: {error}",
+      "reason": "SnackBar literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/achievement_share_card.dart",
+      "line": 110,
+      "surface": "achievement sharing",
+      "text": "Share Achievement",
+      "reason": "Dialog title literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/calendar_subscription_card.dart",
+      "line": 128,
+      "surface": "calendar subscription",
+      "text": "Refresh",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/calendar_subscription_card.dart",
+      "line": 140,
+      "surface": "calendar subscription",
+      "text": "Rotate Token?",
+      "reason": "Dialog title literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/calendar_subscription_card.dart",
+      "line": 147,
+      "surface": "calendar subscription",
+      "text": "Cancel",
+      "reason": "Dialog button literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/calendar_subscription_card.dart",
+      "line": 156,
+      "surface": "calendar subscription",
+      "text": "Rotate",
+      "reason": "Dialog button literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/widgets/calendar_subscription_card.dart",
+      "line": 162,
+      "surface": "calendar subscription",
+      "text": "Rotate Token",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/services/sync_service.dart",
+      "line": 583,
+      "surface": "notifications",
+      "text": "New friend connected",
+      "reason": "Notification title is stored in English"
+    },
+    {
+      "file": "lib/services/sync_service.dart",
+      "line": 756,
+      "surface": "notifications",
+      "text": "You were nudged",
+      "reason": "Notification title is stored in English"
+    },
+    {
+      "file": "lib/services/sync_service.dart",
+      "line": 794,
+      "surface": "notifications",
+      "text": "New private message",
+      "reason": "Notification title is stored in English"
+    },
+    {
+      "file": "lib/services/sync_service.dart",
+      "line": 837,
+      "surface": "notifications",
+      "text": "Habit invite",
+      "reason": "Notification title is stored in English"
+    },
+    {
+      "file": "lib/services/sync_service.dart",
+      "line": 883,
+      "surface": "notifications",
+      "text": "Friend request",
+      "reason": "Notification title is stored in English"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 22,
+      "surface": "standard habits",
+      "text": "Hydration — Drink 8 glasses of water daily",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 28,
+      "surface": "standard habits",
+      "text": "Reading — Read for 20 minutes every day",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 34,
+      "surface": "standard habits",
+      "text": "Meditation — 10 minutes of mindfulness",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 40,
+      "surface": "standard habits",
+      "text": "Exercise — 30 minutes of movement",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 46,
+      "surface": "standard habits",
+      "text": "Sleep Routine — In bed by 10:30 PM",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/data/standard_habits.dart",
+      "line": 52,
+      "surface": "standard habits",
+      "text": "Journaling — Write 3 things you're grateful for",
+      "reason": "Preset title/subtitle literals bypass AppLocalizations"
+    },
+    {
+      "file": "lib/models/celebration_feedback.dart",
+      "line": 113,
+      "surface": "completion feedback",
+      "text": "Start the next chapter",
+      "reason": "Celebration copy literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/models/celebration_feedback.dart",
+      "line": 122,
+      "surface": "completion feedback",
+      "text": "Fresh start energy",
+      "reason": "Celebration copy literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/models/celebration_feedback.dart",
+      "line": 131,
+      "surface": "completion feedback",
+      "text": "Daily quote",
+      "reason": "Celebration copy literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/first_run_quote_screen.dart",
+      "line": 90,
+      "surface": "first-run quote",
+      "text": "Continue",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_habit_screen.dart",
+      "line": 89,
+      "surface": "onboarding habit",
+      "text": "Custom",
+      "reason": "Preset title literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_habit_screen.dart",
+      "line": 90,
+      "surface": "onboarding habit",
+      "text": "Define your own habit",
+      "reason": "Preset subtitle literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_habit_screen.dart",
+      "line": 104,
+      "surface": "onboarding habit",
+      "text": "e.g., Practice guitar",
+      "reason": "Input hint literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_habit_screen.dart",
+      "line": 117,
+      "surface": "onboarding habit",
+      "text": "Continue",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_username_screen.dart",
+      "line": 140,
+      "surface": "onboarding username",
+      "text": "Your name",
+      "reason": "Input hint literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_username_screen.dart",
+      "line": 152,
+      "surface": "onboarding username",
+      "text": "Continue",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_duration_screen.dart",
+      "line": 85,
+      "surface": "onboarding duration",
+      "text": "Build the foundation",
+      "reason": "Preset subtitle literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_duration_screen.dart",
+      "line": 96,
+      "surface": "onboarding duration",
+      "text": "Lock it in permanently",
+      "reason": "Preset subtitle literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_duration_screen.dart",
+      "line": 107,
+      "surface": "onboarding duration",
+      "text": "Set your own number of days",
+      "reason": "Preset subtitle literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_duration_screen.dart",
+      "line": 120,
+      "surface": "onboarding duration",
+      "text": "Number of days (e.g., 30)",
+      "reason": "Input hint literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_duration_screen.dart",
+      "line": 130,
+      "surface": "onboarding duration",
+      "text": "Continue",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 36,
+      "surface": "onboarding slides",
+      "text": "Every day is day one.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 44,
+      "surface": "onboarding slides",
+      "text": "Start through the mud.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 51,
+      "surface": "onboarding slides",
+      "text": "Pick a first commit.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 58,
+      "surface": "onboarding slides",
+      "text": "Bring a partner.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 65,
+      "surface": "onboarding slides",
+      "text": "Let reminders stay gentle.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 72,
+      "surface": "onboarding slides",
+      "text": "Keep reflection private.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 79,
+      "surface": "onboarding slides",
+      "text": "No skip button on the ring.",
+      "reason": "Onboarding model uses literal copy instead of AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_slides_screen.dart",
+      "line": 136,
+      "surface": "onboarding slides",
+      "text": "Log in",
+      "reason": "Button label literal bypasses AppLocalizations"
+    },
+    {
+      "file": "lib/screens/onboarding/onboarding_complete_screen.dart",
+      "line": 159,
+      "surface": "onboarding completion",
+      "text": "Start My Journey",
+      "reason": "Button label literal bypasses AppLocalizations"
+    }
+  ],
+  "prioritization": [
+    {
+      "priority": 1,
+      "scope": "Onboarding and first-run",
+      "reason": "Highest visibility and first language impression",
+      "entries": 21
+    },
+    {
+      "priority": 2,
+      "scope": "Habit creation and completion",
+      "reason": "Primary product interaction",
+      "entries": 43
+    },
+    {
+      "priority": 3,
+      "scope": "Social, notifications, and profile",
+      "reason": "High-frequency user-facing surfaces",
+      "entries": 155
+    },
+    {
+      "priority": 4,
+      "scope": "Settings, accessibility, and calendar",
+      "reason": "Important secondary flows and platform actions",
+      "entries": 49
+    }
+  ]
+}
