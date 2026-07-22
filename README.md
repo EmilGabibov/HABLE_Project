@@ -8,7 +8,6 @@
 
 Hable is an offline-first habit tracker for building consistent routines with a little more warmth and accountability. It combines a Flutter client, local Drift storage, background synchronization, and a Cloudflare Pages/Worker backend for accounts and social features.
 
-[![CI](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml)
 [![Website](https://img.shields.io/badge/website-hable.pages.dev-0f766e?logo=cloudflare&logoColor=white)](https://hable.pages.dev)
 [![Android](https://img.shields.io/badge/available-Android-3ddc84?logo=android&logoColor=white)](#availability)
 [![macOS](https://img.shields.io/badge/available-macOS-111827?logo=apple&logoColor=white)](#availability)
